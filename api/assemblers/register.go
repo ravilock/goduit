@@ -1,8 +1,8 @@
 package assemblers
 
 import (
-	"github.com/ravilock/goduit/internal/api/requests"
-	"github.com/ravilock/goduit/internal/api/responses"
+	"github.com/ravilock/goduit/api/requests"
+	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/app/dtos"
 )
 

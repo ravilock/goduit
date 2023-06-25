@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ravilock/goduit/internal/api"
-	"github.com/ravilock/goduit/internal/api/assemblers"
-	"github.com/ravilock/goduit/internal/api/requests"
-	"github.com/ravilock/goduit/internal/api/validators"
+	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/api/assemblers"
+	"github.com/ravilock/goduit/api/requests"
+	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app/services"
 )
 

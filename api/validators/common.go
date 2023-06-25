@@ -4,7 +4,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/go-playground/validator/v10/non-standard/validators"
 	"github.com/labstack/echo/v4"
-	"github.com/ravilock/goduit/internal/api"
+	"github.com/ravilock/goduit/api"
 )
 
 var Validate *validator.Validate

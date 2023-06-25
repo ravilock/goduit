@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/ravilock/goduit/internal/api/requests"
+	"github.com/ravilock/goduit/api/requests"
 )
 
 func Register(request *requests.Register) error {

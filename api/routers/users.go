@@ -2,7 +2,7 @@ package routers
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/ravilock/goduit/internal/api/handlers"
+	"github.com/ravilock/goduit/api/handlers"
 )
 
 func UsersRouter(apiGroup *echo.Group) {
