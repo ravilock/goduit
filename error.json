@@ -1,8 +1,0 @@
-{
-  "time": "2023-06-08T18:38:59.403963281Z",
-  "level": "ERROR",
-  "prefix": "echo",
-  "file": "errorMiddleware.go",
-  "line": "14",
-  "message": "code=400, message=field Username is required"
-}
