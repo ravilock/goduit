@@ -11,6 +11,7 @@ import (
 const defaultStatusCode = http.StatusInternalServerError
 const defaultErrorMessage = "Internal Server Error"
 
+
 func ErrorMiddleware(err error, c echo.Context) {
 	c.Logger().Error(err)
 

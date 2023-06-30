@@ -11,12 +11,17 @@ import (
 	"github.com/ravilock/goduit/api/middlewares"
 	"github.com/ravilock/goduit/api/routers"
 	"github.com/ravilock/goduit/api/validators"
+	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
 	"github.com/ravilock/goduit/internal/config/mongo"
 )
 
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
+	}
+
+	if err := encryptionkeys.LoadKeys(); err != nil {
+		log.Println("Failed to read encrpytion keys", err)
 	}
 
 	databaseURI := os.Getenv("DB_URL")
