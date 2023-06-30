@@ -11,6 +11,15 @@ var CouldNotUnmarshalBodyError *echo.HTTPError = echo.NewHTTPError(http.StatusBa
 
 var FailedLoginAttempt *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Login failed; Invalid user ID or password.")
 
+var FailedAuthentication *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Invalid, Empty or Expired Token")
+
+func UnexpectedTokenSigningMethod(algName string) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:    http.StatusUnauthorized,
+		Message: fmt.Sprintf("Unexpected signing method: %v", algName),
+	}
+}
+
 func RequiredFieldError(field string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusBadRequest,

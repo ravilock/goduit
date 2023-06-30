@@ -29,7 +29,7 @@ func Login(user *dtos.User, ctx context.Context) (*dtos.User, error) {
 
 	now := time.Now()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.RegisteredClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &jwt.RegisteredClaims{
 		Issuer:    "goduit",
 		Subject:   *model.Email,
 		ExpiresAt: jwt.NewNumericDate(now.Add(10 * time.Minute)),
