@@ -1,3 +1,5 @@
+jwtRS256.key*
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
