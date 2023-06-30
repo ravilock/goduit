@@ -11,7 +11,6 @@ const privateKeyFileName = "jwtRS256.key"
 const publicKeyFileName = "jwtRS256.key.pub"
 
 var PrivateKey *rsa.PrivateKey
-var PublicKey *rsa.PublicKey
 
 func LoadKeys() error {
 	if err := readPrivateKey(); err != nil {
@@ -39,11 +38,5 @@ func readPublicKey() error {
 	if err != nil {
 		return err
 	}
-
-	publicPem, _ := pem.Decode(publicKeyContent)
-	PublicKey, err = x509.ParsePKCS1PublicKey(publicPem.Bytes)
-	if err != nil {
-		return err
-	}
-	return nil
+	return os.Setenv("PUBLIC_KEY", string(publicKeyContent))
 }
