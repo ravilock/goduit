@@ -6,7 +6,7 @@ import (
 	"github.com/ravilock/goduit/internal/app/dtos"
 )
 
-func RequestToDto(registerRequest *requests.Register) *dtos.User {
+func Register(registerRequest *requests.Register) *dtos.User {
 	return &dtos.User{
 		Username: registerRequest.User.Username,
 		Email:    registerRequest.User.Email,
@@ -17,8 +17,19 @@ func RequestToDto(registerRequest *requests.Register) *dtos.User {
 	}
 }
 
-func DtoToResponse(user *dtos.User) *responses.Register {
-	response := new(responses.Register)
+func Login(loginRequest *requests.Login) *dtos.User {
+	return &dtos.User{
+		Email:    loginRequest.User.Email,
+		Password: loginRequest.User.Password,
+		Username: new(string),
+		Token:    new(string),
+		Bio:      new(string),
+		Image:    new(string),
+	}
+}
+
+func Response(user *dtos.User) *responses.User {
+	response := new(responses.User)
 	response.User.Username = user.Username
 	response.User.Email = user.Email
 	response.User.Token = user.Token

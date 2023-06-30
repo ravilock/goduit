@@ -11,19 +11,19 @@ import (
 	"github.com/ravilock/goduit/internal/app/services"
 )
 
-func Register(c echo.Context) error {
-	request := new(requests.Register)
+func Login(c echo.Context) error {
+	request := new(requests.Login)
 	if err := c.Bind(request); err != nil {
 		return api.CouldNotUnmarshalBodyError
 	}
 
-	if err := validators.Register(request); err != nil {
+	if err := validators.Login(request); err != nil {
 		return err
 	}
 
-	dto := assemblers.Register(request)
+	dto := assemblers.Login(request)
 
-	dto, err := services.Register(dto, c.Request().Context())
+	dto, err := services.Login(dto, c.Request().Context())
 	if err != nil {
 		return err
 	}

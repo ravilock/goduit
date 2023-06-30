@@ -1,6 +1,6 @@
 package responses
 
-type Register struct {
+type User struct {
 	User struct {
 		Username *string `json:"username"`
 		Email    *string `json:"email"`

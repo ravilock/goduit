@@ -8,4 +8,5 @@ import (
 func UsersRouter(apiGroup *echo.Group) {
 	usersGroup := apiGroup.Group("/users")
 	usersGroup.POST("", handlers.Register)
+	usersGroup.POST("/login", handlers.Login)
 }

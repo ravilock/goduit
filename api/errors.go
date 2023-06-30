@@ -9,6 +9,8 @@ import (
 
 var CouldNotUnmarshalBodyError *echo.HTTPError = echo.NewHTTPError(http.StatusBadRequest, "Could Not Unmarshall Body")
 
+var FailedLoginAttempt *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Login failed; Invalid user ID or password.")
+
 func RequiredFieldError(field string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusBadRequest,
