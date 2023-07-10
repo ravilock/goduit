@@ -16,12 +16,9 @@ func DtoToModel(user *dtos.User) *models.User {
 }
 
 func ModelToDto(model *models.User, dto *dtos.User) *dtos.User {
-	return &dtos.User{
-		Username: model.Username,
-		Email:    model.Email,
-		Password: dto.Password,
-		Token:    dto.Token,
-		Bio:      model.Bio,
-		Image:    model.Image,
-	}
+	dto.Username = model.Username
+	dto.Email = model.Email
+	dto.Bio = model.Bio
+	dto.Image = model.Image
+	return dto
 }

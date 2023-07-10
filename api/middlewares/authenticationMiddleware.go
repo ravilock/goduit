@@ -36,6 +36,7 @@ func AuthenticationMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			log.Println("Could Not Parse Claims")
 			return api.FailedAuthentication
 		}
-		return nil
+		c.Set("user", token)
+		return next(c)
 	}
 }
