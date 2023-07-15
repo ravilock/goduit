@@ -14,7 +14,7 @@ func GetUser(c echo.Context) error {
 	claims := token.Claims.(*jwt.RegisteredClaims)
 	subject := claims.Subject
 
-	dto := assemblers.GetUser(subject)
+	dto := assemblers.GetUser(&subject)
 
 	dto, err := services.GetUser(dto, c.Request().Context())
 	if err != nil {

@@ -7,11 +7,10 @@ import (
 
 func DtoToModel(user *dtos.User) *models.User {
 	return &models.User{
-		Username:     user.Username,
-		Email:        user.Email,
-		Bio:          user.Bio,
-		Image:        user.Image,
-		PasswordHash: new(string),
+		Username: user.Username,
+		Email:    user.Email,
+		Bio:      user.Bio,
+		Image:    user.Image,
 	}
 }
 
