@@ -19,17 +19,7 @@ func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(os.Getenv("PUBLIC_KEY")))
-			if err != nil {
-				return err
-			}
-
-			token, err := jwt.ParseWithClaims(authorizationHeader, &dtos.TokenClaims{}, func(t *jwt.Token) (interface{}, error) {
-				if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-					return nil, api.UnexpectedTokenSigningMethod(t.Method.Alg())
-				}
-				return key, nil
-			})
+			token, err := jwt.ParseWithClaims(authorizationHeader, &dtos.TokenClaims{}, keyFunc)
 			if err != nil {
 				log.Println("Could Not Parse Token, err=", err)
 				return api.FailedAuthentication
@@ -39,13 +29,31 @@ func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 				return api.FailedAuthentication
 			}
 
-			_, ok := token.Claims.(*dtos.TokenClaims)
+			claims, ok := token.Claims.(*dtos.TokenClaims)
 			if !ok {
 				log.Println("Could Not Parse Claims")
 				return api.FailedAuthentication
 			}
-			c.Set("user", token)
+			setAuthInformationOnContext(claims, c)
 			return next(c)
 		}
 	}
+}
+
+func keyFunc(t *jwt.Token) (interface{}, error) {
+	key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(os.Getenv("PUBLIC_KEY")))
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+		return nil, api.UnexpectedTokenSigningMethod(t.Method.Alg())
+	}
+	return key, nil
+}
+
+func setAuthInformationOnContext(claims *dtos.TokenClaims, c echo.Context) {
+	headers := c.Request().Header
+	headers.Set("Goduit-Client-Username", claims.Username)
+	headers.Set("Goduit-Subject", claims.Subject)
 }

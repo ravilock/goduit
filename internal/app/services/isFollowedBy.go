@@ -7,7 +7,7 @@ import (
 )
 
 func IsFollowedBy(username, followerUsername string, ctx context.Context) bool {
-	if followerUsername == "" {
+	if followerUsername == "" || username == followerUsername {
 		return false
 	}
 	_, err := repositories.IsFollowedBy(username, followerUsername, ctx)
