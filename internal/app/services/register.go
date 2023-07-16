@@ -29,13 +29,16 @@ func Register(user *dtos.User, ctx context.Context) (*dtos.User, error) {
 
 	now := time.Now()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &jwt.RegisteredClaims{
-		Issuer:    "goduit",
-		Subject:   *model.Email,
-		ExpiresAt: jwt.NewNumericDate(now.Add(10 * time.Minute)),
-		NotBefore: jwt.NewNumericDate(now),
-		IssuedAt:  jwt.NewNumericDate(now),
-		ID:        uuid.NewString(),
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &dtos.TokenClaims{
+		Username: *model.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "goduit",
+			Subject:   *model.Email,
+			ExpiresAt: jwt.NewNumericDate(now.Add(10 * time.Minute)),
+			NotBefore: jwt.NewNumericDate(now),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ID:        uuid.NewString(),
+		},
 	})
 
 	tokenString, err := token.SignedString(encryptionkeys.PrivateKey)

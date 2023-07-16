@@ -12,6 +12,6 @@ func UsersRouter(apiGroup *echo.Group) {
 	usersGroup.POST("/login", handlers.Login)
 
 	userGroup := apiGroup.Group("/user")
-	userGroup.GET("", handlers.GetUser, middlewares.AuthenticationMiddleware)
-	userGroup.PUT("", handlers.UpdateUser, middlewares.AuthenticationMiddleware)
+	userGroup.GET("", handlers.GetUser, middlewares.CreateAuthMiddleware(true))
+	userGroup.PUT("", handlers.UpdateUser, middlewares.CreateAuthMiddleware(true))
 }

@@ -8,10 +8,10 @@ import (
 	"github.com/ravilock/goduit/internal/app/transformers"
 )
 
-func GetUser(user *dtos.User, ctx context.Context) (*dtos.User, error) {
-	model, err := repositories.GetUserByEmail(*user.Email, ctx)
+func GetUserByEmail(email string, ctx context.Context) (*dtos.User, error) {
+	model, err := repositories.GetUserByEmail(email, ctx)
 	if err != nil {
 		return nil, err
 	}
-	return transformers.ModelToDto(model, user), nil
+	return transformers.ModelToUserDto(model, new(dtos.User)), nil
 }
