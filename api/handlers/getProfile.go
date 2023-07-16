@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -12,16 +11,14 @@ import (
 )
 
 func GetProfile(c echo.Context) error {
-	username := c.Param("username")
-	subject := ""
-	tokenString := c.Get("user")
+	var subject string
+	username, tokenString := c.Param("username"), c.Get("user")
 	if tokenString != "" {
 		claims := tokenString.(*jwt.Token).Claims.(*dtos.TokenClaims)
 		if username != claims.Username {
 			subject = claims.Username
 		}
 	}
-	fmt.Println(username, subject)
 
 	dto, err := services.GetProfileByUsername(username, subject, c.Request().Context())
 	if err != nil {
