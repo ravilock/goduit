@@ -8,6 +8,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+func FollowUser(follower *models.Follower, ctx context.Context) error {
+	collection := db.DatabaseClient.Database("conduit").Collection("followers")
+	if _, err := collection.InsertOne(ctx, follower); err != nil {
+		return err
+	}
+	return nil
+}
+
 func IsFollowedBy(from, to string, ctx context.Context) (*models.Follower, error) {
 	var follower *models.Follower
 	filter := bson.D{
