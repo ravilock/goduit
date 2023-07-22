@@ -47,5 +47,5 @@ func Login(user *dtos.User, ctx context.Context) (*dtos.User, error) {
 	}
 	user.Token = &tokenString
 
-	return transformers.ModelToUserDto(model, user), nil
+	return transformers.UserModelToDto(model, user), nil
 }

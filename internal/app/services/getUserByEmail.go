@@ -13,5 +13,5 @@ func GetUserByEmail(email string, ctx context.Context) (*dtos.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return transformers.ModelToUserDto(model, new(dtos.User)), nil
+	return transformers.UserModelToDto(model, new(dtos.User)), nil
 }

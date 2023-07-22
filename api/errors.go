@@ -60,3 +60,10 @@ func UserNotFound(identifier string) *echo.HTTPError {
 		Message: fmt.Sprintf("User with identifier %q not found", identifier),
 	}
 }
+
+func FollowerRelationshipNotFound(followed, follower string) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:    http.StatusNotFound,
+		Message: fmt.Sprintf("%q does not follow %q", follower, followed),
+	}
+}

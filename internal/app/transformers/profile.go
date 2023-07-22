@@ -5,11 +5,10 @@ import (
 	"github.com/ravilock/goduit/internal/app/models"
 )
 
-func ModelToProfileDto(model *models.User, following bool) *dtos.Profile {
+func ModelToProfileDto(model *models.User) *dtos.Profile {
 	return &dtos.Profile{
-		Username:  model.Username,
-		Bio:       model.Bio,
-		Image:     model.Image,
-		Following: following,
+		Username: model.Username,
+		Bio:      model.Bio,
+		Image:    model.Image,
 	}
 }
