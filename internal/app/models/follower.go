@@ -2,7 +2,7 @@ package models
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
-// FollowerModel represents a relationship between users
+// Follower represents a relationship between users, describing the followers that a particular user has.
 //   - "Followed" represents the username of the user to be followed
 //   - "Follower" represents the username of the user that is following
 type Follower struct {
