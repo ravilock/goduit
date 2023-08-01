@@ -5,15 +5,17 @@ import (
 	"github.com/ravilock/goduit/internal/app/dtos"
 )
 
-func ProfileResponse(user *dtos.Profile) *responses.Profile {
-	response := new(responses.Profile)
-	response.Profile.Username = *user.Username
-	response.Profile.Following = user.Following
+func ProfileResponse(user *dtos.Profile) *responses.ProfileResponse {
+	var profile responses.Profile
+	response := new(responses.ProfileResponse)
+	profile.Username = *user.Username
+	profile.Following = user.Following
 	if user.Bio != nil {
-		response.Profile.Bio = *user.Bio
+		profile.Bio = *user.Bio
 	}
 	if user.Image != nil {
-		response.Profile.Image = *user.Image
+		profile.Image = *user.Image
 	}
+	response.Profile = profile
 	return response
 }
