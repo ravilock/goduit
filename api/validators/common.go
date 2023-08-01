@@ -23,6 +23,8 @@ func toHTTP(err validator.FieldError) *echo.HTTPError {
 		return api.InvalidFieldLength(err.Field(), tag, err.Param())
 	case "email", "http_url|base64":
 		return api.InvalidFieldError(err.Field(), err.Value())
+	case "unique":
+		return api.UniqueFieldError(err.Field())
 	default:
 		return nil
 	}
