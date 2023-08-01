@@ -42,6 +42,13 @@ func InvalidFieldError(field string, value any) *echo.HTTPError {
 	}
 }
 
+func UniqueFieldError(field string) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:    http.StatusBadRequest,
+		Message: fmt.Sprintf("field '%v' must have unique values", field),
+	}
+}
+
 func InvalidFieldLength(field string, validationName string, validationSize string) *echo.HTTPError {
 	sizeMessage := "short"
 	if validationName == "max" {

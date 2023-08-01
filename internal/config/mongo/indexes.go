@@ -37,6 +37,7 @@ func ensureIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
 	_, err = followersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys: bson.D{
 			{"follower", 1},
@@ -47,4 +48,26 @@ func ensureIndexes() {
 		panic(err)
 	}
 
+	articlesCollection := DatabaseClient.Database("conduit").Collection("articles")
+	_, err = articlesCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{"author", 1}},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = articlesCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.D{{"slug", 1}},
+		Options: options.Index().SetUnique(true),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = articlesCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{"tagList", 1}},
+	})
+	if err != nil {
+		panic(err)
+	}
 }
