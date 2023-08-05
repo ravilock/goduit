@@ -74,3 +74,11 @@ func FollowerRelationshipNotFound(followed, follower string) *echo.HTTPError {
 		Message: fmt.Sprintf("%q does not follow %q", follower, followed),
 	}
 }
+
+func InternalError(internal error) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:     http.StatusInternalServerError,
+		Message:  "Internal Server Error",
+		Internal: internal,
+	}
+}

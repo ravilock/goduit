@@ -29,7 +29,10 @@ func Follow(c echo.Context) error {
 	}
 	dto.Following = true
 
-	response := assemblers.ProfileResponse(dto)
+	response, err := assemblers.ProfileResponse(dto)
+	if err != nil {
+		return err
+	}
 
 	return c.JSON(http.StatusOK, response)
 }
