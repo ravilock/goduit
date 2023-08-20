@@ -28,7 +28,10 @@ func GetProfile(c echo.Context) error {
 
 	dto.Following = services.IsFollowedBy(request.Username, clientUsername, ctx)
 
-	response := assemblers.ProfileResponse(dto)
+	response, err := assemblers.ProfileResponse(dto)
+	if err != nil {
+		return err
+	}
 
 	return c.JSON(http.StatusOK, response)
 }
