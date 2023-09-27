@@ -9,14 +9,19 @@ import (
 
 var DatabaseClient *mongo.Client
 
-func ConnectDatabase(databaseURI string) {
+func ConnectDatabase(databaseURI string) error {
 	var err error
 	DatabaseClient, err = mongo.Connect(context.Background(), options.Client().ApplyURI(databaseURI))
 	if err != nil {
-		panic(err)
+		return err
 	}
-	testDatabase()
-	ensureIndexes()
+	if err = testDatabase(); err != nil {
+		return err
+	}
+	if err = ensureIndexes(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func DisconnectDatabase() {
@@ -25,8 +30,6 @@ func DisconnectDatabase() {
 	}
 }
 
-func testDatabase() {
-	if err := DatabaseClient.Ping(context.Background(), nil); err != nil {
-		panic(err)
-	}
+func testDatabase() error {
+	return DatabaseClient.Ping(context.Background(), nil)
 }
