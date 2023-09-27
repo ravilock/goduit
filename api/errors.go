@@ -14,6 +14,8 @@ var FailedLoginAttempt *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthoriz
 
 var FailedAuthentication *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Invalid, Empty or Expired Token")
 
+var ConfictError *echo.HTTPError = echo.NewHTTPError(http.StatusConflict, "Content Already Exists")
+
 func UnexpectedTokenSigningMethod(algName string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusUnauthorized,
