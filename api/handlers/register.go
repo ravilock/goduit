@@ -34,5 +34,5 @@ func Register(c echo.Context) error {
 
 	response := assemblers.UserResponse(dto)
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusCreated, response)
 }
