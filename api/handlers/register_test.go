@@ -4,66 +4,21 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/requests"
 	"github.com/ravilock/goduit/api/responses"
-	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app/models"
 	"github.com/ravilock/goduit/internal/app/repositories"
-	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
-	"github.com/ravilock/goduit/internal/config/mongo"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
-func init() {
-	if err := os.Chdir("../.."); err != nil {
-		log.Fatalln("Error chanigng directory", err)
-	}
-
-	if err := godotenv.Load(".env.test"); err != nil {
-		log.Fatalln("No .env file found", err)
-	}
-
-	if err := encryptionkeys.LoadKeys(); err != nil {
-		log.Fatalln("Failed to read encrpytion keys", err)
-	}
-
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatal("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	if err := mongo.ConnectDatabase(databaseURI); err != nil {
-		log.Fatal("Error connecting to database", err)
-	}
-
-	clearDatabase()
-
-	// Start Validator
-	validators.InitValidator()
-}
-
-func clearDatabase() {
-	conduitDb := mongo.DatabaseClient.Database("conduit")
-	collections, err := conduitDb.ListCollectionNames(context.Background(), bson.D{})
-	if err != nil {
-		log.Fatal("Could not list collections", err)
-	}
-	for _, coll := range collections {
-		conduitDb.Collection(coll).DeleteMany(context.Background(), bson.D{})
-	}
-}
-
 func TestRegister(t *testing.T) {
+	clearDatabase()
 	e := echo.New()
 	t.Run("Should create new user", func(t *testing.T) {
 		registerRequest := generateRegisterBody()
@@ -81,7 +36,7 @@ func TestRegister(t *testing.T) {
 		registerResponse := new(responses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), registerResponse)
 		assert.NoError(t, err)
-		checkResponse(t, registerRequest, registerResponse)
+		checkRegisterResponse(t, registerRequest, registerResponse)
 		userModel, err := repositories.GetUserByEmail(registerRequest.User.Email, context.Background())
 		assert.NoError(t, err)
 		checkUserModel(t, registerRequest, userModel)
@@ -120,7 +75,7 @@ func generateRegisterBody() *requests.Register {
 	return request
 }
 
-func checkResponse(t *testing.T, request *requests.Register, response *responses.User) {
+func checkRegisterResponse(t *testing.T, request *requests.Register, response *responses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	assert.Equal(t, request.User.Username, response.User.Username, "User Username should be the same")
