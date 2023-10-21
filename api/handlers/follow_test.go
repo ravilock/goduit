@@ -32,7 +32,7 @@ func TestFollow(t *testing.T) {
 		log.Fatal("Could not create user", err)
 	}
 	t.Run("Should follow a user", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/follow", followTestUsername), nil)
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", followTestUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -54,7 +54,7 @@ func TestFollow(t *testing.T) {
 	})
 	t.Run("Should return 404 if no user is found", func(t *testing.T) {
 		inexistentUsername := "inexistent-username"
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/follow", inexistentUsername), nil)
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", inexistentUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
