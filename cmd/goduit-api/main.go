@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ravilock/goduit/api/handlers"
-	"github.com/ravilock/goduit/api/middlewares"
 	"github.com/ravilock/goduit/api/routers"
 	"github.com/ravilock/goduit/api/validators"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
@@ -29,13 +28,13 @@ func main() {
 		log.Fatal("You must sey your 'DATABASE_URI' environmental variable.")
 	}
 	// Connect Mongo DB
-	mongo.ConnectDatabase(databaseURI)
+	if err := mongo.ConnectDatabase(databaseURI); err != nil {
+		log.Fatal("Error connecting to database", err)
+	}
 	defer mongo.DisconnectDatabase()
 
 	// Echo instance
 	e := echo.New()
-
-	e.HTTPErrorHandler = middlewares.ErrorMiddleware
 
 	// Middleware
 	e.Use(middleware.Logger())
