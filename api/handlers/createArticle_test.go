@@ -71,3 +71,37 @@ func makeSlug(title string) string {
 	titleWords := strings.Split(loweredTitle, " ")
 	return strings.Join(titleWords, "-")
 }
+
+func createArticle(title, description, body, authorUsername string, tagList []string) error {
+	if title == "" {
+		title = "Default Title"
+	}
+	if description == "" {
+		description = "Default Description"
+	}
+	if body == "" {
+		body = "Default Body"
+	}
+	if len(tagList) == 0 {
+		tagList = []string{"default-tag", "test"}
+	}
+	request := new(requests.CreateArticle)
+	request.Article.Title = title
+	request.Article.Description = description
+	request.Article.Body = body
+	request.Article.TagList = tagList
+	requestBody, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/api/articles", bytes.NewBuffer(requestBody))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Goduit-Client-Username", authorUsername)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	if err := CreateArticle(c); err != nil {
+		return err
+	}
+	return nil
+}
