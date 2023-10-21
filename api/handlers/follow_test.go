@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/app/models"
 	"github.com/ravilock/goduit/internal/app/repositories"
@@ -51,7 +52,18 @@ func TestFollow(t *testing.T) {
 		assert.NoError(t, err)
 		checkFollowerModel(t, followTestUsername, followerUsername, followerModel)
 	})
-  // TODO: add 404 error test
+	t.Run("Should return 404 if no user is found", func(t *testing.T) {
+		inexistentUsername := "inexistent-username"
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/follow", inexistentUsername), nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("username")
+		c.SetParamValues(inexistentUsername)
+		req.Header.Set("Goduit-Client-Username", followerUsername)
+		err := Follow(c)
+		assert.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
+	})
 }
 
 func checkFollowResponse(t *testing.T, username string, following bool, response *responses.ProfileResponse) {
