@@ -57,7 +57,7 @@ func TestFollow(t *testing.T) {
 func checkFollowResponse(t *testing.T, username string, following bool, response *responses.ProfileResponse) {
 	t.Helper()
 	assert.Equal(t, username, response.Profile.Username, "User username should be the same")
-	assert.Equal(t, !following, response.Profile.Following)
+	assert.Equal(t, following, response.Profile.Following)
 	assert.Zero(t, response.Profile.Image)
 	assert.Zero(t, response.Profile.Bio)
 }
