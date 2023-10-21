@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/requests"
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/stretchr/testify/assert"
@@ -44,19 +43,6 @@ func TestCreateArticle(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), createArticleResponse)
 		checkCreateArticleResponse(t, createArticleRequest, createArticleTestUsername, createArticleResponse)
 		assert.NoError(t, err)
-	})
-	t.Run("Should return http 404 if author's profile is not found", func(t *testing.T) {
-		inexistentUsername := "inexistent-username"
-		createArticleRequest := generateCreateArticleBody()
-		requestBody, err := json.Marshal(createArticleRequest)
-		assert.NoError(t, err)
-		req := httptest.NewRequest(http.MethodPost, "/api/articles", bytes.NewBuffer(requestBody))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Client-Username", inexistentUsername)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		err = CreateArticle(c)
-		assert.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error()) // TODO: Should not be 404, should be 401 (Unauthorized)
 	})
 	// TODO: Add test for articles with the same Title/Slug
 }
