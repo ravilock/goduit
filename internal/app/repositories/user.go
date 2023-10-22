@@ -28,7 +28,7 @@ func GetUserByEmail(email string, ctx context.Context) (*models.User, error) {
 	collection := db.DatabaseClient.Database("conduit").Collection("users")
 	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, app.UserNotFoundError(email).AddContext(err)
+			return nil, app.UserNotFoundError(email, err)
 		}
 		return nil, err
 	}
