@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -8,6 +9,7 @@ import (
 	"github.com/ravilock/goduit/api/assemblers"
 	"github.com/ravilock/goduit/api/requests"
 	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/app/services"
 )
 
@@ -25,6 +27,14 @@ func Login(c echo.Context) error {
 
 	dto, err := services.Login(dto, c.Request().Context())
 	if err != nil {
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.UserNotFoundErrorCode:
+				fallthrough
+			case app.WrongPasswordErrorCode:
+				return api.FailedLoginAttempt
+			}
+		}
 		return err
 	}
 
