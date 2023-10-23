@@ -20,7 +20,7 @@ func TestCreateArticle(t *testing.T) {
 	const createArticleTestEmail = "create.article.test@test.test"
 
 	clearDatabase()
-	if err := registerAccount(createArticleTestUsername, createArticleTestEmail, ""); err != nil {
+	if err := registerUser(createArticleTestUsername, createArticleTestEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 
