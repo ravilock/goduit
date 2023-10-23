@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 
-	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/app/models"
 	db "github.com/ravilock/goduit/internal/config/mongo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,7 +27,7 @@ func GetUserByEmail(email string, ctx context.Context) (*models.User, error) {
 	collection := db.DatabaseClient.Database("conduit").Collection("users")
 	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, api.FailedLoginAttempt
+			return nil, app.UserNotFoundError(email, err)
 		}
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func GetUserByUsername(username string, ctx context.Context) (*models.User, erro
 	collection := db.DatabaseClient.Database("conduit").Collection("users")
 	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, api.UserNotFound(username)
+			return nil, app.UserNotFoundError(username, err)
 		}
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func UpdateUser(user *models.User, ctx context.Context) (*models.User, error) {
 		return nil, err
 	}
 	if updateResult.MatchedCount == 0 {
-		return nil, api.UserNotFound(*user.Email)
+		return nil, app.UserNotFoundError(*user.Email, nil)
 	}
 	return user, nil
 }

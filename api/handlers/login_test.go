@@ -21,7 +21,7 @@ const loginTestPassword = "login-test-password"
 
 func TestLogin(t *testing.T) {
 	clearDatabase()
-	if err := registerAccount(loginTestUsername, loginTestEmail, loginTestPassword); err != nil {
+	if err := registerUser(loginTestUsername, loginTestEmail, loginTestPassword); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 	e := echo.New()
