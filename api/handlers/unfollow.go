@@ -21,7 +21,9 @@ func Unfollow(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	err := services.Unfollow(request.Username, clientUsername, ctx)
+	if err := services.Unfollow(request.Username, clientUsername, ctx); err != nil {
+		return err
+	}
 
 	dto, err := services.GetProfileByUsername(request.Username, ctx)
 	if err != nil {

@@ -81,3 +81,7 @@ func checkFollowerModel(t *testing.T, followed, follower string, model *models.F
 	assert.Equal(t, followed, *model.Followed, "Wrong followed username")
 	assert.Equal(t, follower, *model.Follower, "Wrong follower username")
 }
+
+func followUser(followed, follower string) error {
+	return repositories.Follow(followed, follower, context.Background())
+}
