@@ -10,13 +10,9 @@ import (
 
 var PrivateKey *rsa.PrivateKey
 
-func LoadPrivateKey(privateKey io.ReadCloser) error {
+func LoadPrivateKey(privateKey io.Reader) error {
 	privateKeyContent, err := io.ReadAll(privateKey)
 	if err != nil {
-		return err
-	}
-
-	if err = privateKey.Close(); err != nil {
 		return err
 	}
 
@@ -28,13 +24,9 @@ func LoadPrivateKey(privateKey io.ReadCloser) error {
 	return nil
 }
 
-func LoadPublicKey(publicKey io.ReadCloser) error {
-	publicKeyContent, err := io.ReadAll(publicKey)
+func LoadPublicKey(publicKeyFile io.Reader) error {
+	publicKeyContent, err := io.ReadAll(publicKeyFile)
 	if err != nil {
-		return err
-	}
-
-	if err = publicKey.Close(); err != nil {
 		return err
 	}
 	return os.Setenv("PUBLIC_KEY", string(publicKeyContent))
