@@ -28,6 +28,10 @@ func main() {
 		log.Fatal("Failed to load private key file content", err)
 	}
 
+	if err := privateKeyFile.Close(); err != nil {
+		log.Fatal("Failed to close private key file", err)
+	}
+
 	publicKeyFile, err := os.Open("./jwtRS256.key.pub")
 	if err != nil {
 		log.Fatal("Failed to open public key file", err)
@@ -35,6 +39,10 @@ func main() {
 
 	if err := encryptionkeys.LoadPublicKey(publicKeyFile); err != nil {
 		log.Fatal("Failed to load public key file content", err)
+	}
+
+	if err := publicKeyFile.Close(); err != nil {
+		log.Fatal("Failed to close publicKeyFile key file", err)
 	}
 
 	databaseURI := os.Getenv("DB_URL")
