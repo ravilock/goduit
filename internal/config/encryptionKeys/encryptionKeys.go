@@ -7,21 +7,23 @@ import (
 	"os"
 )
 
-const privateKeyFileName = "jwtRS256.key"
-const publicKeyFileName = "jwtRS256.key.pub"
-
 var PrivateKey *rsa.PrivateKey
 
-func LoadKeys() error {
-	if err := readPrivateKey(); err != nil {
+func LoadKeys(privateKeyFile, publicKeyFile *os.File) error {
+	if err := readPrivateKey(privateKeyFile); err != nil {
 		return err
 	}
-	return readPublicKey()
+	return readPublicKey(publicKeyFile)
 }
 
-func readPrivateKey() error {
-	privateKeyContent, err := os.ReadFile(privateKeyFileName)
+func readPrivateKey(privateKeyFile *os.File) error {
+	stat, err := privateKeyFile.Stat()
 	if err != nil {
+		return err
+	}
+	privateKeyContent := make([]byte, stat.Size())
+
+	if _, err := privateKeyFile.Read(privateKeyContent); err != nil {
 		return err
 	}
 
@@ -33,9 +35,14 @@ func readPrivateKey() error {
 	return nil
 }
 
-func readPublicKey() error {
-	publicKeyContent, err := os.ReadFile(publicKeyFileName)
+func readPublicKey(publicKeyFile *os.File) error {
+	stat, err := publicKeyFile.Stat()
 	if err != nil {
+		return err
+	}
+	publicKeyContent := make([]byte, stat.Size())
+
+	if _, err := publicKeyFile.Read(publicKeyContent); err != nil {
 		return err
 	}
 	return os.Setenv("PUBLIC_KEY", string(publicKeyContent))
