@@ -24,7 +24,7 @@ func GetProfile(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	dto, err := services.GetProfileByUsername(request.Username, ctx)
+	model, err := services.GetProfileByUsername(request.Username, ctx)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -35,9 +35,9 @@ func GetProfile(c echo.Context) error {
 		return err
 	}
 
-	dto.Following = services.IsFollowedBy(request.Username, clientUsername, ctx)
+	isFollowing := services.IsFollowedBy(request.Username, clientUsername, ctx)
 
-	response, err := assemblers.ProfileResponse(dto)
+	response, err := assemblers.ProfileResponse(model, isFollowing)
 	if err != nil {
 		return err
 	}

@@ -5,18 +5,18 @@ import (
 
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/responses"
-	"github.com/ravilock/goduit/internal/app/dtos"
+	"github.com/ravilock/goduit/internal/app/models"
 )
 
-var nilDtoError = errors.New("Dto is nil")
+var nilModelError = errors.New("Dto is nil")
 var nilUsernameError = errors.New("Username is nil")
 
-func ProfileResponse(user *dtos.Profile) (*responses.ProfileResponse, error) {
+func ProfileResponse(user *models.User, isFollowing bool) (*responses.ProfileResponse, error) {
 	var profile responses.Profile
 	response := new(responses.ProfileResponse)
 
 	if user == nil {
-		return nil, api.InternalError(nilDtoError)
+		return nil, api.InternalError(nilModelError)
 	}
 
 	if user.Username == nil {
@@ -32,7 +32,7 @@ func ProfileResponse(user *dtos.Profile) (*responses.ProfileResponse, error) {
 		profile.Image = *user.Image
 	}
 
-	profile.Following = user.Following
+	profile.Following = isFollowing
 	response.Profile = profile
 	return response, nil
 }

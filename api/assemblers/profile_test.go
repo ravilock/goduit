@@ -4,45 +4,47 @@ import (
 	"testing"
 
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/internal/app/dtos"
+	"github.com/ravilock/goduit/internal/app/models"
 )
 
 func TestProfileResponse(t *testing.T) {
-	t.Run("Should handle if dto is nil", func(t *testing.T) {
-		responses, err := ProfileResponse(nil)
+	t.Run("Should handle if model is nil", func(t *testing.T) {
+		responses, err := ProfileResponse(nil, false)
 		if responses != nil {
 			t.Errorf("Response should be nil")
 		}
-		assertError(t, err, api.InternalError(nilDtoError))
+		assertError(t, err, api.InternalError(nilModelError))
 	})
 	t.Run("Should return error if Username is nil", func(t *testing.T) {
-		dto := assebleProfileDto()
-		dto.Username = nil
-		responses, err := ProfileResponse(dto)
+		model := assembleUserModel()
+		model.Username = nil
+		responses, err := ProfileResponse(model, false)
 		if responses != nil {
 			t.Errorf("Response should be nil")
 		}
 		assertError(t, err, api.InternalError(nilUsernameError))
 	})
 	t.Run("Should handle if Bio is nil", func(t *testing.T) {
-		dto := assebleProfileDto()
-		dto.Bio = nil
-		responses, err := ProfileResponse(dto)
+		model := assembleUserModel()
+		model.Bio = nil
+		responses, err := ProfileResponse(model, false)
 		assertNoError(t, err)
 		if responses == nil {
 			t.Errorf("Response should not be nil")
+			return
 		}
 		if responses.Profile.Bio != "" {
 			t.Errorf("Response bio should be blank")
 		}
 	})
 	t.Run("Should handle if Image is nil", func(t *testing.T) {
-		dto := assebleProfileDto()
-		dto.Image = nil
-		responses, err := ProfileResponse(dto)
+		model := assembleUserModel()
+		model.Image = nil
+		responses, err := ProfileResponse(model, false)
 		assertNoError(t, err)
 		if responses == nil {
 			t.Errorf("Response should not be nil")
+			return
 		}
 		if responses.Profile.Image != "" {
 			t.Errorf("Response image should be blank")
@@ -51,15 +53,14 @@ func TestProfileResponse(t *testing.T) {
 
 }
 
-func assebleProfileDto() *dtos.Profile {
+func assembleUserModel() *models.User {
 	username := "raylok"
 	bio := "This is a bio"
 	image := "https://cataas.com/cat"
-	return &dtos.Profile{
-		Username:  &username,
-		Bio:       &bio,
-		Image:     &image,
-		Following: true,
+	return &models.User{
+		Username: &username,
+		Bio:      &bio,
+		Image:    &image,
 	}
 }
 
