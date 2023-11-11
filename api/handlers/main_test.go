@@ -60,7 +60,9 @@ func setup() {
 	}
 
 	// Start Validator
-	validators.InitValidator()
+	if err := validators.InitValidator(); err != nil {
+		log.Fatalln("Failed to load validator", err)
+	}
 }
 
 func clearDatabase() {

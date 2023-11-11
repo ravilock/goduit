@@ -11,7 +11,6 @@ import (
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func TestGetProfile(t *testing.T) {
-	InitValidator()
 	t.Run("Username is required", func(t *testing.T) {
 		request := &requests.GetProfile{}
 

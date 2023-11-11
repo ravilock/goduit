@@ -9,7 +9,6 @@ import (
 )
 
 func TestUpdateUser(t *testing.T) {
-	InitValidator()
 	t.Run("Username must not be blank", func(t *testing.T) {
 		request := assembleValidUpdateUserRequest()
 		request.User.Username = "   "

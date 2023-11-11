@@ -63,7 +63,9 @@ func main() {
 	e.Use(middleware.Recover())
 
 	// Start Validator
-	validators.InitValidator()
+	if err := validators.InitValidator(); err != nil {
+		log.Fatal("Could not init validator", err)
+	}
 
 	// Routes
 	apiGroup := e.Group("/api")

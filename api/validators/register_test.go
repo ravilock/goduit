@@ -8,7 +8,6 @@ import (
 )
 
 func TestRegister(t *testing.T) {
-	InitValidator()
 	t.Run("Username is required", func(t *testing.T) {
 		request := assembleValidRegisterRequest()
 		request.User.Username = ""
