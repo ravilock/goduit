@@ -22,9 +22,9 @@ func Register(c echo.Context) error {
 		return err
 	}
 
-	model := request.Model()
+	user := request.Model()
 
-	dto, token, err := services.Register(model, request.User.Password, c.Request().Context())
+	dto, token, err := services.Register(user, request.User.Password, c.Request().Context())
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return api.ConfictError

@@ -34,3 +34,6 @@ logs-all:
 
 test:
 	go test ./...
+
+test-verbose:
+	go test ./... -v

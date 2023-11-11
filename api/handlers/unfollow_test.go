@@ -25,14 +25,16 @@ func TestUnfollow(t *testing.T) {
 	const followerEmail = "follower.email@test.test"
 
 	clearDatabase()
-	if err := registerUser(unfollowTestUsername, getUserTestEmail, ""); err != nil {
+	if err := registerUser(unfollowTestUsername, unfollowTestEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 	if err := registerUser(followerUsername, followerEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 
-	followUser(unfollowTestUsername, followerUsername)
+	if err := followUser(unfollowTestUsername, followerUsername); err != nil {
+		t.Error("Failed to setup user following relationship", err)
+	}
 
 	e := echo.New()
 	t.Run("Should unfollow a user", func(t *testing.T) {

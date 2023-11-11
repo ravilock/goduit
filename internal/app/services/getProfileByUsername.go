@@ -7,7 +7,7 @@ import (
 	"github.com/ravilock/goduit/internal/app/repositories"
 )
 
-func GetProfileByUsername(profileUsername string, ctx context.Context) (*models.User, error) {
+func GetUserByUsername(profileUsername string, ctx context.Context) (*models.User, error) {
 	model, err := repositories.GetUserByUsername(profileUsername, ctx)
 	if err != nil {
 		return nil, err

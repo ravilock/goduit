@@ -11,12 +11,12 @@ import (
 func GetUser(c echo.Context) error {
 	subject := c.Request().Header.Get("Goduit-Subject")
 
-	model, err := services.GetUserByEmail(subject, c.Request().Context())
+	user, err := services.GetUserByEmail(subject, c.Request().Context())
 	if err != nil {
 		return err
 	}
 
-	response := assemblers.UserResponse(model, nil)
+	response := assemblers.UserResponse(user, nil)
 
 	return c.JSON(http.StatusOK, response)
 }

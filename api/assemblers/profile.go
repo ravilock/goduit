@@ -8,7 +8,7 @@ import (
 	"github.com/ravilock/goduit/internal/app/models"
 )
 
-var nilModelError = errors.New("Dto is nil")
+var nilModelError = errors.New("Model is nil")
 var nilUsernameError = errors.New("Username is nil")
 
 func ProfileResponse(user *models.User, isFollowing bool) (*responses.ProfileResponse, error) {

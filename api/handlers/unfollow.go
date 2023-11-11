@@ -28,7 +28,7 @@ func Unfollow(c echo.Context) error {
 		return err
 	}
 
-	models, err := services.GetProfileByUsername(request.Username, ctx)
+	followedUser, err := services.GetUserByUsername(request.Username, ctx)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -39,7 +39,7 @@ func Unfollow(c echo.Context) error {
 		return err
 	}
 
-	response, err := assemblers.ProfileResponse(models, false)
+	response, err := assemblers.ProfileResponse(followedUser, false)
 	if err != nil {
 		return err
 	}
