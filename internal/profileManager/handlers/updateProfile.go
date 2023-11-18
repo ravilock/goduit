@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	assemblers "github.com/ravilock/goduit/internal/profileManager/assembler"
+	"github.com/ravilock/goduit/internal/profileManager/assemblers"
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	"github.com/ravilock/goduit/internal/profileManager/requests"
 )

@@ -12,6 +12,9 @@ import (
 	"github.com/ravilock/goduit/api/validators"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
 	"github.com/ravilock/goduit/internal/config/mongo"
+	followerHandlers "github.com/ravilock/goduit/internal/followerCentral/handlers"
+	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
+	followerServices "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileHandlers "github.com/ravilock/goduit/internal/profileManager/handlers"
 	profileRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileServices "github.com/ravilock/goduit/internal/profileManager/services"
@@ -58,10 +61,14 @@ func main() {
 		log.Fatal("Error connecting to database", err)
 	}
 	defer mongo.DisconnectDatabase(client)
+	// profileManager
 	userRepository := profileRepositories.NewUserRepository(client)
 	profileManager := profileServices.NewProfileManager(userRepository)
 	profileHandler := profileHandlers.NewProfileHandler(profileManager)
-
+	// followerCentral
+	followerRepository := followerRepositories.NewFollowerRepository(client)
+	followerCentral := followerServices.NewFollowerCentral(followerRepository)
+	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
 	// Echo instance
 	e := echo.New()
 
@@ -87,8 +94,8 @@ func main() {
 	// Profile Routes
 	profileGroup := apiGroup.Group("/profile")
 	profileGroup.GET("/:username", handlers.GetProfile, middlewares.CreateAuthMiddleware(false))
-	profileGroup.POST("/:username/follow", handlers.Follow, middlewares.CreateAuthMiddleware(false))
-	profileGroup.POST("/:username/unfollow", handlers.Unfollow, middlewares.CreateAuthMiddleware(false))
+	profileGroup.POST("/:username/follow", followerHandler.Follow, middlewares.CreateAuthMiddleware(true))
+	profileGroup.POST("/:username/unfollow", followerHandler.Unfollow, middlewares.CreateAuthMiddleware(true))
 	// Article Routes
 	articlesGroup := apiGroup.Group("/articles")
 	articlesGroup.POST("", handlers.CreateArticle, middlewares.CreateAuthMiddleware(true))
