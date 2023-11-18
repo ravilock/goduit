@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ravilock/goduit/api/handlers"
-	"github.com/ravilock/goduit/api/routers"
+	"github.com/ravilock/goduit/api/middlewares"
 	"github.com/ravilock/goduit/api/validators"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
 	"github.com/ravilock/goduit/internal/config/mongo"
@@ -77,10 +77,23 @@ func main() {
 	// Routes
 	apiGroup := e.Group("/api")
 	apiGroup.GET("/healthcheck", handlers.Healthcheck)
-	routers.UsersRouter(apiGroup, profileHandler)
-	routers.ProfilesRouter(apiGroup)
-	routers.ArticlesRouter(apiGroup)
-
+	// User Routes
+	usersGroup := apiGroup.Group("/users")
+	usersGroup.POST("", profileHandler.Register)
+	usersGroup.POST("/login", profileHandler.Login)
+	userGroup := apiGroup.Group("/user")
+	userGroup.GET("", profileHandler.GetOwnProfile, middlewares.CreateAuthMiddleware(true))
+	userGroup.PUT("", profileHandler.UpdateProfile, middlewares.CreateAuthMiddleware(true))
+	// Profile Routes
+	profileGroup := apiGroup.Group("/profile")
+	profileGroup.GET("/:username", handlers.GetProfile, middlewares.CreateAuthMiddleware(false))
+	profileGroup.POST("/:username/follow", handlers.Follow, middlewares.CreateAuthMiddleware(false))
+	profileGroup.POST("/:username/unfollow", handlers.Unfollow, middlewares.CreateAuthMiddleware(false))
+	// Article Routes
+	articlesGroup := apiGroup.Group("/articles")
+	articlesGroup.POST("", handlers.CreateArticle, middlewares.CreateAuthMiddleware(true))
+	articleGroup := apiGroup.Group("/article")
+	articleGroup.GET("/:slug", handlers.GetArticle, middlewares.CreateAuthMiddleware(false))
 	// Start server
 	e.Logger.Fatal(e.Start(":6969"))
 }
