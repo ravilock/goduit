@@ -8,8 +8,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func ensureIndexes() error {
-	usersCollection := DatabaseClient.Database("conduit").Collection("users")
+func ensureIndexes(client *mongo.Client) error {
+	usersCollection := client.Database("conduit").Collection("users")
 	_, err := usersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys:    bson.D{{Key: "username", Value: 1}},
 		Options: options.Index().SetUnique(true),
@@ -26,7 +26,7 @@ func ensureIndexes() error {
 		return err
 	}
 
-	followersCollection := DatabaseClient.Database("conduit").Collection("followers")
+	followersCollection := client.Database("conduit").Collection("followers")
 	_, err = followersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "followed", Value: 1},
@@ -48,7 +48,7 @@ func ensureIndexes() error {
 		return err
 	}
 
-	articlesCollection := DatabaseClient.Database("conduit").Collection("articles")
+	articlesCollection := client.Database("conduit").Collection("articles")
 	_, err = articlesCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys: bson.D{{Key: "author", Value: 1}},
 	})

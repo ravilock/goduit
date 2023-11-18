@@ -105,3 +105,32 @@ func createArticle(title, description, body, authorUsername string, tagList []st
 	}
 	return nil
 }
+
+func registerUser(username, email, password string) error {
+	if username == "" {
+		username = "default-username"
+	}
+	if email == "" {
+		email = "default.email@test.test"
+	}
+	if password == "" {
+		password = "default-password"
+	}
+	registerRequest := new(requests.Register)
+	registerRequest.User.Username = username
+	registerRequest.User.Email = email
+	registerRequest.User.Password = password
+	requestBody, err := json.Marshal(registerRequest)
+	if err != nil {
+		return err
+	}
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(requestBody))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	if err := Register(c); err != nil {
+		return err
+	}
+	return nil
+}
