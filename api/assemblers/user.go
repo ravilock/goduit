@@ -5,7 +5,7 @@ import (
 	"github.com/ravilock/goduit/internal/app/models"
 )
 
-func UserResponse(user *models.User, token *string) *responses.User {
+func UserResponse(user *models.User, token string) *responses.User {
 	response := new(responses.User)
 	if user.Username != nil {
 		response.User.Username = *user.Username
@@ -13,8 +13,8 @@ func UserResponse(user *models.User, token *string) *responses.User {
 	if user.Email != nil {
 		response.User.Email = *user.Email
 	}
-	if token != nil {
-		response.User.Token = *token
+	if token != "" {
+		response.User.Token = token
 	}
 	if user.Bio != nil {
 		response.User.Bio = *user.Bio

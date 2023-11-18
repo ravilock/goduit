@@ -28,7 +28,7 @@ func UpdateUser(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(model, nil)
+	response := assemblers.UserResponse(model, "")
 
 	return c.JSON(http.StatusOK, response)
 }
