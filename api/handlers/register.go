@@ -24,7 +24,7 @@ func Register(c echo.Context) error {
 
 	user := request.Model()
 
-	dto, token, err := services.Register(user, request.User.Password, c.Request().Context())
+	user, token, err := services.Register(user, request.User.Password, c.Request().Context())
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return api.ConfictError
@@ -32,7 +32,7 @@ func Register(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(dto, token)
+	response := assemblers.UserResponse(user, token)
 
 	return c.JSON(http.StatusCreated, response)
 }
