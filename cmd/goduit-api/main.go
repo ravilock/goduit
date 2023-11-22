@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ravilock/goduit/api/handlers"
@@ -21,10 +20,6 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
-	}
-
 	privateKeyFile, err := os.Open("./jwtRS256.key")
 	if err != nil {
 		log.Fatal("Failed to open private key file", err)
