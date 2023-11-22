@@ -20,7 +20,7 @@ import (
 )
 
 func main() {
-	privateKeyFile, err := os.Open("./jwtRS256.key")
+	privateKeyFile, err := os.Open(os.Getenv("PRIVATE_KEY_LOCATION"))
 	if err != nil {
 		log.Fatal("Failed to open private key file", err)
 	}
@@ -33,7 +33,7 @@ func main() {
 		log.Fatal("Failed to close private key file", err)
 	}
 
-	publicKeyFile, err := os.Open("./jwtRS256.key.pub")
+	publicKeyFile, err := os.Open(os.Getenv("PUBLIC_KEY_LOCATION"))
 	if err != nil {
 		log.Fatal("Failed to open public key file", err)
 	}
