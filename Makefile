@@ -33,7 +33,7 @@ logs-all:
 	@$(LOGS_CMD)
 
 test:
-	go test ./...
+	@docker-compose exec $(SVC_API) go test ./...
 
 test-verbose:
-	go test ./... -v
+	@docker-compose exec $(SVC_API) go test ./... -v
