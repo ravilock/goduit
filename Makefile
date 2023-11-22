@@ -37,3 +37,6 @@ test:
 
 test-verbose:
 	@docker-compose exec $(SVC_API) go test ./... -v
+
+bash:
+	@docker-compose exec $(SVC_API) sh
