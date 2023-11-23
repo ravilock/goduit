@@ -15,11 +15,11 @@ import (
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralModels "github.com/ravilock/goduit/internal/followerCentral/models"
-	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerServices "github.com/ravilock/goduit/internal/followerCentral/services"
+	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
+	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
-	userRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	userServices "github.com/ravilock/goduit/internal/profileManager/services"
+	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,19 +39,19 @@ func TestFollow(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error connecting to database", err)
 	}
-	followerRepository := followerRepositories.NewFollowerRepository(client)
-	central := followerServices.NewFollowerCentral(followerRepository)
-	userRepository := userRepositories.NewUserRepository(client)
-	manager := userServices.NewProfileManager(userRepository)
-	handler := NewFollowerHandler(central, manager)
+	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
+	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
+	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
+	profileManager := profileManager.NewProfileManager(profileManagerRepository)
+	handler := NewFollowerHandler(followerCentral, profileManager)
 
 	clearDatabase(client)
-	_, _, err = registerUser(followTestUsername, followTestEmail, "", manager)
+	_, _, err = registerUser(followTestUsername, followTestEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
 
-	_, _, err = registerUser(followerUsername, followerEmail, "", manager)
+	_, _, err = registerUser(followerUsername, followerEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
@@ -74,7 +74,7 @@ func TestFollow(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
 		assert.NoError(t, err)
 		checkFollowResponse(t, followTestUsername, true, followResponse)
-		followerModel, err := followerRepository.IsFollowedBy(context.Background(), followTestUsername, followerUsername)
+		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), followTestUsername, followerUsername)
 		assert.NoError(t, err)
 		checkFollowerModel(t, followTestUsername, followerUsername, followerModel)
 	})
@@ -107,7 +107,7 @@ func checkFollowerModel(t *testing.T, followed, follower string, model *follower
 	assert.Equal(t, follower, *model.Follower, "Wrong follower username")
 }
 
-func registerUser(username, email, password string, manager *userServices.ProfileManager) (*profileManagerModels.User, string, error) {
+func registerUser(username, email, password string, manager *profileManager.ProfileManager) (*profileManagerModels.User, string, error) {
 	if username == "" {
 		username = "default-username"
 	}
