@@ -14,6 +14,8 @@ import (
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
+	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
+	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
@@ -31,9 +33,11 @@ func TestRegister(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error connecting to database", err)
 	}
-	repository := profileManagerRepositories.NewUserRepository(client)
-	manager := profileManager.NewProfileManager(repository)
-	handler := NewProfileHandler(manager)
+	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
+	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
+	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
+	profileManager := profileManager.NewProfileManager(profileManagerRepository)
+	handler := NewProfileHandler(profileManager, followerCentral)
 	clearDatabase(client)
 	e := echo.New()
 	t.Run("Should create new user", func(t *testing.T) {
@@ -53,7 +57,7 @@ func TestRegister(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), registerResponse)
 		assert.NoError(t, err)
 		checkRegisterResponse(t, registerRequest, registerResponse)
-		userModel, err := repository.GetUserByEmail(context.Background(), registerRequest.User.Email)
+		userModel, err := profileManagerRepository.GetUserByEmail(context.Background(), registerRequest.User.Email)
 		assert.NoError(t, err)
 		checkUserModel(t, registerRequest, userModel)
 	})
