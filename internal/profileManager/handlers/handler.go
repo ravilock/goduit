@@ -10,6 +10,7 @@ type ProfileHandler struct {
 	loginHandler
 	updateProfileHandler
 	getOwnProfileHandler
+	getProfileHandler
 }
 
 func NewProfileHandler(manager *services.ProfileManager, central *followerCentral.FollowerCentral) *ProfileHandler {
@@ -17,5 +18,6 @@ func NewProfileHandler(manager *services.ProfileManager, central *followerCentra
 	login := loginHandler{manager}
 	updateProfile := updateProfileHandler{manager}
 	getOwnProfile := getOwnProfileHandler{manager}
-	return &ProfileHandler{register, login, updateProfile, getOwnProfile}
+	getProfile := getProfileHandler{manager, central}
+	return &ProfileHandler{register, login, updateProfile, getOwnProfile, getProfile}
 }
