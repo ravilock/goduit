@@ -14,10 +14,10 @@ import (
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
-	"github.com/ravilock/goduit/internal/profileManager/models"
-	"github.com/ravilock/goduit/internal/profileManager/repositories"
-	"github.com/ravilock/goduit/internal/profileManager/requests"
-	"github.com/ravilock/goduit/internal/profileManager/services"
+	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
+	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
+	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,8 +31,8 @@ func TestRegister(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error connecting to database", err)
 	}
-	repository := repositories.NewUserRepository(client)
-	manager := services.NewProfileManager(repository)
+	repository := profileManagerRepositories.NewUserRepository(client)
+	manager := profileManager.NewProfileManager(repository)
 	handler := NewProfileHandler(manager)
 	clearDatabase(client)
 	e := echo.New()
@@ -83,15 +83,15 @@ func TestRegister(t *testing.T) {
 	})
 }
 
-func generateRegisterBody() *requests.Register {
-	request := new(requests.Register)
+func generateRegisterBody() *profileManagerRequests.Register {
+	request := new(profileManagerRequests.Register)
 	request.User.Email = "test.test@test.test"
 	request.User.Username = "test-username"
 	request.User.Password = "test-password"
 	return request
 }
 
-func checkRegisterResponse(t *testing.T, request *requests.Register, response *responses.User) {
+func checkRegisterResponse(t *testing.T, request *profileManagerRequests.Register, response *responses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	assert.Equal(t, request.User.Username, response.User.Username, "User Username should be the same")
@@ -100,7 +100,7 @@ func checkRegisterResponse(t *testing.T, request *requests.Register, response *r
 	assert.Zero(t, response.User.Bio)
 }
 
-func checkUserModel(t *testing.T, request *requests.Register, user *models.User) {
+func checkUserModel(t *testing.T, request *profileManagerRequests.Register, user *profileManagerModels.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, *user.Email, "User email should be the same")
 	assert.Equal(t, request.User.Username, *user.Username, "User Username should be the same")
@@ -119,7 +119,7 @@ func registerUser(username, email, password string, handler registerProfileHandl
 	if password == "" {
 		password = "default-password"
 	}
-	registerRequest := new(requests.Register)
+	registerRequest := new(profileManagerRequests.Register)
 	registerRequest.User.Username = username
 	registerRequest.User.Email = email
 	registerRequest.User.Password = password

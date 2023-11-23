@@ -11,8 +11,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
-	"github.com/ravilock/goduit/internal/profileManager/repositories"
-	"github.com/ravilock/goduit/internal/profileManager/services"
+	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,8 +29,8 @@ func TestGetOwnProfile(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error connecting to database", err)
 	}
-	repository := repositories.NewUserRepository(client)
-	manager := services.NewProfileManager(repository)
+	repository := profileManagerRepositories.NewUserRepository(client)
+	manager := profileManager.NewProfileManager(repository)
 	handler := NewProfileHandler(manager)
 	clearDatabase(client)
 	e := echo.New()
