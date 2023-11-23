@@ -56,13 +56,14 @@ func main() {
 		log.Fatal("Error connecting to database", err)
 	}
 	defer mongo.DisconnectDatabase(client)
-	// profileManager
+	// repositories
 	userRepository := profileRepositories.NewUserRepository(client)
-	profileManager := profileServices.NewProfileManager(userRepository)
-	profileHandler := profileHandlers.NewProfileHandler(profileManager)
-	// followerCentral
 	followerRepository := followerRepositories.NewFollowerRepository(client)
+	// services
+	profileManager := profileServices.NewProfileManager(userRepository)
 	followerCentral := followerServices.NewFollowerCentral(followerRepository)
+	// handlers
+	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral)
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
 	// Echo instance
 	e := echo.New()
@@ -88,7 +89,7 @@ func main() {
 	userGroup.PUT("", profileHandler.UpdateProfile, middlewares.CreateAuthMiddleware(true))
 	// Profile Routes
 	profileGroup := apiGroup.Group("/profile")
-	profileGroup.GET("/:username", handlers.GetProfile, middlewares.CreateAuthMiddleware(false))
+	profileGroup.GET("/:username", profileHandler.GetProfile, middlewares.CreateAuthMiddleware(false))
 	profileGroup.POST("/:username/follow", followerHandler.Follow, middlewares.CreateAuthMiddleware(true))
 	profileGroup.POST("/:username/unfollow", followerHandler.Unfollow, middlewares.CreateAuthMiddleware(true))
 	// Article Routes
