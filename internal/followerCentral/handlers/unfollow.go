@@ -49,7 +49,7 @@ func (h *unfollowUserHandler) Unfollow(c echo.Context) error {
 		return err
 	}
 
-	response, err := assemblers.ProfileResponse(followedUser, true)
+	response, err := assemblers.ProfileResponse(followedUser, false)
 	if err != nil {
 		return err
 	}
