@@ -32,3 +32,5 @@ func (r *Login) Validate() error {
 	}
 	return nil
 }
+
+// TODO: Add validation tests here as well
