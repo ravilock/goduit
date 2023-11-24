@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/profileManager/models"
+	"github.com/ravilock/goduit/internal/profileManager/responses"
 )
 
 var nilModelError = errors.New("Model is nil")
