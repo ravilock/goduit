@@ -12,7 +12,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/internal/app/repositories"
 	mongoConfig "github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
@@ -78,7 +77,7 @@ func TestUnfollow(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
 		assert.NoError(t, err)
 		checkFollowResponse(t, unfollowTestUsername, false, followResponse)
-		followerModel, err := repositories.IsFollowedBy(unfollowTestUsername, followerUsername, context.Background())
+		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), unfollowTestUsername, followerUsername)
 		assert.ErrorIs(t, err, mongo.ErrNoDocuments)
 		assert.Nil(t, followerModel)
 	})
@@ -115,5 +114,4 @@ func TestUnfollow(t *testing.T) {
 		err := handler.Unfollow(c)
 		assert.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
 	})
-
 }
