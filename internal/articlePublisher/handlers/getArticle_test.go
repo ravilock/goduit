@@ -11,8 +11,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/api/responses"
 	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
+	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
@@ -70,7 +70,7 @@ func TestGetArticle(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
-		getArticleResponse := new(responses.Article)
+		getArticleResponse := new(articlePublisherResponses.Article)
 		err = json.Unmarshal(rec.Body.Bytes(), getArticleResponse)
 		assert.NoError(t, err)
 		checkGetArticleResponse(t, articleTitle, articleSlug, articleAuthorUsername, articleTagList, getArticleResponse)
@@ -89,7 +89,7 @@ func TestGetArticle(t *testing.T) {
 	// TODO: Add test for when the user favorited the article
 }
 
-func checkGetArticleResponse(t *testing.T, title, slug, authorUsername string, tagList []string, response *responses.Article) {
+func checkGetArticleResponse(t *testing.T, title, slug, authorUsername string, tagList []string, response *articlePublisherResponses.Article) {
 	t.Helper()
 	assert.Equal(t, authorUsername, response.Article.Author.Username, "Article's author username is wrong")
 	assert.Equal(t, title, response.Article.Title, "Wrong article title")
