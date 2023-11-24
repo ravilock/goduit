@@ -1,13 +1,9 @@
 package middlewares
 
 import (
-	"log"
-	"os"
-
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/internal/app/dtos"
+	"github.com/ravilock/goduit/internal/identity"
 )
 
 func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
@@ -19,41 +15,14 @@ func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			token, err := jwt.ParseWithClaims(authorizationHeader, &dtos.TokenClaims{}, keyFunc)
+			identity, err := identity.FromToken(authorizationHeader)
 			if err != nil {
-				log.Println("Could Not Parse Token, err=", err)
 				return api.FailedAuthentication
 			}
-			if !token.Valid {
-				log.Println("Invalid Token")
-				return api.FailedAuthentication
-			}
-
-			claims, ok := token.Claims.(*dtos.TokenClaims)
-			if !ok {
-				log.Println("Could Not Parse Claims")
-				return api.FailedAuthentication
-			}
-			setAuthInformationOnContext(claims, c)
+			headers := c.Request().Header
+			headers.Set("Goduit-Client-Username", identity.Username)
+			headers.Set("Goduit-Subject", identity.Subject)
 			return next(c)
 		}
 	}
-}
-
-func keyFunc(t *jwt.Token) (interface{}, error) {
-	key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(os.Getenv("PUBLIC_KEY")))
-	if err != nil {
-		return nil, err
-	}
-
-	if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-		return nil, api.UnexpectedTokenSigningMethod(t.Method.Alg())
-	}
-	return key, nil
-}
-
-func setAuthInformationOnContext(claims *dtos.TokenClaims, c echo.Context) {
-	headers := c.Request().Header
-	headers.Set("Goduit-Client-Username", claims.Username)
-	headers.Set("Goduit-Subject", claims.Subject)
 }

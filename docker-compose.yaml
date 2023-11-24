@@ -5,9 +5,11 @@ services:
     environment:
       - RACE_DETECTOR=1
       - BUILD_ARGS=./cmd/goduit-api/main.go
+    env_file:
+      - .env
     container_name: goduit-app
     ports:
-      - 9191:9191
+      - 6969:6969
     depends_on:
       - mongo
       - mongo-express

@@ -9,12 +9,12 @@ import (
 
 var Validate *validator.Validate
 
-func InitValidator() {
+func InitValidator() error {
 	Validate = validator.New()
-	Validate.RegisterValidation("notblank", validators.NotBlank)
+	return Validate.RegisterValidation("notblank", validators.NotBlank)
 }
 
-func toHTTP(err validator.FieldError) *echo.HTTPError {
+func ToHTTP(err validator.FieldError) *echo.HTTPError {
 	tag := err.Tag()
 	switch tag {
 	case "required", "notblank":

@@ -16,8 +16,5 @@ func IsFollowedBy(followed, following string, ctx context.Context) bool {
 		return false
 	}
 	_, err := repositories.IsFollowedBy(followed, following, ctx)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }

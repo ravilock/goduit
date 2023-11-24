@@ -8,7 +8,6 @@ import (
 )
 
 func TestLogin(t *testing.T) {
-	InitValidator()
 	t.Run("Email is required", func(t *testing.T) {
 		request := assembleValidLoginRequest()
 		request.User.Email = ""

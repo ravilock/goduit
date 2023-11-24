@@ -8,7 +8,6 @@ import (
 )
 
 func TestCreateArticle(t *testing.T) {
-	InitValidator()
 	t.Run("Title is required", func(t *testing.T) {
 		request := assembleCreateArticleRequest()
 		request.Article.Title = ""
