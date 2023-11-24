@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -109,18 +108,6 @@ func registerUser(username, email, password string) error {
 		return err
 	}
 	return nil
-}
-
-func followUser(followed, follower string) error {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", followed), nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetParamNames("username")
-	c.SetParamValues(followed)
-	req.Header.Set("Goduit-Client-Username", follower)
-	return Follow(c)
 }
 
 func makeSlug(title string) string {
