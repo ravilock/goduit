@@ -9,6 +9,9 @@ import (
 	"github.com/ravilock/goduit/api/handlers"
 	"github.com/ravilock/goduit/api/middlewares"
 	"github.com/ravilock/goduit/api/validators"
+	articleHandlers "github.com/ravilock/goduit/internal/articlePublisher/handlers"
+	articleRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
+	articleServices "github.com/ravilock/goduit/internal/articlePublisher/services"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerHandlers "github.com/ravilock/goduit/internal/followerCentral/handlers"
@@ -59,12 +62,15 @@ func main() {
 	// repositories
 	userRepository := profileRepositories.NewUserRepository(client)
 	followerRepository := followerRepositories.NewFollowerRepository(client)
+	articlePublisherRepository := articleRepositories.NewArticleRepository(client)
 	// services
 	profileManager := profileServices.NewProfileManager(userRepository)
 	followerCentral := followerServices.NewFollowerCentral(followerRepository)
+	articlePublisher := articleServices.NewArticlePublisher(articlePublisherRepository)
 	// handlers
 	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral)
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
+	articleHandler := articleHandlers.NewArticlehandler(articlePublisher, profileManager, followerCentral)
 	// Echo instance
 	e := echo.New()
 
@@ -94,9 +100,9 @@ func main() {
 	profileGroup.POST("/:username/unfollow", followerHandler.Unfollow, middlewares.CreateAuthMiddleware(true))
 	// Article Routes
 	articlesGroup := apiGroup.Group("/articles")
-	articlesGroup.POST("", handlers.CreateArticle, middlewares.CreateAuthMiddleware(true))
+	articlesGroup.POST("", articleHandler.WriteArticle, middlewares.CreateAuthMiddleware(true))
 	articleGroup := apiGroup.Group("/article")
-	articleGroup.GET("/:slug", handlers.GetArticle, middlewares.CreateAuthMiddleware(false))
+	articleGroup.GET("/:slug", articleHandler.GetArticle, middlewares.CreateAuthMiddleware(false))
 	// Start server
 	e.Logger.Fatal(e.Start(":6969"))
 }
