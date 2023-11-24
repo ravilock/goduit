@@ -18,7 +18,7 @@ type IsFollowedChecker interface {
 }
 
 type getProfileHandler struct {
-	service         ProfileGetter
+	service         profileGetter
 	followerCentral IsFollowedChecker
 }
 
