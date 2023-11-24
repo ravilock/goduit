@@ -10,16 +10,20 @@ import (
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/followerCentral/requests"
 	"github.com/ravilock/goduit/internal/profileManager/assemblers"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/handlers"
+	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 )
 
 type userFollower interface {
 	Follow(ctx context.Context, followed, following string) error
 }
 
+type profileGetter interface {
+	GetProfileByUsername(ctx context.Context, username string) (*profileManagerModels.User, error)
+}
+
 type followUserHandler struct {
 	service        userFollower
-	profileManager profileManager.ProfileGetter
+	profileManager profileGetter
 }
 
 func (h *followUserHandler) Follow(c echo.Context) error {
