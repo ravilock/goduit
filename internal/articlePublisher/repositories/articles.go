@@ -25,7 +25,7 @@ func (r *ArticleRepository) WriteArticle(ctx context.Context, article *models.Ar
 	return nil
 }
 
-func (r *ArticleRepository) GetArticleBySlug(slug string, ctx context.Context) (*models.Article, error) {
+func (r *ArticleRepository) GetArticleBySlug(ctx context.Context, slug string) (*models.Article, error) {
 	var article *models.Article
 	filter := bson.D{{
 		Key:   "slug",
