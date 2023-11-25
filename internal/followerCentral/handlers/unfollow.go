@@ -10,7 +10,6 @@ import (
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/followerCentral/requests"
 	"github.com/ravilock/goduit/internal/profileManager/assemblers"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/handlers"
 )
 
 type userUnfollower interface {
@@ -19,7 +18,7 @@ type userUnfollower interface {
 
 type unfollowUserHandler struct {
 	service        userUnfollower
-	profileManager profileManager.ProfileGetter
+	profileManager profileGetter
 }
 
 func (h *unfollowUserHandler) Unfollow(c echo.Context) error {

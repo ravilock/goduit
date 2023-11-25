@@ -13,13 +13,13 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/requests"
 )
 
-type IsFollowedChecker interface {
+type isFollowedChecker interface {
 	IsFollowedBy(ctx context.Context, followed, following string) bool
 }
 
 type getProfileHandler struct {
-	service         ProfileGetter
-	followerCentral IsFollowedChecker
+	service         profileGetter
+	followerCentral isFollowedChecker
 }
 
 func (h *getProfileHandler) GetProfile(c echo.Context) error {

@@ -10,12 +10,12 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
+	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
@@ -61,7 +61,7 @@ func TestUpdateProfile(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
-		updateProfileResponse := new(responses.User)
+		updateProfileResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), updateProfileResponse)
 		assert.NoError(t, err)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
@@ -82,7 +82,7 @@ func TestUpdateProfile(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
-		updateProfileResponse := new(responses.User)
+		updateProfileResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), updateProfileResponse)
 		assert.NoError(t, err)
 		assert.Equal(t, request.User.Username, updateProfileResponse.User.Username, "User email should be the same")
@@ -102,7 +102,7 @@ func generateUpdateProfileBody() *profileManagerRequests.UpdateProfile {
 	return request
 }
 
-func checkUpdateProfileResponse(t *testing.T, request *profileManagerRequests.UpdateProfile, response *responses.User) {
+func checkUpdateProfileResponse(t *testing.T, request *profileManagerRequests.UpdateProfile, response *profileManagerResponses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	assert.Equal(t, request.User.Username, response.User.Username, "User username should be the same")

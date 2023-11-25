@@ -12,11 +12,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,7 +56,7 @@ func TestGetProfile(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
-		getProfileResponse := new(responses.ProfileResponse)
+		getProfileResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), getProfileResponse)
 		assert.NoError(t, err)
 		checkGetProfileResponse(t, getProfileTestUsername, false, getProfileResponse)
@@ -77,7 +77,7 @@ func TestGetProfile(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
-		getProfileResponse := new(responses.ProfileResponse)
+		getProfileResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), getProfileResponse)
 		assert.NoError(t, err)
 		checkGetProfileResponse(t, getProfileTestUsername, true, getProfileResponse)
@@ -95,7 +95,7 @@ func TestGetProfile(t *testing.T) {
 	})
 }
 
-func checkGetProfileResponse(t *testing.T, username string, following bool, response *responses.ProfileResponse) {
+func checkGetProfileResponse(t *testing.T, username string, following bool, response *profileManagerResponses.ProfileResponse) {
 	t.Helper()
 	assert.Equal(t, username, response.Profile.Username, "User username should be the same")
 	assert.Equal(t, following, response.Profile.Following, "Wrong user following")
