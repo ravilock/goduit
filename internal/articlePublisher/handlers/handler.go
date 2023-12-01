@@ -10,10 +10,12 @@ import (
 type ArticleHandler struct {
 	writeArticleHandler
 	getArticleHandler
+	unpublishArticleHandler
 }
 
 func NewArticlehandler(publisher *services.ArticlePublisher, manager *profileManager.ProfileManager, central *followerCentral.FollowerCentral) *ArticleHandler {
 	writeArticle := writeArticleHandler{publisher, manager}
 	getArticle := getArticleHandler{publisher, manager, central}
-	return &ArticleHandler{writeArticle, getArticle}
+	unpublishArticle := unpublishArticleHandler{publisher}
+	return &ArticleHandler{writeArticle, getArticle, unpublishArticle}
 }
