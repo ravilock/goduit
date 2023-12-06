@@ -6,11 +6,13 @@ type ArticlePublisher struct {
 	writeArticleService
 	getArticleService
 	unpublishArticleService
+	updateArticleService
 }
 
 func NewArticlePublisher(articleRepository *repositories.ArticleRepository) *ArticlePublisher {
 	write := writeArticleService{articleRepository}
 	get := getArticleService{articleRepository}
 	unpublish := unpublishArticleService{articleRepository}
-	return &ArticlePublisher{write, get, unpublish}
+	updated := updateArticleService{articleRepository}
+	return &ArticlePublisher{write, get, unpublish, updated}
 }
