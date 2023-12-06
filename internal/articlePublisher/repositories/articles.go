@@ -40,3 +40,19 @@ func (r *ArticleRepository) GetArticleBySlug(ctx context.Context, slug string) (
 	}
 	return article, nil
 }
+
+func (r *ArticleRepository) DeleteArticle(ctx context.Context, slug string) error {
+	filter := bson.D{{
+		Key:   "slug",
+		Value: slug,
+	}}
+	collection := r.DBClient.Database("conduit").Collection("articles")
+	result, err := collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+	if result.DeletedCount == 0 {
+		return app.ArticleNotFoundError(slug, nil)
+	}
+	return nil
+}
