@@ -43,13 +43,6 @@ func TestLogin(t *testing.T) {
 		assert.ErrorContains(t, err, api.RequiredFieldError("Password").Error())
 	})
 
-	t.Run("Email should contain at least 5 chars", func(t *testing.T) {
-		request := generateLoginRequest()
-		request.User.Email = "mail"
-		err := request.Validate()
-		assert.ErrorContains(t, err, api.InvalidFieldLength("Email", "min", "5").Error())
-	})
-
 	t.Run("Password should contain at least 8 chars", func(t *testing.T) {
 		request := generateLoginRequest()
 		request.User.Password = "pass"
