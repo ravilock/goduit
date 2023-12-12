@@ -7,7 +7,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ravilock/goduit/api/handlers"
-	"github.com/ravilock/goduit/api/middlewares"
 	"github.com/ravilock/goduit/api/validators"
 	articleHandlers "github.com/ravilock/goduit/internal/articlePublisher/handlers"
 	articleRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
@@ -17,6 +16,7 @@ import (
 	followerHandlers "github.com/ravilock/goduit/internal/followerCentral/handlers"
 	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerServices "github.com/ravilock/goduit/internal/followerCentral/services"
+	"github.com/ravilock/goduit/internal/identity"
 	profileHandlers "github.com/ravilock/goduit/internal/profileManager/handlers"
 	profileRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileServices "github.com/ravilock/goduit/internal/profileManager/services"
@@ -91,18 +91,18 @@ func main() {
 	usersGroup.POST("", profileHandler.Register)
 	usersGroup.POST("/login", profileHandler.Login)
 	userGroup := apiGroup.Group("/user")
-	userGroup.GET("", profileHandler.GetOwnProfile, middlewares.CreateAuthMiddleware(true))
-	userGroup.PUT("", profileHandler.UpdateProfile, middlewares.CreateAuthMiddleware(true))
+	userGroup.GET("", profileHandler.GetOwnProfile, identity.CreateAuthMiddleware(true))
+	userGroup.PUT("", profileHandler.UpdateProfile, identity.CreateAuthMiddleware(true))
 	// Profile Routes
 	profileGroup := apiGroup.Group("/profile")
-	profileGroup.GET("/:username", profileHandler.GetProfile, middlewares.CreateAuthMiddleware(false))
-	profileGroup.POST("/:username/follow", followerHandler.Follow, middlewares.CreateAuthMiddleware(true))
-	profileGroup.POST("/:username/unfollow", followerHandler.Unfollow, middlewares.CreateAuthMiddleware(true))
+	profileGroup.GET("/:username", profileHandler.GetProfile, identity.CreateAuthMiddleware(false))
+	profileGroup.POST("/:username/follow", followerHandler.Follow, identity.CreateAuthMiddleware(true))
+	profileGroup.POST("/:username/unfollow", followerHandler.Unfollow, identity.CreateAuthMiddleware(true))
 	// Article Routes
 	articlesGroup := apiGroup.Group("/articles")
-	articlesGroup.POST("", articleHandler.WriteArticle, middlewares.CreateAuthMiddleware(true))
+	articlesGroup.POST("", articleHandler.WriteArticle, identity.CreateAuthMiddleware(true))
 	articleGroup := apiGroup.Group("/article")
-	articleGroup.GET("/:slug", articleHandler.GetArticle, middlewares.CreateAuthMiddleware(false))
+	articleGroup.GET("/:slug", articleHandler.GetArticle, identity.CreateAuthMiddleware(false))
 	// Start server
 	e.Logger.Fatal(e.Start(":6969"))
 }
