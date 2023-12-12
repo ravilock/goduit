@@ -1,12 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/ravilock/goduit/api/handlers"
 	"github.com/ravilock/goduit/api/validators"
 	articleHandlers "github.com/ravilock/goduit/internal/articlePublisher/handlers"
 	articleRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
@@ -85,7 +86,7 @@ func main() {
 
 	// Routes
 	apiGroup := e.Group("/api")
-	apiGroup.GET("/healthcheck", handlers.Healthcheck)
+	apiGroup.GET("/healthcheck", healthcheck)
 	// User Routes
 	usersGroup := apiGroup.Group("/users")
 	usersGroup.POST("", profileHandler.Register)
@@ -105,4 +106,8 @@ func main() {
 	articleGroup.GET("/:slug", articleHandler.GetArticle, identity.CreateAuthMiddleware(false))
 	// Start server
 	e.Logger.Fatal(e.Start(":6969"))
+}
+
+func healthcheck(c echo.Context) error {
+	return c.String(http.StatusOK, fmt.Sprintln("OK"))
 }
