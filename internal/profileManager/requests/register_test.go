@@ -84,7 +84,7 @@ func TestRegister(t *testing.T) {
 		assert.ErrorContains(t, err, api.InvalidFieldLength("Password", "max", "72").Error())
 	})
 
-	t.Run("Username should contain at most 72 chars", func(t *testing.T) {
+	t.Run("Username should contain at most 255 chars", func(t *testing.T) {
 		request := generateRegisterRequest()
 		request.User.Username = randomString(256)
 		err := request.Validate()
