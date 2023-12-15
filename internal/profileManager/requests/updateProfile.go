@@ -12,11 +12,10 @@ import (
 type UpdateProfile struct {
 	User struct {
 		Username string `json:"username" validate:"required,omitempty,notblank,min=5,max=255"`
-		Email    string `json:"email" validate:"required,notblank,min=5,max=255,email"`
+		Email    string `json:"email" validate:"required,notblank,max=256,email"`
 		Password string `json:"password" validate:"omitempty,notblank,min=8,max=72"`
-		// TODO: add checks for theses values as they are optional and can be empty
-		Bio   string `json:"bio" validate:"required,omitempty,notblank,max=255"`
-		Image string `json:"image" validate:"required,omitempty,notblank,max=65000,http_url|base64"`
+		Bio      string `json:"bio" validate:"required,omitempty,notblank,max=255"`
+		Image    string `json:"image" validate:"required,omitempty,notblank,max=65000,http_url|base64"`
 	} `json:"user" validate:"required"`
 }
 
