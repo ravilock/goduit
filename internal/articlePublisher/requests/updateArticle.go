@@ -11,17 +11,18 @@ import (
 
 type UpdateArticle struct {
 	Article struct {
-		Title       string `json:"title" validate:"notblank,min=5,max=255"`
-		Description string `json:"description" validate:"notblank,min=5,max=255"`
-		Body        string `json:"body" validate:"notblank"`
+		Slug        string `validate:"required,notblank,min=5"`
+		Title       string `json:"title" validate:"required,notblank,min=5,max=255"`
+		Description string `json:"description" validate:"required,notblank,min=5,max=255"`
+		Body        string `json:"body" validate:"required,notblank"`
 	} `json:"article" validate:"required"`
 }
 
-func (r *UpdateArticle) Model(author string) *models.Article {
+func (r *UpdateArticle) Model(authorUsername string) *models.Article {
 	slug := makeSlug(r.Article.Title)
 	updatedAt := time.Now()
 	return &models.Article{
-		Author:         &author,
+		Author:         &authorUsername,
 		Slug:           &slug,
 		Title:          &r.Article.Title,
 		Description:    &r.Article.Description,
