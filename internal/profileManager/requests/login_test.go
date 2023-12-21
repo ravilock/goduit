@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/ravilock/goduit/api"
@@ -77,13 +76,4 @@ func generateLoginRequest() *Login {
 	login.User.Email = "test.email@test.com"
 	login.User.Password = "password123456"
 	return login
-}
-
-func randomString(n int) string {
-	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
 }

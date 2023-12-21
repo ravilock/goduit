@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/ravilock/goduit/api"
@@ -44,13 +43,4 @@ func generateFollowerRequest() *Follower {
 	return &Follower{
 		Username: "test-username",
 	}
-}
-
-func randomString(n int) string {
-	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
 }
