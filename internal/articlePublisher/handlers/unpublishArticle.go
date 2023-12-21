@@ -22,7 +22,7 @@ type unpublishArticleHandler struct {
 
 func (h *unpublishArticleHandler) UnpublishArticle(c echo.Context) error {
 	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
-	request := new(requests.UnpublishArticle)
+	request := new(requests.ArticleSlug)
 
 	request.Slug = c.Param("slug")
 	if err := request.Validate(); err != nil {

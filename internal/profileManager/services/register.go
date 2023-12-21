@@ -28,7 +28,7 @@ func (s *registerProfileService) Register(ctx context.Context, model *models.Use
 		return nil, "", err
 	}
 
-	tokenString, err := identity.GenerateToken(model.Username, model.Email)
+	tokenString, err := identity.GenerateToken(*model.Username, *model.Email)
 	if err != nil {
 		return nil, "", err
 	}

@@ -57,8 +57,11 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, username string)
 	return user, nil
 }
 
-func (r *UserRepository) UpdateProfile(ctx context.Context, user *models.User) (*models.User, error) {
-	filter := bson.D{{Key: "email", Value: user.Email}}
+func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) (*models.User, error) {
+	filter := bson.D{
+		{Key: "username", Value: clientUsername},
+		{Key: "email", Value: subjectEmail},
+	}
 	update := bson.D{{Key: "$set", Value: user}}
 	collection := r.DBClient.Database("conduit").Collection("users")
 	updateResult, err := collection.UpdateOne(ctx, filter, update, nil)

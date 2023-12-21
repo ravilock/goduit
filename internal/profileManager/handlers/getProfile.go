@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -24,7 +23,6 @@ type getProfileHandler struct {
 
 func (h *getProfileHandler) GetProfile(c echo.Context) error {
 	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
-	fmt.Println(clientUsername)
 	request := new(requests.GetProfile)
 
 	request.Username = c.Param("username")
