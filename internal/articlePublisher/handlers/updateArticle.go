@@ -31,7 +31,7 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 		return api.CouldNotUnmarshalBodyError
 	}
 
-	currentSlug := c.Param("slug")
+	request.Article.Slug = c.Param("slug")
 
 	if err := request.Validate(); err != nil {
 		return err
@@ -41,14 +41,22 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	article, err := h.service.GetArticleBySlug(ctx, currentSlug)
+	currentArticle, err := h.service.GetArticleBySlug(ctx, request.Article.Slug)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
 			case app.ArticleNotFoundErrorCode:
-				return api.ArticleNotFound(currentSlug)
+				return api.ArticleNotFound(request.Article.Slug)
 			}
 		}
+		return err
+	}
+
+	if authorUsername != *currentArticle.Author {
+		return api.Forbidden
+	}
+
+	if err = h.service.UpdateArticle(ctx, request.Article.Slug, article); err != nil {
 		return err
 	}
 
