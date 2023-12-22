@@ -3,6 +3,7 @@ package identity
 import (
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -59,6 +60,7 @@ func GenerateToken(userEmail, username string) (string, error) {
 }
 
 func FromToken(authorizationHeader string) (*Identity, error) {
+	authorizationHeader = strings.TrimPrefix(authorizationHeader, "Bearer ")
 	token, err := jwt.ParseWithClaims(authorizationHeader, &Identity{}, func(t *jwt.Token) (interface{}, error) {
 		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(os.Getenv("PUBLIC_KEY")))
 		if err != nil {

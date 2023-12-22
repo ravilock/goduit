@@ -31,7 +31,7 @@ func (s *logUserService) Login(ctx context.Context, model *models.User, password
 		return nil, "", err
 	}
 
-	tokenString, err := identity.GenerateToken(*model.Username, *model.Email)
+	tokenString, err := identity.GenerateToken(*model.Email, *model.Username)
 	if err != nil {
 		return nil, "", err
 	}
