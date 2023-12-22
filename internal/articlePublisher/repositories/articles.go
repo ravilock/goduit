@@ -63,6 +63,9 @@ func (r *ArticleRepository) UpdateArticle(ctx context.Context, slug string, arti
 	collection := r.DBClient.Database("conduit").Collection("articles")
 	updateResult, err := collection.UpdateOne(ctx, filter, update, nil)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return app.ConflictError("articles")
+		}
 		return err
 	}
 	if updateResult.MatchedCount == 0 {
