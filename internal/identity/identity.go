@@ -28,7 +28,6 @@ func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			authorizationHeader := c.Request().Header.Get("Authorization")
 			if !requiredAuthentication && authorizationHeader == "" {
-				c.Set("user", "")
 				return next(c)
 			}
 			identity, err := FromToken(authorizationHeader)
