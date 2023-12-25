@@ -104,6 +104,8 @@ func main() {
 	articlesGroup.POST("", articleHandler.WriteArticle, identity.CreateAuthMiddleware(true))
 	articleGroup := apiGroup.Group("/article")
 	articleGroup.GET("/:slug", articleHandler.GetArticle, identity.CreateAuthMiddleware(false))
+	articleGroup.DELETE("/:slug", articleHandler.UnpublishArticle, identity.CreateAuthMiddleware(true))
+	articleGroup.PUT("/:slug", articleHandler.UpdateArticle, identity.CreateAuthMiddleware(true))
 	// Start server
 	e.Logger.Fatal(e.Start(":6969"))
 }
