@@ -32,7 +32,7 @@ func (r *WriteArticle) Model(authorUsername string) *models.Article {
 		TagList:        &tags,
 		CreatedAt:      &createAt,
 		UpdatedAt:      nil,
-		FavoritesCount: 0,
+		FavoritesCount: new(int64),
 	}
 }
 

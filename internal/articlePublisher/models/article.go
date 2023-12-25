@@ -16,5 +16,5 @@ type Article struct {
 	TagList        *[]string           `bson:"tagList,omitempty"`
 	CreatedAt      *time.Time          `bson:"createdAt,omitempty"`
 	UpdatedAt      *time.Time          `bson:"updatedAt,omitempty"`
-	FavoritesCount int64               `bson:"favoritesCount,omitempty"`
+	FavoritesCount *int64              `bson:"favoritesCount,omitempty"`
 }
