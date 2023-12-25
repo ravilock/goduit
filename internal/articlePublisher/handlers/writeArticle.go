@@ -15,7 +15,7 @@ import (
 )
 
 type articleWriter interface {
-	WriteArticle(ctx context.Context, article *models.Article) (*models.Article, error)
+	WriteArticle(ctx context.Context, article *models.Article) error
 }
 
 type writeArticleHandler struct {
@@ -38,7 +38,7 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	article, err := h.service.WriteArticle(ctx, article)
+	err := h.service.WriteArticle(ctx, article)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
