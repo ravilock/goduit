@@ -14,7 +14,7 @@ import (
 )
 
 type profileUpdater interface {
-	UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (*models.User, string, error)
+	UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (string, error)
 }
 
 type updateProfileHandler struct {
@@ -36,7 +36,7 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 
 	model := request.Model()
 
-	model, token, err := h.service.UpdateProfile(c.Request().Context(), subjectEmail, clientUsername, request.User.Password, model)
+	token, err := h.service.UpdateProfile(c.Request().Context(), subjectEmail, clientUsername, request.User.Password, model)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
