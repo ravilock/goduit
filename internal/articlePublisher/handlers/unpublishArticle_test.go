@@ -48,7 +48,7 @@ func TestUnpublishArticle(t *testing.T) {
 	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
-	_, _, err = registerUser(articleAuthorUsername, "", "", profileManager)
+	_, err = registerUser(articleAuthorUsername, "", "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}

@@ -45,12 +45,12 @@ func TestUnfollow(t *testing.T) {
 	handler := NewFollowerHandler(followerCentral, profileManager)
 
 	clearDatabase(client)
-	_, _, err = registerUser(unfollowTestUsername, unfollowTestEmail, "", profileManager)
+	_, err = registerUser(unfollowTestUsername, unfollowTestEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
 
-	_, _, err = registerUser(followerUsername, followerEmail, "", profileManager)
+	_, err = registerUser(followerUsername, followerEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}

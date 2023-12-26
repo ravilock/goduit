@@ -46,12 +46,12 @@ func TestFollow(t *testing.T) {
 	handler := NewFollowerHandler(followerCentral, profileManager)
 
 	clearDatabase(client)
-	_, _, err = registerUser(followTestUsername, followTestEmail, "", profileManager)
+	_, err = registerUser(followTestUsername, followTestEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
 
-	_, _, err = registerUser(followerUsername, followerEmail, "", profileManager)
+	_, err = registerUser(followerUsername, followerEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
@@ -107,7 +107,7 @@ func checkFollowerModel(t *testing.T, followed, follower string, model *follower
 	assert.Equal(t, follower, *model.Follower, "Wrong follower username")
 }
 
-func registerUser(username, email, password string, manager *profileManager.ProfileManager) (*profileManagerModels.User, string, error) {
+func registerUser(username, email, password string, manager *profileManager.ProfileManager) (string, error) {
 	if username == "" {
 		username = "default-username"
 	}

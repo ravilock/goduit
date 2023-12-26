@@ -47,7 +47,7 @@ func TestWriteArticle(t *testing.T) {
 	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
-	_, _, err = registerUser(createArticleTestUsername, createArticleTestEmail, "", profileManager)
+	_, err = registerUser(createArticleTestUsername, createArticleTestEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
@@ -99,7 +99,7 @@ func makeSlug(title string) string {
 	return strings.Join(titleWords, "-")
 }
 
-func registerUser(username, email, password string, manager *profileManager.ProfileManager) (*profileManagerModels.User, string, error) {
+func registerUser(username, email, password string, manager *profileManager.ProfileManager) (string, error) {
 	if username == "" {
 		username = "default-username"
 	}
