@@ -7,6 +7,7 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ArticleRepository struct {
@@ -61,7 +62,8 @@ func (r *ArticleRepository) UpdateArticle(ctx context.Context, slug string, arti
 	filter := bson.D{{Key: "slug", Value: slug}}
 	update := bson.D{{Key: "$set", Value: article}}
 	collection := r.DBClient.Database("conduit").Collection("articles")
-	err := collection.FindOneAndUpdate(ctx, filter, update, nil).Decode(article)
+	returnDocumentOption := options.After
+	err := collection.FindOneAndUpdate(ctx, filter, update, &options.FindOneAndUpdateOptions{ReturnDocument: &returnDocumentOption}).Decode(article)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return app.ArticleNotFoundError(slug, err)

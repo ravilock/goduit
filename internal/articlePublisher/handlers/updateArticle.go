@@ -85,5 +85,5 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 	}
 
 	response := assemblers.ArticleResponse(article, profileResponse)
-	return c.JSON(http.StatusCreated, response)
+	return c.JSON(http.StatusOK, response)
 }
