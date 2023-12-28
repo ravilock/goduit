@@ -70,6 +70,9 @@ func clearDatabase() {
 		log.Fatal("Could not list collections", err)
 	}
 	for _, coll := range collections {
-		conduitDb.Collection(coll).DeleteMany(context.Background(), bson.D{})
+		_, err := conduitDb.Collection(coll).DeleteMany(context.Background(), bson.D{})
+		if err != nil {
+			log.Fatal("Could not clear database", err)
+		}
 	}
 }

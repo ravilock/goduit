@@ -24,7 +24,7 @@ func GetArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	model, err := services.GetArticleBySlug(request.Slug, clientUsername, ctx)
+	article, err := services.GetArticleBySlug(request.Slug, clientUsername, ctx)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -35,7 +35,7 @@ func GetArticle(c echo.Context) error {
 		return err
 	}
 
-	author, err := services.GetProfileByUsername(*model.Author, ctx)
+	author, err := services.GetUserByUsername(*article.Author, ctx)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func GetArticle(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.ArticleResponse(model, *authorProfile)
+	response := assemblers.ArticleResponse(article, *authorProfile)
 
 	return c.JSON(http.StatusOK, response)
 }

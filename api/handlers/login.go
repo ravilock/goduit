@@ -23,9 +23,9 @@ func Login(c echo.Context) error {
 		return err
 	}
 
-	model := request.Model()
+	user := request.Model()
 
-	model, token, err := services.Login(model, request.User.Password, c.Request().Context())
+	user, token, err := services.Login(user, request.User.Password, c.Request().Context())
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -38,7 +38,7 @@ func Login(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(model, token)
+	response := assemblers.UserResponse(user, token)
 
 	return c.JSON(http.StatusOK, response)
 }

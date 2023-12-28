@@ -25,7 +25,7 @@ func CreateArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	author, err := services.GetProfileByUsername(username, ctx)
+	author, err := services.GetUserByUsername(username, ctx)
 	if err != nil {
 		return err
 	}
@@ -35,12 +35,12 @@ func CreateArticle(c echo.Context) error {
 		return err
 	}
 
-	model := request.Model(author.Username)
+	article := request.Model(author.Username)
 
-	model, err = services.CreateArticle(model, ctx)
+	article, err = services.CreateArticle(article, ctx)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, assemblers.ArticleResponse(model, *authorProfile))
+	return c.JSON(http.StatusCreated, assemblers.ArticleResponse(article, *authorProfile))
 }
