@@ -7,10 +7,10 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/ravilock/goduit/internal/api/handlers"
-	"github.com/ravilock/goduit/internal/api/middlewares"
-	"github.com/ravilock/goduit/internal/api/routers"
-	"github.com/ravilock/goduit/internal/api/validators"
+	"github.com/ravilock/goduit/api/handlers"
+	"github.com/ravilock/goduit/api/middlewares"
+	"github.com/ravilock/goduit/api/routers"
+	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/config/mongo"
 )
 
