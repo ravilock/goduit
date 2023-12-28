@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ravilock/goduit/internal/identity"
 	"github.com/ravilock/goduit/internal/profileManager/assemblers"
 	"github.com/ravilock/goduit/internal/profileManager/models"
 )
@@ -19,9 +20,13 @@ type getOwnProfileHandler struct {
 }
 
 func (h *getOwnProfileHandler) GetOwnProfile(c echo.Context) error {
-	subjectEmail := c.Request().Header.Get("Goduit-Subject")
+	identity := new(identity.IdentityHeaders)
+	binder := &echo.DefaultBinder{}
+	if err := binder.BindHeaders(c, identity); err != nil {
+		return err
+	}
 
-	user, err := h.service.GetProfileByEmail(c.Request().Context(), subjectEmail)
+	user, err := h.service.GetProfileByEmail(c.Request().Context(), identity.SubjectEmail)
 	if err != nil {
 		return err
 	}

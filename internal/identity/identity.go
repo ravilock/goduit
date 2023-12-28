@@ -23,6 +23,11 @@ type Identity struct {
 	jwt.RegisteredClaims
 }
 
+type IdentityHeaders struct {
+	SubjectEmail   string `header:"Goduit-Subject"`
+	ClientUsername string `header:"Goduit-Client-Username"`
+}
+
 func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

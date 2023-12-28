@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/identity"
 	"github.com/ravilock/goduit/internal/profileManager/assemblers"
 	"github.com/ravilock/goduit/internal/profileManager/requests"
 )
@@ -22,10 +23,16 @@ type getProfileHandler struct {
 }
 
 func (h *getProfileHandler) GetProfile(c echo.Context) error {
-	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
 	request := new(requests.GetProfile)
+	identity := new(identity.IdentityHeaders)
+	binder := &echo.DefaultBinder{}
+	if err := binder.BindPathParams(c, request); err != nil {
+		return api.CouldNotUnmarshalBodyError
+	}
+	if err := binder.BindHeaders(c, identity); err != nil {
+		return err
+	}
 
-	request.Username = c.Param("username")
 	if err := request.Validate(); err != nil {
 		return err
 	}
@@ -42,7 +49,7 @@ func (h *getProfileHandler) GetProfile(c echo.Context) error {
 		return err
 	}
 
-	isFollowing := h.followerCentral.IsFollowedBy(ctx, request.Username, clientUsername)
+	isFollowing := h.followerCentral.IsFollowedBy(ctx, request.Username, identity.ClientUsername)
 
 	response, err := assemblers.ProfileResponse(profile, isFollowing)
 	if err != nil {
