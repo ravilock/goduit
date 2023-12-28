@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 
-	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/app/models"
 	db "github.com/ravilock/goduit/internal/config/mongo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,7 +27,7 @@ func GetArticleBySlug(slug string, ctx context.Context) (*models.Article, error)
 	collection := db.DatabaseClient.Database("conduit").Collection("articles")
 	if err := collection.FindOne(ctx, filter).Decode(&article); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, api.ArticleNotFound(slug)
+			return nil, app.ArticleNotFoundError(slug, err)
 		}
 		return nil, err
 	}

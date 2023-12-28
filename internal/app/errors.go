@@ -8,6 +8,7 @@ type ErrorCode uint
 
 const (
 	UserNotFoundErrorCode ErrorCode = iota + 1
+	ArticleNotFoundErrorCode
 	WrongPasswordErrorCode
 )
 
@@ -26,11 +27,19 @@ func (err *AppError) AddContext(originalError error) *AppError {
 	return err
 }
 
-func UserNotFoundError(identifier string) *AppError {
+func UserNotFoundError(identifier string, originalError error) *AppError {
 	return &AppError{
 		ErrorCode:     UserNotFoundErrorCode,
 		CustomMessage: fmt.Sprintf("User with identifier %q was not found", identifier),
-		OriginalError: nil,
+		OriginalError: originalError,
+	}
+}
+
+func ArticleNotFoundError(identifier string, originalError error) *AppError {
+	return &AppError{
+		ErrorCode:     ArticleNotFoundErrorCode,
+		CustomMessage: fmt.Sprintf("Article with identifier %q was not found", identifier),
+		OriginalError: originalError,
 	}
 }
 
