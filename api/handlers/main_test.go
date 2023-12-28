@@ -29,13 +29,17 @@ func setup() {
 		log.Fatal(err)
 	}
 
+	if err := encryptionkeys.LoadPrivateKey(privateKeyFile); err != nil {
+		log.Fatal("Failed to load private key file content", err)
+	}
+
 	publicKeyFile, err := os.Open("../../jwtRS256.key.pub")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := encryptionkeys.LoadKeys(privateKeyFile, publicKeyFile); err != nil {
-		log.Fatal("Failed to read encrpytion keys", err)
+	if err := encryptionkeys.LoadPublicKey(publicKeyFile); err != nil {
+		log.Fatal("Failed to load public key file content", err)
 	}
 
 	databaseURI := os.Getenv("DB_URL")

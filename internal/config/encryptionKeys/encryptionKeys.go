@@ -4,26 +4,15 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"io"
 	"os"
 )
 
 var PrivateKey *rsa.PrivateKey
 
-func LoadKeys(privateKeyFile, publicKeyFile *os.File) error {
-	if err := readPrivateKey(privateKeyFile); err != nil {
-		return err
-	}
-	return readPublicKey(publicKeyFile)
-}
-
-func readPrivateKey(privateKeyFile *os.File) error {
-	stat, err := privateKeyFile.Stat()
+func LoadPrivateKey(privateKey io.Reader) error {
+	privateKeyContent, err := io.ReadAll(privateKey)
 	if err != nil {
-		return err
-	}
-	privateKeyContent := make([]byte, stat.Size())
-
-	if _, err := privateKeyFile.Read(privateKeyContent); err != nil {
 		return err
 	}
 
@@ -35,14 +24,9 @@ func readPrivateKey(privateKeyFile *os.File) error {
 	return nil
 }
 
-func readPublicKey(publicKeyFile *os.File) error {
-	stat, err := publicKeyFile.Stat()
+func LoadPublicKey(publicKeyFile io.Reader) error {
+	publicKeyContent, err := io.ReadAll(publicKeyFile)
 	if err != nil {
-		return err
-	}
-	publicKeyContent := make([]byte, stat.Size())
-
-	if _, err := publicKeyFile.Read(publicKeyContent); err != nil {
 		return err
 	}
 	return os.Setenv("PUBLIC_KEY", string(publicKeyContent))
