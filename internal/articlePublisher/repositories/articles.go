@@ -46,7 +46,7 @@ func (r *ArticleRepository) DeleteArticle(ctx context.Context, slug string) erro
 		Key:   "slug",
 		Value: slug,
 	}}
-	collection := r.DBClient.Database("conduit").Collection("followers")
+	collection := r.DBClient.Database("conduit").Collection("articles")
 	result, err := collection.DeleteOne(ctx, filter)
 	if err != nil {
 		return err
