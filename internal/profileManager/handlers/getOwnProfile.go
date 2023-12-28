@@ -9,11 +9,6 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/models"
 )
 
-type ProfileGetter interface { // TODO: Remove
-	GetProfileByEmail(ctx context.Context, email string) (*models.User, error)
-	GetProfileByUsername(ctx context.Context, username string) (*models.User, error)
-}
-
 type profileGetter interface {
 	GetProfileByEmail(ctx context.Context, email string) (*models.User, error)
 	GetProfileByUsername(ctx context.Context, username string) (*models.User, error)
