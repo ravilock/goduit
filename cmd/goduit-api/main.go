@@ -49,6 +49,7 @@ func main() {
 	apiGroup.GET("/healthcheck", handlers.Healthcheck)
 	routers.UsersRouter(apiGroup)
 	routers.ProfilesRouter(apiGroup)
+	routers.ArticlesRouter(apiGroup)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":9191"))
