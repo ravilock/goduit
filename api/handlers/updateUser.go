@@ -21,14 +21,14 @@ func UpdateUser(c echo.Context) error {
 		return err
 	}
 
-	dto := assemblers.UpdateUser(request)
+	model := request.Model()
 
-	dto, err := services.UpdateUser(dto, c.Request().Context())
+	model, err := services.UpdateUser(model, request.User.Password, c.Request().Context())
 	if err != nil {
 		return err
 	}
 
-	response := assemblers.UserResponse(dto)
+	response := assemblers.UserResponse(model, nil)
 
 	return c.JSON(http.StatusOK, response)
 }
