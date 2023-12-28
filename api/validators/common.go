@@ -14,7 +14,7 @@ func InitValidator() error {
 	return Validate.RegisterValidation("notblank", validators.NotBlank)
 }
 
-func toHTTP(err validator.FieldError) *echo.HTTPError {
+func ToHTTP(err validator.FieldError) *echo.HTTPError {
 	tag := err.Tag()
 	switch tag {
 	case "required", "notblank":

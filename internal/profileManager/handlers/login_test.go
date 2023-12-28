@@ -6,12 +6,16 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/api/requests"
 	"github.com/ravilock/goduit/api/responses"
+	"github.com/ravilock/goduit/internal/config/mongo"
+	"github.com/ravilock/goduit/internal/profileManager/repositories"
+	"github.com/ravilock/goduit/internal/profileManager/requests"
+	"github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,11 +24,23 @@ const loginTestEmail = "login.test.email@test.test"
 const loginTestPassword = "login-test-password"
 
 func TestLogin(t *testing.T) {
-	clearDatabase()
-	if err := registerUser(loginTestUsername, loginTestEmail, loginTestPassword); err != nil {
+	databaseURI := os.Getenv("DB_URL")
+	if databaseURI == "" {
+		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
+	}
+	// Connect Mongo DB
+	client, err := mongo.ConnectDatabase(databaseURI)
+	if err != nil {
+		log.Fatalln("Error connecting to database", err)
+	}
+	repository := repositories.NewUserRepository(client)
+	manager := services.NewProfileManager(repository)
+	handler := NewProfileHandler(manager)
+	clearDatabase(client)
+	e := echo.New()
+	if err := registerUser(loginTestUsername, loginTestEmail, loginTestPassword, handler.registerProfileHandler); err != nil {
 		log.Fatal("Could not create user", err)
 	}
-	e := echo.New()
 	t.Run("Should successfully login", func(t *testing.T) {
 		loginRequest := generateLoginBody()
 		requestBody, err := json.Marshal(loginRequest)
@@ -33,7 +49,7 @@ func TestLogin(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		err = Login(c)
+		err = handler.Login(c)
 		assert.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
@@ -52,7 +68,7 @@ func TestLogin(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		err = Login(c)
+		err = handler.Login(c)
 		assert.ErrorIs(t, err, api.FailedLoginAttempt)
 	})
 	t.Run("Should return 401 if wrong password", func(t *testing.T) {
@@ -64,7 +80,7 @@ func TestLogin(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		err = Login(c)
+		err = handler.Login(c)
 		assert.ErrorIs(t, err, api.FailedLoginAttempt)
 	})
 }
@@ -82,34 +98,4 @@ func checkLoginResponse(t *testing.T, request *requests.Login, response *respons
 	assert.NotZero(t, response.User.Token)
 	assert.Zero(t, response.User.Image)
 	assert.Zero(t, response.User.Bio)
-}
-
-func login(email, password string) (string, error) {
-	if email == "" {
-		email = "default.email@test.test"
-	}
-	if password == "" {
-		password = "default-password"
-	}
-	loginRequest := new(requests.Login)
-	loginRequest.User.Email = email
-	loginRequest.User.Password = password
-	requestBody, err := json.Marshal(loginRequest)
-	if err != nil {
-		return "", err
-	}
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	if err := Login(c); err != nil {
-		return "", err
-	}
-	loginResponse := new(responses.User)
-	if err = json.Unmarshal(rec.Body.Bytes(), loginResponse); err != nil {
-		return "", err
-	}
-	return loginResponse.User.Token, nil
-
 }

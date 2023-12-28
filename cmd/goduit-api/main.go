@@ -12,6 +12,9 @@ import (
 	"github.com/ravilock/goduit/api/validators"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
 	"github.com/ravilock/goduit/internal/config/mongo"
+	profileHandlers "github.com/ravilock/goduit/internal/profileManager/handlers"
+	profileRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileServices "github.com/ravilock/goduit/internal/profileManager/services"
 )
 
 func main() {
@@ -50,10 +53,14 @@ func main() {
 		log.Fatal("You must sey your 'DATABASE_URI' environmental variable.")
 	}
 	// Connect Mongo DB
-	if err := mongo.ConnectDatabase(databaseURI); err != nil {
+	client, err := mongo.ConnectDatabase(databaseURI)
+	if err != nil {
 		log.Fatal("Error connecting to database", err)
 	}
-	defer mongo.DisconnectDatabase()
+	defer mongo.DisconnectDatabase(client)
+	userRepository := profileRepositories.NewUserRepository(client)
+	profileManager := profileServices.NewProfileManager(userRepository)
+	profileHandler := profileHandlers.NewProfileHandler(profileManager)
 
 	// Echo instance
 	e := echo.New()
@@ -70,7 +77,7 @@ func main() {
 	// Routes
 	apiGroup := e.Group("/api")
 	apiGroup.GET("/healthcheck", handlers.Healthcheck)
-	routers.UsersRouter(apiGroup)
+	routers.UsersRouter(apiGroup, profileHandler)
 	routers.ProfilesRouter(apiGroup)
 	routers.ArticlesRouter(apiGroup)
 

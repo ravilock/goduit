@@ -4,21 +4,37 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/api/requests"
 	"github.com/ravilock/goduit/api/responses"
-	"github.com/ravilock/goduit/internal/app/models"
-	"github.com/ravilock/goduit/internal/app/repositories"
+	"github.com/ravilock/goduit/internal/config/mongo"
+	"github.com/ravilock/goduit/internal/profileManager/models"
+	"github.com/ravilock/goduit/internal/profileManager/repositories"
+	"github.com/ravilock/goduit/internal/profileManager/requests"
+	"github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRegister(t *testing.T) {
-	clearDatabase()
+	databaseURI := os.Getenv("DB_URL")
+	if databaseURI == "" {
+		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
+	}
+	// Connect Mongo DB
+	client, err := mongo.ConnectDatabase(databaseURI)
+	if err != nil {
+		log.Fatalln("Error connecting to database", err)
+	}
+	repository := repositories.NewUserRepository(client)
+	manager := services.NewProfileManager(repository)
+	handler := NewProfileHandler(manager)
+	clearDatabase(client)
 	e := echo.New()
 	t.Run("Should create new user", func(t *testing.T) {
 		registerRequest := generateRegisterBody()
@@ -28,7 +44,7 @@ func TestRegister(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		err = Register(c)
+		err = handler.Register(c)
 		assert.NoError(t, err)
 		if rec.Code != http.StatusCreated {
 			t.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
@@ -37,7 +53,7 @@ func TestRegister(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), registerResponse)
 		assert.NoError(t, err)
 		checkRegisterResponse(t, registerRequest, registerResponse)
-		userModel, err := repositories.GetUserByEmail(registerRequest.User.Email, context.Background())
+		userModel, err := repository.GetUserByEmail(context.Background(), registerRequest.User.Email)
 		assert.NoError(t, err)
 		checkUserModel(t, registerRequest, userModel)
 	})
@@ -50,7 +66,7 @@ func TestRegister(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		err = Register(c)
+		err = handler.Register(c)
 		assert.ErrorIs(t, err, api.ConfictError)
 	})
 	t.Run("Should not create user with duplicated username", func(t *testing.T) {
@@ -62,7 +78,7 @@ func TestRegister(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		err = Register(c)
+		err = handler.Register(c)
 		assert.ErrorIs(t, err, api.ConfictError)
 	})
 }
@@ -93,7 +109,7 @@ func checkUserModel(t *testing.T, request *requests.Register, user *models.User)
 	assert.Zero(t, *user.Bio)
 }
 
-func registerUser(username, email, password string) error {
+func registerUser(username, email, password string, handler registerProfileHandler) error {
 	if username == "" {
 		username = "default-username"
 	}
@@ -116,7 +132,7 @@ func registerUser(username, email, password string) error {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	if err := Register(c); err != nil {
+	if err := handler.Register(c); err != nil {
 		return err
 	}
 	return nil
