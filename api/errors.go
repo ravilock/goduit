@@ -14,6 +14,8 @@ var FailedLoginAttempt *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthoriz
 
 var FailedAuthentication *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Invalid, Empty or Expired Token")
 
+var ConfictError *echo.HTTPError = echo.NewHTTPError(http.StatusConflict, "Content Already Exists")
+
 func UnexpectedTokenSigningMethod(algName string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusUnauthorized,
@@ -72,6 +74,13 @@ func FollowerRelationshipNotFound(followed, follower string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusNotFound,
 		Message: fmt.Sprintf("%q does not follow %q", follower, followed),
+	}
+}
+
+func ArticleNotFound(identifier string) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:    http.StatusNotFound,
+		Message: fmt.Sprintf("Article with identifier %q not found", identifier),
 	}
 }
 

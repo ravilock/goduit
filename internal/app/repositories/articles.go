@@ -27,7 +27,7 @@ func GetArticleBySlug(slug string, ctx context.Context) (*models.Article, error)
 	collection := db.DatabaseClient.Database("conduit").Collection("articles")
 	if err := collection.FindOne(ctx, filter).Decode(&article); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, api.FailedLoginAttempt
+			return nil, api.ArticleNotFound(slug)
 		}
 		return nil, err
 	}

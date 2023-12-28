@@ -37,5 +37,5 @@ func CreateArticle(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, assemblers.ArticleResponse(dto))
+	return c.JSON(http.StatusCreated, assemblers.ArticleResponse(dto))
 }

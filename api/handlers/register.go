@@ -9,6 +9,7 @@ import (
 	"github.com/ravilock/goduit/api/requests"
 	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app/services"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func Register(c echo.Context) error {
@@ -25,10 +26,13 @@ func Register(c echo.Context) error {
 
 	dto, err := services.Register(dto, c.Request().Context())
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return api.ConfictError
+		}
 		return err
 	}
 
 	response := assemblers.UserResponse(dto)
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusCreated, response)
 }
