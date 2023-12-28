@@ -15,10 +15,10 @@ import (
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/app/repositories"
 	mongoConfig "github.com/ravilock/goduit/internal/config/mongo"
-	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerServices "github.com/ravilock/goduit/internal/followerCentral/services"
-	userRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	userServices "github.com/ravilock/goduit/internal/profileManager/services"
+	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
+	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
+	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -39,19 +39,19 @@ func TestUnfollow(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error connecting to database", err)
 	}
-	followerRepository := followerRepositories.NewFollowerRepository(client)
-	central := followerServices.NewFollowerCentral(followerRepository)
-	userRepository := userRepositories.NewUserRepository(client)
-	manager := userServices.NewProfileManager(userRepository)
-	handler := NewFollowerHandler(central, manager)
+	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
+	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
+	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
+	profileManager := profileManager.NewProfileManager(profileManagerRepository)
+	handler := NewFollowerHandler(followerCentral, profileManager)
 
 	clearDatabase(client)
-	_, _, err = registerUser(unfollowTestUsername, unfollowTestEmail, "", manager)
+	_, _, err = registerUser(unfollowTestUsername, unfollowTestEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
 
-	_, _, err = registerUser(followerUsername, followerEmail, "", manager)
+	_, _, err = registerUser(followerUsername, followerEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
@@ -99,7 +99,7 @@ func TestUnfollow(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
 		assert.NoError(t, err)
 		checkFollowResponse(t, unfollowTestUsername, false, followResponse)
-		followerModel, err := followerRepository.IsFollowedBy(context.Background(), unfollowTestUsername, followerUsername)
+		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), unfollowTestUsername, followerUsername)
 		assert.ErrorIs(t, err, mongo.ErrNoDocuments)
 		assert.Nil(t, followerModel)
 	})
