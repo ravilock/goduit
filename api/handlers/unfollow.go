@@ -10,23 +10,24 @@ import (
 	"github.com/ravilock/goduit/internal/app/services"
 )
 
-func GetProfile(c echo.Context) error {
+func Unfollow(c echo.Context) error {
 	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
-	request := new(requests.GetProfile)
+	request := new(requests.Follower)
 
 	request.Username = c.Param("username")
-	if err := validators.GetProfile(request); err != nil {
+	if err := validators.Follower(request); err != nil {
 		return err
 	}
 
 	ctx := c.Request().Context()
 
+	err := services.Unfollow(request.Username, clientUsername, ctx)
+
 	dto, err := services.GetProfileByUsername(request.Username, ctx)
 	if err != nil {
 		return err
 	}
-
-	dto.Following = services.IsFollowedBy(request.Username, clientUsername, ctx)
+	dto.Following = false
 
 	response := assemblers.ProfileResponse(dto)
 

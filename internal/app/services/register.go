@@ -14,7 +14,7 @@ import (
 )
 
 func Register(user *dtos.User, ctx context.Context) (*dtos.User, error) {
-	model := transformers.DtoToModel(user)
+	model := transformers.UserDtoToModel(user)
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(*user.Password), bcrypt.DefaultCost)
 	if err != nil {

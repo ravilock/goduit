@@ -8,11 +8,10 @@ import (
 	"github.com/ravilock/goduit/internal/app/transformers"
 )
 
-func GetProfileByUsername(profileUsername, clientUsername string, ctx context.Context) (*dtos.Profile, error) {
+func GetProfileByUsername(profileUsername string, ctx context.Context) (*dtos.Profile, error) {
 	model, err := repositories.GetUserByUsername(profileUsername, ctx)
 	if err != nil {
 		return nil, err
 	}
-	following := IsFollowedBy(profileUsername, clientUsername, ctx)
-	return transformers.ModelToProfileDto(model, following), nil
+	return transformers.ModelToProfileDto(model), nil
 }
