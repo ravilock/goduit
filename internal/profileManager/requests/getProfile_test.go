@@ -35,7 +35,7 @@ func TestGetProfile(t *testing.T) {
 		assert.ErrorContains(t, err, api.InvalidFieldLength("Username", "min", "5").Error())
 	})
 
-	t.Run("Username should contain at most 72 chars", func(t *testing.T) {
+	t.Run("Username should contain at most 255 chars", func(t *testing.T) {
 		request := generateGetProfileRequest()
 		request.Username = randomString(256)
 		err := request.Validate()
