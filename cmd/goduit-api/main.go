@@ -98,7 +98,7 @@ func main() {
 	profileGroup := apiGroup.Group("/profile")
 	profileGroup.GET("/:username", profileHandler.GetProfile, identity.CreateAuthMiddleware(false))
 	profileGroup.POST("/:username/follow", followerHandler.Follow, identity.CreateAuthMiddleware(true))
-	profileGroup.POST("/:username/unfollow", followerHandler.Unfollow, identity.CreateAuthMiddleware(true))
+	profileGroup.DELETE("/:username/follow", followerHandler.Unfollow, identity.CreateAuthMiddleware(true))
 	// Article Routes
 	articlesGroup := apiGroup.Group("/articles")
 	articlesGroup.POST("", articleHandler.WriteArticle, identity.CreateAuthMiddleware(true))
