@@ -24,7 +24,7 @@ func TestGetArticle(t *testing.T) {
 	articleTagList := []string{"test"}
 
 	clearDatabase()
-	if err := registerAccount(articleAuthorUsername, "", ""); err != nil {
+	if err := registerUser(articleAuthorUsername, "", ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 	if err := createArticle(articleTitle, articleDescription, articleBody, articleAuthorUsername, articleTagList); err != nil {

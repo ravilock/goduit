@@ -93,7 +93,7 @@ func checkUserModel(t *testing.T, request *requests.Register, user *models.User)
 	assert.Zero(t, *user.Bio)
 }
 
-func registerAccount(username, email, password string) error {
+func registerUser(username, email, password string) error {
 	if username == "" {
 		username = "default-username"
 	}

@@ -25,10 +25,10 @@ func TestFollow(t *testing.T) {
 	const followerEmail = "follower.email@test.test"
 
 	clearDatabase()
-	if err := registerAccount(followTestUsername, getUserTestEmail, ""); err != nil {
+	if err := registerUser(followTestUsername, getUserTestEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
-	if err := registerAccount(followerUsername, followerEmail, ""); err != nil {
+	if err := registerUser(followerUsername, followerEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 
@@ -80,4 +80,16 @@ func checkFollowerModel(t *testing.T, followed, follower string, model *models.F
 	t.Helper()
 	assert.Equal(t, followed, *model.Followed, "Wrong followed username")
 	assert.Equal(t, follower, *model.Follower, "Wrong follower username")
+}
+
+func followUser(followed, follower string) error {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", followed), nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetParamNames("username")
+	c.SetParamValues(followed)
+	req.Header.Set("Goduit-Client-Username", follower)
+	return Follow(c)
 }

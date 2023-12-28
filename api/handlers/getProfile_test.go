@@ -22,7 +22,7 @@ const getProfileTestEmail = "get.profile.email@test.test"
 func TestGetProfile(t *testing.T) {
 	clearDatabase()
 	e := echo.New()
-	if err := registerAccount(getProfileTestUsername, getUserTestEmail, ""); err != nil {
+	if err := registerUser(getProfileTestUsername, getUserTestEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 	t.Run("Should get user profile", func(t *testing.T) {

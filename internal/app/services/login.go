@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/app/dtos"
 	"github.com/ravilock/goduit/internal/app/repositories"
 	"github.com/ravilock/goduit/internal/app/transformers"
@@ -22,7 +22,7 @@ func Login(user *dtos.User, ctx context.Context) (*dtos.User, error) {
 
 	if err = bcrypt.CompareHashAndPassword([]byte(*model.PasswordHash), []byte(*user.Password)); err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return nil, api.FailedLoginAttempt
+			return nil, app.WrongPasswordError.AddContext(err)
 		}
 		return nil, err
 	}
