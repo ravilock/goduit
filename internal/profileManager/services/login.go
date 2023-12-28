@@ -9,12 +9,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type userGetter interface {
+type UserGetter interface {
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
 }
 
 type logUserService struct {
-	repository userGetter
+	repository UserGetter
 }
 
 func (s *logUserService) Login(ctx context.Context, model *models.User, password string) (*models.User, string, error) {
