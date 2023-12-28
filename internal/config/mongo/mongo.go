@@ -9,27 +9,27 @@ import (
 
 var DatabaseClient *mongo.Client
 
-func ConnectDatabase(databaseURI string) error {
-	var err error
-	DatabaseClient, err = mongo.Connect(context.Background(), options.Client().ApplyURI(databaseURI))
+func ConnectDatabase(databaseURI string) (*mongo.Client, error) {
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(databaseURI))
+	DatabaseClient = client
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err = testDatabase(); err != nil {
-		return err
+	if err = testDatabase(client); err != nil {
+		return nil, err
 	}
-	if err = ensureIndexes(); err != nil {
-		return err
+	if err = ensureIndexes(client); err != nil {
+		return nil, err
 	}
-	return nil
+	return client, nil
 }
 
-func DisconnectDatabase() {
-	if err := DatabaseClient.Disconnect(context.Background()); err != nil {
+func DisconnectDatabase(client *mongo.Client) {
+	if err := client.Disconnect(context.Background()); err != nil {
 		panic(err)
 	}
 }
 
-func testDatabase() error {
-	return DatabaseClient.Ping(context.Background(), nil)
+func testDatabase(client *mongo.Client) error {
+	return client.Ping(context.Background(), nil)
 }

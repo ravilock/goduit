@@ -11,7 +11,7 @@ func GetArticle(request *requests.GetArticle) error {
 	if err := Validate.Struct(request); err != nil {
 		if validationErrors := new(validator.ValidationErrors); errors.As(err, validationErrors) {
 			for _, validationError := range *validationErrors {
-				return toHTTP(validationError)
+				return ToHTTP(validationError)
 			}
 		}
 		return err

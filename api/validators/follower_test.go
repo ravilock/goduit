@@ -8,7 +8,6 @@ import (
 )
 
 func TestFollower(t *testing.T) {
-	InitValidator()
 	t.Run("Username is required", func(t *testing.T) {
 		request := &requests.Follower{}
 

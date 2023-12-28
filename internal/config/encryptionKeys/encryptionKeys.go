@@ -4,23 +4,14 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"io"
 	"os"
 )
 
-const privateKeyFileName = "jwtRS256.key"
-const publicKeyFileName = "jwtRS256.key.pub"
-
 var PrivateKey *rsa.PrivateKey
 
-func LoadKeys() error {
-	if err := readPrivateKey(); err != nil {
-		return err
-	}
-	return readPublicKey()
-}
-
-func readPrivateKey() error {
-	privateKeyContent, err := os.ReadFile(privateKeyFileName)
+func LoadPrivateKey(privateKey io.Reader) error {
+	privateKeyContent, err := io.ReadAll(privateKey)
 	if err != nil {
 		return err
 	}
@@ -33,8 +24,8 @@ func readPrivateKey() error {
 	return nil
 }
 
-func readPublicKey() error {
-	publicKeyContent, err := os.ReadFile(publicKeyFileName)
+func LoadPublicKey(publicKeyFile io.Reader) error {
+	publicKeyContent, err := io.ReadAll(publicKeyFile)
 	if err != nil {
 		return err
 	}
