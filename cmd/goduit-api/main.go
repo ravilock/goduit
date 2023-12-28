@@ -48,6 +48,7 @@ func main() {
 	apiGroup := e.Group("/api")
 	apiGroup.GET("/healthcheck", handlers.Healthcheck)
 	routers.UsersRouter(apiGroup)
+	routers.ProfilesRouter(apiGroup)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":9191"))

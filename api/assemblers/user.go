@@ -57,7 +57,7 @@ func UpdateUser(request *requests.UpdateUser) *dtos.User {
 	return dto
 }
 
-func Response(user *dtos.User) *responses.User {
+func UserResponse(user *dtos.User) *responses.User {
 	response := new(responses.User)
 	if user.Username != nil {
 		response.User.Username = *user.Username

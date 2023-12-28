@@ -9,8 +9,8 @@ import (
 )
 
 func ensureIndexes() {
-	collection := DatabaseClient.Database("conduit").Collection("users")
-	_, err := collection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+	usersCollection := DatabaseClient.Database("conduit").Collection("users")
+	_, err := usersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys:    bson.D{{"username", 1}},
 		Options: options.Index().SetUnique(true),
 	})
@@ -18,8 +18,20 @@ func ensureIndexes() {
 		panic(err)
 	}
 
-	_, err = collection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+	_, err = usersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys:    bson.D{{"email", 1}},
+		Options: options.Index().SetUnique(true),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	followersCollection := DatabaseClient.Database("conduit").Collection("followers")
+	_, err = followersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{
+			{"from", 1},
+			{"to", 1},
+		},
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {

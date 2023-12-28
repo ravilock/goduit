@@ -34,6 +34,22 @@ func GetUserByEmail(email string, ctx context.Context) (*models.User, error) {
 	return user, nil
 }
 
+func GetUserByUsername(username string, ctx context.Context) (*models.User, error) {
+	var user *models.User
+	filter := bson.D{{
+		Key:   "username",
+		Value: username,
+	}}
+	collection := db.DatabaseClient.Database("conduit").Collection("users")
+	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, api.FailedLoginAttempt
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
 func UpdateUser(user *models.User, ctx context.Context) (*models.User, error) {
 	filter := bson.D{{Key: "email", Value: user.Email}}
 	update := bson.D{{Key: "$set", Value: user}}
