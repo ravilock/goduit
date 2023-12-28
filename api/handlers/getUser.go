@@ -16,7 +16,7 @@ func GetUser(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(user, nil)
+	response := assemblers.UserResponse(user, "")
 
 	return c.JSON(http.StatusOK, response)
 }
