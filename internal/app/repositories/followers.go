@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 
-	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/internal/app/models"
 	db "github.com/ravilock/goduit/internal/config/mongo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -34,12 +33,9 @@ func Unfollow(followed, follower string, ctx context.Context) error {
 		{Key: "follower", Value: follower},
 	}
 	collection := db.DatabaseClient.Database("conduit").Collection("followers")
-	result, err := collection.DeleteOne(ctx, filter)
+	_, err := collection.DeleteOne(ctx, filter)
 	if err != nil {
 		return err
-	}
-	if result.DeletedCount == 0 {
-		return api.FollowerRelationshipNotFound(followed, follower)
 	}
 	return nil
 }
