@@ -14,7 +14,7 @@ func DtoToModel(user *dtos.User) *models.User {
 	}
 }
 
-func ModelToDto(model *models.User, dto *dtos.User) *dtos.User {
+func ModelToUserDto(model *models.User, dto *dtos.User) *dtos.User {
 	dto.Username = model.Username
 	dto.Email = model.Email
 	dto.Bio = model.Bio
