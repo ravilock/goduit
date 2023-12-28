@@ -47,6 +47,9 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 	}
 
 	authorProfile, err := h.profileManager.GetProfileByUsername(ctx, authorUsername)
+	if err != nil {
+		return api.UserNotFound(authorUsername)
+	}
 
 	profileResponse, err := profileManagerAssembler.ProfileResponse(authorProfile, false)
 	if err != nil {
