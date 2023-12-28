@@ -43,7 +43,7 @@ func GetUserByUsername(username string, ctx context.Context) (*models.User, erro
 	collection := db.DatabaseClient.Database("conduit").Collection("users")
 	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, api.FailedLoginAttempt
+			return nil, api.UserNotFound(username)
 		}
 		return nil, err
 	}
