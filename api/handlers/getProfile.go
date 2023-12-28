@@ -19,10 +19,14 @@ func GetProfile(c echo.Context) error {
 		return err
 	}
 
-	dto, err := services.GetProfileByUsername(request.Username, clientUsername, c.Request().Context())
+	ctx := c.Request().Context()
+
+	dto, err := services.GetProfileByUsername(request.Username, ctx)
 	if err != nil {
 		return err
 	}
+
+	dto.Following = services.IsFollowedBy(request.Username, clientUsername, ctx)
 
 	response := assemblers.ProfileResponse(dto)
 
