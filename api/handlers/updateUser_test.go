@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -51,7 +50,6 @@ func TestUpdateUser(t *testing.T) {
 		request := new(requests.UpdateUser)
 		request.User.Username = oldUpdateUserTestUsername
 		request.User.Email = updateUserTestEmail
-		fmt.Println(request.User)
 		requestBody, err := json.Marshal(request)
 		assert.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, "/user", bytes.NewBuffer(requestBody))

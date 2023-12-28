@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/app/repositories"
 	"github.com/stretchr/testify/assert"
@@ -62,7 +63,17 @@ func TestGetProfile(t *testing.T) {
 		assert.NoError(t, err)
 		checkGetProfileResponse(t, getProfileTestUsername, true, getProfileResponse)
 	})
-  // TODO: add 404 error test
+	t.Run("Should return http 404 if no user is found", func(t *testing.T) {
+		inexistentUsername := "inexistent-username"
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", inexistentUsername), nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("username")
+		c.SetParamValues(inexistentUsername)
+		err := GetProfile(c)
+		assert.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
+	})
 }
 
 func checkGetProfileResponse(t *testing.T, username string, following bool, response *responses.ProfileResponse) {
