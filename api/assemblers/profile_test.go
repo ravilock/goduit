@@ -14,7 +14,6 @@ func TestProfileResponse(t *testing.T) {
 			t.Errorf("Response should be nil")
 		}
 		assertError(t, err, api.InternalError(nilDtoError))
-
 	})
 	t.Run("Should return error if Username is nil", func(t *testing.T) {
 		dto := assebleProfileDto()
