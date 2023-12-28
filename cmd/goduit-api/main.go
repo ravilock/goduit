@@ -19,8 +19,18 @@ func main() {
 		log.Println("No .env file found")
 	}
 
-	if err := encryptionkeys.LoadKeys(); err != nil {
-		log.Println("Failed to read encrpytion keys", err)
+	privateKeyFile, err := os.Open("./jwtRS256.key")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	publicKeyFile, err := os.Open("./jwtRS256.key.pub")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := encryptionkeys.LoadKeys(privateKeyFile, publicKeyFile); err != nil {
+		log.Fatal("Failed to read encrpytion keys", err)
 	}
 
 	databaseURI := os.Getenv("DB_URL")
@@ -51,5 +61,5 @@ func main() {
 	routers.ArticlesRouter(apiGroup)
 
 	// Start server
-	e.Logger.Fatal(e.Start(":9191"))
+	e.Logger.Fatal(e.Start(":6969"))
 }
