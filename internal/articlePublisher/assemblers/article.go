@@ -1,11 +1,12 @@
 package assemblers
 
 import (
-	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
+	"github.com/ravilock/goduit/internal/articlePublisher/responses"
+	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 )
 
-func ArticleResponse(article *models.Article, author *responses.ProfileResponse) *responses.Article {
+func ArticleResponse(article *models.Article, author *profileManagerResponses.ProfileResponse) *responses.Article {
 	response := new(responses.Article)
 	response.Article.Slug = *article.Slug
 	response.Article.Title = *article.Title
