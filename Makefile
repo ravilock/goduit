@@ -1,5 +1,6 @@
 SVC_API := web
 SVC_DB := mongo mongo-express
+LOGS_CMD := docker-compose logs --follow --tail=5
 
 run: run-all
 
@@ -21,6 +22,15 @@ stop-api:
 
 stop-db:
 	@docker-compose stop $(SVC_DB)
+
+logs-api:
+	@$(LOGS_CMD) $(SVC_API)
+
+logs-db:
+	@$(LOGS_CMD) $(SVC_DB)
+
+logs-all:
+	@$(LOGS_CMD)
 
 test:
 	go test ./...
