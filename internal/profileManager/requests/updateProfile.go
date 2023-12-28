@@ -10,9 +10,7 @@ import (
 )
 
 type UpdateProfile struct {
-	SubjectEmail   string `header:"Goduit-Subject"`
-	ClientUsername string `header:"Goduit-Client-Username"`
-	User           struct {
+	User     struct {
 		Username string `json:"username" validate:"required,omitempty,notblank,min=5,max=255"`
 		Email    string `json:"email" validate:"required,notblank,max=256,email"`
 		Password string `json:"password" validate:"omitempty,notblank,min=8,max=72"`
