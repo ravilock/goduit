@@ -18,6 +18,10 @@ func ErrorMiddleware(err error, c echo.Context) {
 		if httpError.Code < http.StatusInternalServerError {
 			c.String(httpError.Code, httpError.Error())
 			return
+		} else {
+			httpError.Internal = nil
+			c.String(httpError.Code, httpError.Error())
+			return
 		}
 	}
 

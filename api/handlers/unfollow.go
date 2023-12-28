@@ -29,7 +29,10 @@ func Unfollow(c echo.Context) error {
 	}
 	dto.Following = false
 
-	response := assemblers.ProfileResponse(dto)
+	response, err := assemblers.ProfileResponse(dto)
+	if err != nil {
+		return err
+	}
 
 	return c.JSON(http.StatusOK, response)
 }
