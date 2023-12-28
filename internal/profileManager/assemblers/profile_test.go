@@ -50,7 +50,6 @@ func TestProfileResponse(t *testing.T) {
 			t.Errorf("Response image should be blank")
 		}
 	})
-
 }
 
 func assembleUserModel() *models.User {
@@ -66,12 +65,10 @@ func assembleUserModel() *models.User {
 
 func assertError(t testing.TB, got, want error) {
 	t.Helper()
-
 	if got == nil {
 		t.Errorf("Expected error but didn't receive one")
 		return
 	}
-
 	if got.Error() != want.Error() {
 		t.Errorf("Got %q want %q", got, want)
 		return
@@ -80,7 +77,6 @@ func assertError(t testing.TB, got, want error) {
 
 func assertNoError(t testing.TB, got error) {
 	t.Helper()
-
 	if got != nil {
 		t.Errorf("Got an error but did'nt want one")
 	}

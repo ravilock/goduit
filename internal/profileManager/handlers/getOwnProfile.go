@@ -19,9 +19,9 @@ type getOwnProfileHandler struct {
 }
 
 func (h *getOwnProfileHandler) GetOwnProfile(c echo.Context) error {
-	subject := c.Request().Header.Get("Goduit-Subject")
+	subjectEmail := c.Request().Header.Get("Goduit-Subject")
 
-	user, err := h.service.GetProfileByEmail(c.Request().Context(), subject)
+	user, err := h.service.GetProfileByEmail(c.Request().Context(), subjectEmail)
 	if err != nil {
 		return err
 	}
