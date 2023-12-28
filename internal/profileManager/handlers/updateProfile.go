@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/profileManager/assemblers"
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	"github.com/ravilock/goduit/internal/profileManager/requests"
@@ -36,6 +38,12 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 
 	model, token, err := h.service.UpdateProfile(c.Request().Context(), subjectEmail, clientUsername, request.User.Password, model)
 	if err != nil {
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.ConflictErrorCode:
+				return api.ConfictError
+			}
+		}
 		return err
 	}
 

@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/articlePublisher/assemblers"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"github.com/ravilock/goduit/internal/articlePublisher/requests"
 	profileManagerAssembler "github.com/ravilock/goduit/internal/profileManager/assemblers"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type articleWriter interface {
@@ -39,8 +40,11 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 
 	article, err := h.service.WriteArticle(ctx, article)
 	if err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return api.ConfictError
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.ConflictErrorCode:
+				return api.ConfictError
+			}
 		}
 		return err
 	}

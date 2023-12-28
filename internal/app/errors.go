@@ -10,6 +10,7 @@ const (
 	UserNotFoundErrorCode ErrorCode = iota + 1
 	ArticleNotFoundErrorCode
 	WrongPasswordErrorCode
+	ConflictErrorCode
 )
 
 type AppError struct {
@@ -40,6 +41,14 @@ func ArticleNotFoundError(identifier string, originalError error) *AppError {
 		ErrorCode:     ArticleNotFoundErrorCode,
 		CustomMessage: fmt.Sprintf("Article with identifier %q was not found", identifier),
 		OriginalError: originalError,
+	}
+}
+
+func ConflictError(resource string) *AppError {
+	return &AppError{
+		ErrorCode:     ConflictErrorCode,
+		CustomMessage: fmt.Sprintf("Conflict on resource %s", resource),
+		OriginalError: nil,
 	}
 }
 

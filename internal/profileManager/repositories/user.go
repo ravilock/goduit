@@ -20,6 +20,9 @@ func NewUserRepository(client *mongo.Client) *UserRepository {
 func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) error {
 	collection := r.DBClient.Database("conduit").Collection("users")
 	if _, err := collection.InsertOne(ctx, user); err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return app.ConflictError("users")
+		}
 		return err
 	}
 	return nil
@@ -66,6 +69,9 @@ func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, client
 	collection := r.DBClient.Database("conduit").Collection("users")
 	updateResult, err := collection.UpdateOne(ctx, filter, update, nil)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, app.ConflictError("users")
+		}
 		return nil, err
 	}
 	if updateResult.MatchedCount == 0 {
