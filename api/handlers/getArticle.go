@@ -14,7 +14,7 @@ import (
 )
 
 func GetArticle(c echo.Context) error {
-	username := c.Request().Header.Get("Goduit-Client-Username")
+	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
 	request := new(requests.GetArticle)
 
 	request.Slug = c.Param("slug")
@@ -24,7 +24,7 @@ func GetArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	dto, err := services.GetArticleBySlug(request.Slug, username, ctx)
+	model, err := services.GetArticleBySlug(request.Slug, clientUsername, ctx)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -35,7 +35,19 @@ func GetArticle(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.ArticleResponse(dto)
+	author, err := services.GetProfileByUsername(*model.Author, ctx)
+	if err != nil {
+		return err
+	}
+
+	isFollowing := services.IsFollowedBy(*author.Username, clientUsername, ctx)
+
+	authorProfile, err := assemblers.ProfileResponse(author, isFollowing)
+	if err != nil {
+		return err
+	}
+
+	response := assemblers.ArticleResponse(model, *authorProfile)
 
 	return c.JSON(http.StatusOK, response)
 }

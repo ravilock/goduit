@@ -25,17 +25,22 @@ func CreateArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	profile, err := services.GetProfileByUsername(username, ctx)
+	author, err := services.GetProfileByUsername(username, ctx)
 	if err != nil {
 		return err
 	}
 
-	dto := assemblers.CreateArticle(request, profile)
-
-	dto, err = services.CreateArticle(dto, ctx)
+	authorProfile, err := assemblers.ProfileResponse(author, false)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, assemblers.ArticleResponse(dto))
+	model := request.Model(author.Username)
+
+	model, err = services.CreateArticle(model, ctx)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, assemblers.ArticleResponse(model, *authorProfile))
 }
