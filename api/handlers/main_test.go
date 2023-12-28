@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	privateKeyFile, err := os.Open("../../jwtRS256.key")
+	privateKeyFile, err := os.Open(os.Getenv("PRIVATE_KEY_LOCATION"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func setup() {
 		log.Fatal("Failed to close private key file", err)
 	}
 
-	publicKeyFile, err := os.Open("../../jwtRS256.key.pub")
+	publicKeyFile, err := os.Open(os.Getenv("PUBLIC_KEY_LOCATION"))
 	if err != nil {
 		log.Fatal(err)
 	}
