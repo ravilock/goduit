@@ -11,12 +11,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
+	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,7 +58,7 @@ func TestLogin(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
-		loginResponse := new(responses.User)
+		loginResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), loginResponse)
 		assert.NoError(t, err)
 		checkLoginResponse(t, loginRequest, loginResponse)
@@ -96,7 +96,7 @@ func generateLoginBody() *profileManagerRequests.Login {
 	return request
 }
 
-func checkLoginResponse(t *testing.T, request *profileManagerRequests.Login, response *responses.User) {
+func checkLoginResponse(t *testing.T, request *profileManagerRequests.Login, response *profileManagerResponses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	assert.NotZero(t, response.User.Token)

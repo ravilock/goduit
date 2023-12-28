@@ -12,13 +12,13 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralModels "github.com/ravilock/goduit/internal/followerCentral/models"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
@@ -70,7 +70,7 @@ func TestFollow(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
-		followResponse := new(responses.ProfileResponse)
+		followResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
 		assert.NoError(t, err)
 		checkFollowResponse(t, followTestUsername, true, followResponse)
@@ -92,7 +92,7 @@ func TestFollow(t *testing.T) {
 	})
 }
 
-func checkFollowResponse(t *testing.T, username string, following bool, response *responses.ProfileResponse) {
+func checkFollowResponse(t *testing.T, username string, following bool, response *profileManagerResponses.ProfileResponse) {
 	t.Helper()
 	assert.Equal(t, username, response.Profile.Username, "User username should be the same")
 	assert.Equal(t, following, response.Profile.Following)

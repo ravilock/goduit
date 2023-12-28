@@ -12,9 +12,9 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ravilock/goduit/api/responses"
 	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
+	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
@@ -66,7 +66,7 @@ func TestWriteArticle(t *testing.T) {
 		if rec.Code != http.StatusCreated {
 			t.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
 		}
-		createArticleResponse := new(responses.Article)
+		createArticleResponse := new(articlePublisherResponses.Article)
 		err = json.Unmarshal(rec.Body.Bytes(), createArticleResponse)
 		checkWriteArticleResponse(t, createArticleRequest, createArticleTestUsername, createArticleResponse)
 		assert.NoError(t, err)
@@ -83,7 +83,7 @@ func generateWriteArticleBody() *articlePublisherRequests.WriteArticle {
 	return request
 }
 
-func checkWriteArticleResponse(t *testing.T, request *articlePublisherRequests.WriteArticle, author string, response *responses.Article) {
+func checkWriteArticleResponse(t *testing.T, request *articlePublisherRequests.WriteArticle, author string, response *articlePublisherResponses.Article) {
 	t.Helper()
 	assert.Equal(t, request.Article.Title, response.Article.Title, "Wrong article title")
 	assert.Equal(t, request.Article.Description, response.Article.Description, "Wrong article description")
