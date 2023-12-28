@@ -33,3 +33,17 @@ func GetUserByEmail(email string, ctx context.Context) (*models.User, error) {
 	}
 	return user, nil
 }
+
+func UpdateUser(user *models.User, ctx context.Context) (*models.User, error) {
+	filter := bson.D{{Key: "email", Value: user.Email}}
+	update := bson.D{{Key: "$set", Value: user}}
+	collection := db.DatabaseClient.Database("conduit").Collection("users")
+	updateResult, err := collection.UpdateOne(ctx, filter, update, nil)
+	if err != nil {
+		return nil, err
+	}
+	if updateResult.MatchedCount == 0 {
+		return nil, api.UserNotFound(*user.Email)
+	}
+	return user, nil
+}
