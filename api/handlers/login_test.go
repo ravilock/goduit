@@ -43,9 +43,21 @@ func TestLogin(t *testing.T) {
 		assert.NoError(t, err)
 		checkLoginResponse(t, loginRequest, loginResponse)
 	})
-	t.Run("Should return 401 regardless of wrong username or wrong password", func(t *testing.T) {
+	t.Run("Should return 401 if email is not found", func(t *testing.T) {
 		loginRequest := generateLoginBody()
 		loginRequest.User.Email = "wrong-email@test.test"
+		requestBody, err := json.Marshal(loginRequest)
+		assert.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		err = Login(c)
+		assert.ErrorIs(t, err, api.FailedLoginAttempt)
+	})
+	t.Run("Should return 401 if wrong password", func(t *testing.T) {
+		loginRequest := generateLoginBody()
+		loginRequest.User.Password = "wrong-user-password"
 		requestBody, err := json.Marshal(loginRequest)
 		assert.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
