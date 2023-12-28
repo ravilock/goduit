@@ -25,10 +25,10 @@ func TestFollow(t *testing.T) {
 	const followerEmail = "follower.email@test.test"
 
 	clearDatabase()
-	if err := registerAccount(followTestUsername, getUserTestEmail, ""); err != nil {
+	if err := registerUser(followTestUsername, getUserTestEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
-	if err := registerAccount(followerUsername, followerEmail, ""); err != nil {
+	if err := registerUser(followerUsername, followerEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 

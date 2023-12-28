@@ -18,7 +18,7 @@ const getUserTestEmail = "get.user.email@test.test"
 func TestGetUser(t *testing.T) {
 	clearDatabase()
 	e := echo.New()
-	if err := registerAccount(getUserTestUsername, getUserTestEmail, ""); err != nil {
+	if err := registerUser(getUserTestUsername, getUserTestEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 	t.Run("Should get currently authenticated in user", func(t *testing.T) {

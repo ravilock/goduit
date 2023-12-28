@@ -24,7 +24,7 @@ const updateUserTestImage = "https://update.user.test.bio.com/image"
 func TestUpdateUser(t *testing.T) {
 	clearDatabase()
 	e := echo.New()
-	if err := registerAccount(oldUpdateUserTestUsername, updateUserTestEmail, ""); err != nil {
+	if err := registerUser(oldUpdateUserTestUsername, updateUserTestEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 	t.Run("Should fully update currently authenticated in user", func(t *testing.T) {
