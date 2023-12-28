@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ravilock/goduit/internal/identity"
 	"github.com/ravilock/goduit/internal/profileManager/models"
@@ -20,7 +19,6 @@ type updateProfileService struct {
 func (s *updateProfileService) UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (string, error) {
 	if shouldGenerateNewPasswordHash(password) {
 		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		fmt.Println(passwordHash, password)
 		if err != nil {
 			return "", err
 		}
