@@ -20,16 +20,22 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	if err := os.Chdir("../.."); err != nil {
-		log.Fatalln("Error chanigng directory", err)
-	}
-
-	if err := godotenv.Load(".env.test"); err != nil {
+	if err := godotenv.Load("../../.env.test"); err != nil {
 		log.Fatalln("No .env file found", err)
 	}
 
-	if err := encryptionkeys.LoadKeys(); err != nil {
-		log.Fatalln("Failed to read encrpytion keys", err)
+	privateKeyFile, err := os.Open("../../jwtRS256.key")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	publicKeyFile, err := os.Open("../../jwtRS256.key.pub")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := encryptionkeys.LoadKeys(privateKeyFile, publicKeyFile); err != nil {
+		log.Fatal("Failed to read encrpytion keys", err)
 	}
 
 	databaseURI := os.Getenv("DB_URL")
