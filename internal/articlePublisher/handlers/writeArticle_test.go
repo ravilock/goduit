@@ -17,6 +17,8 @@ import (
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
 	"github.com/ravilock/goduit/internal/config/mongo"
+	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
+	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
@@ -38,9 +40,11 @@ func TestWriteArticle(t *testing.T) {
 	}
 	articlePublisherRepository := articlePublisherRepositories.NewArticleRepository(client)
 	articlePublisher := articlePublisher.NewArticlePublisher(articlePublisherRepository)
+	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
+	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
 	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
 	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewArticlehandler(articlePublisher, profileManager)
+	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
 	_, _, err = registerUser(createArticleTestUsername, createArticleTestEmail, "", profileManager)
@@ -106,4 +110,38 @@ func registerUser(username, email, password string, manager *profileManager.Prof
 		password = "default-password"
 	}
 	return manager.Register(context.Background(), &profileManagerModels.User{Username: &username, Email: &email}, password)
+}
+
+func createArticle(title, description, body, authorUsername string, tagList []string, handler writeArticleHandler) error {
+	if title == "" {
+		title = "Default Title"
+	}
+	if description == "" {
+		description = "Default Description"
+	}
+	if body == "" {
+		body = "Default Body"
+	}
+	if len(tagList) == 0 {
+		tagList = []string{"default-tag", "test"}
+	}
+	request := new(articlePublisherRequests.WriteArticle)
+	request.Article.Title = title
+	request.Article.Description = description
+	request.Article.Body = body
+	request.Article.TagList = tagList
+	requestBody, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/api/articles", bytes.NewBuffer(requestBody))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Goduit-Client-Username", authorUsername)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	if err := handler.WriteArticle(c); err != nil {
+		return err
+	}
+	return nil
 }
