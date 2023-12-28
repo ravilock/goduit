@@ -8,7 +8,7 @@ import (
 )
 
 type Follower struct {
-	Username string `validate:"required,notblank,min=5,max=255"`
+	Username string `param:"username" validate:"required,notblank,min=5,max=255"`
 }
 
 func (r *Follower) Validate() error {

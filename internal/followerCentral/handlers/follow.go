@@ -9,6 +9,7 @@ import (
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/followerCentral/requests"
+	"github.com/ravilock/goduit/internal/identity"
 	"github.com/ravilock/goduit/internal/profileManager/assemblers"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 )
@@ -27,10 +28,16 @@ type followUserHandler struct {
 }
 
 func (h *followUserHandler) Follow(c echo.Context) error {
-	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
 	request := new(requests.Follower)
+	identity := new(identity.IdentityHeaders)
+	binder := &echo.DefaultBinder{}
+	if err := binder.BindPathParams(c, request); err != nil {
+		return api.CouldNotUnmarshalBodyError
+	}
+	if err := binder.BindHeaders(c, identity); err != nil {
+		return err
+	}
 
-	request.Username = c.Param("username")
 	if err := request.Validate(); err != nil {
 		return err
 	}
@@ -48,7 +55,7 @@ func (h *followUserHandler) Follow(c echo.Context) error {
 		return err
 	}
 
-	err = h.service.Follow(ctx, request.Username, clientUsername)
+	err = h.service.Follow(ctx, request.Username, identity.ClientUsername)
 	if err != nil {
 		return err
 	}
