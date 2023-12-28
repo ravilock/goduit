@@ -8,7 +8,6 @@ import (
 )
 
 func TestGetArticle(t *testing.T) {
-	InitValidator()
 	t.Run("Slug is required", func(t *testing.T) {
 		request := &requests.GetArticle{}
 
