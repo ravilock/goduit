@@ -12,11 +12,15 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"github.com/ravilock/goduit/internal/articlePublisher/requests"
 	profileManagerAssembler "github.com/ravilock/goduit/internal/profileManager/assemblers"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/handlers"
+	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 )
 
 type articleGetter interface {
 	GetArticleBySlug(ctx context.Context, slug string) (*models.Article, error)
+}
+
+type profileGetter interface {
+	GetProfileByUsername(ctx context.Context, username string) (*profileManagerModels.User, error)
 }
 
 type isFollowedChecker interface {
@@ -25,7 +29,7 @@ type isFollowedChecker interface {
 
 type getArticleHandler struct {
 	service         articleGetter
-	profileManager  profileManager.ProfileGetter
+	profileManager  profileGetter
 	followerCentral isFollowedChecker
 }
 

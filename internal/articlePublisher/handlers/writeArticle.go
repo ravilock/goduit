@@ -10,7 +10,6 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"github.com/ravilock/goduit/internal/articlePublisher/requests"
 	profileManagerAssembler "github.com/ravilock/goduit/internal/profileManager/assemblers"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/handlers"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -20,7 +19,7 @@ type articleWriter interface {
 
 type writeArticleHandler struct {
 	service        articleWriter
-	profileManager profileManager.ProfileGetter
+	profileManager profileGetter
 }
 
 func (h *writeArticleHandler) WriteArticle(c echo.Context) error {

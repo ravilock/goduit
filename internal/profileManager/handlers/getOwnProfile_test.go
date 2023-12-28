@@ -9,11 +9,11 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +33,7 @@ func TestGetOwnProfile(t *testing.T) {
 	}
 	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
 	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-  profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
+	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
 	profileManager := profileManager.NewProfileManager(profileManagerRepository)
 	handler := NewProfileHandler(profileManager, followerCentral)
 	clearDatabase(client)
@@ -52,14 +52,14 @@ func TestGetOwnProfile(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
-		getOwnProfileResponse := new(responses.User)
+		getOwnProfileResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), getOwnProfileResponse)
 		assert.NoError(t, err)
 		checkGetOwnProfileResponse(t, getOwnProfileTestUsername, getOwnProfileTestEmail, getOwnProfileResponse)
 	})
 }
 
-func checkGetOwnProfileResponse(t *testing.T, username, email string, response *responses.User) {
+func checkGetOwnProfileResponse(t *testing.T, username, email string, response *profileManagerResponses.User) {
 	t.Helper()
 	assert.Equal(t, email, response.User.Email, "User email should be the same")
 	assert.Equal(t, username, response.User.Username, "User username should be the same")

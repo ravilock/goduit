@@ -12,13 +12,13 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
+	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
@@ -53,7 +53,7 @@ func TestRegister(t *testing.T) {
 		if rec.Code != http.StatusCreated {
 			t.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
 		}
-		registerResponse := new(responses.User)
+		registerResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), registerResponse)
 		assert.NoError(t, err)
 		checkRegisterResponse(t, registerRequest, registerResponse)
@@ -95,7 +95,7 @@ func generateRegisterBody() *profileManagerRequests.Register {
 	return request
 }
 
-func checkRegisterResponse(t *testing.T, request *profileManagerRequests.Register, response *responses.User) {
+func checkRegisterResponse(t *testing.T, request *profileManagerRequests.Register, response *profileManagerResponses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	assert.Equal(t, request.User.Username, response.User.Username, "User Username should be the same")

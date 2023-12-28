@@ -1,8 +1,8 @@
 package assemblers
 
 import (
-	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/profileManager/models"
+	"github.com/ravilock/goduit/internal/profileManager/responses"
 )
 
 func UserResponse(user *models.User, token string) *responses.User {
