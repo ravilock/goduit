@@ -9,4 +9,7 @@ import (
 func ArticlesRouter(apiGroup *echo.Group) {
 	articlesGroup := apiGroup.Group("/articles")
 	articlesGroup.POST("", handlers.CreateArticle, middlewares.CreateAuthMiddleware(true))
+
+	articleGroup := apiGroup.Group("/article")
+	articleGroup.GET("/:slug", handlers.GetArticle, middlewares.CreateAuthMiddleware(false))
 }
