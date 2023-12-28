@@ -15,7 +15,7 @@ type WriteArticle struct {
 		Title       string   `json:"title" validate:"required,notblank,min=5,max=255"`
 		Description string   `json:"description" validate:"required,notblank,min=5,max=255"`
 		Body        string   `json:"body" validate:"required,notblank"`
-		TagList     []string `json:"tagList" validate:"unique,dive,min=3,max=30"`
+		TagList     []string `json:"tagList" validate:"min=1,max=10,unique,dive,min=3,max=30"`
 	} `json:"article" validate:"required"`
 }
 

@@ -35,7 +35,7 @@ type getArticleHandler struct {
 
 func (h *getArticleHandler) GetArticle(c echo.Context) error {
 	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
-	request := new(requests.GetArticle)
+	request := new(requests.ArticleSlug)
 
 	request.Slug = c.Param("slug")
 	if err := request.Validate(); err != nil {
