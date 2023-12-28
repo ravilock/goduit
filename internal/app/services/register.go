@@ -20,7 +20,8 @@ func Register(user *dtos.User, ctx context.Context) (*dtos.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	*model.PasswordHash = string(passwordHash)
+	passwordHashString := string(passwordHash)
+	model.PasswordHash = &passwordHashString
 
 	if err = repositories.RegisterUser(model, ctx); err != nil {
 		return nil, err
