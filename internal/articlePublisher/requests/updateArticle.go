@@ -10,8 +10,8 @@ import (
 )
 
 type UpdateArticle struct {
+	Slug    string `param:"slug" validate:"required,notblank,min=5"`
 	Article struct {
-		Slug        string `validate:"required,notblank,min=5"`
 		Title       string `json:"title" validate:"required,notblank,min=5,max=255"`
 		Description string `json:"description" validate:"required,notblank,min=5,max=255"`
 		Body        string `json:"body" validate:"required,notblank"`

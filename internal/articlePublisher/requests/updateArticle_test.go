@@ -15,19 +15,19 @@ func TestUpdateArticle(t *testing.T) {
 	})
 	t.Run("Slug is required", func(t *testing.T) {
 		request := generateUpdateArticleRequest()
-		request.Article.Slug = ""
+		request.Slug = ""
 		err := request.Validate()
 		assert.ErrorContains(t, err, api.RequiredFieldError("Slug").Error())
 	})
 	t.Run("Slug should not be blank", func(t *testing.T) {
 		request := generateUpdateArticleRequest()
-		request.Article.Slug = " "
+		request.Slug = " "
 		err := request.Validate()
 		assert.ErrorContains(t, err, api.RequiredFieldError("Slug").Error())
 	})
 	t.Run("Slug should contain at least 5 chars", func(t *testing.T) {
 		request := generateUpdateArticleRequest()
-		request.Article.Slug = "1234"
+		request.Slug = "1234"
 		err := request.Validate()
 		assert.ErrorContains(t, err, api.InvalidFieldLength("Slug", "min", "5").Error())
 	})
@@ -95,7 +95,7 @@ func TestUpdateArticle(t *testing.T) {
 
 func generateUpdateArticleRequest() *UpdateArticle {
 	article := new(UpdateArticle)
-	article.Article.Slug = "test-slug"
+	article.Slug = "test-slug"
 	article.Article.Title = "Test Title"
 	article.Article.Description = "Test Description"
 	article.Article.Body = "Test Body"

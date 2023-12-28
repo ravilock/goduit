@@ -8,7 +8,7 @@ import (
 )
 
 type ArticleSlug struct {
-	Slug string `validate:"required,notblank,min=5"`
+	Slug string `param:"slug" validate:"required,notblank,min=5"`
 }
 
 func (r *ArticleSlug) Validate() error {

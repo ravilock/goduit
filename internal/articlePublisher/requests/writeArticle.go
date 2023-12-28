@@ -22,7 +22,7 @@ type WriteArticle struct {
 func (r *WriteArticle) Model(authorUsername string) *models.Article {
 	tags := deduplicateTags(r.Article.TagList)
 	slug := makeSlug(r.Article.Title)
-	createAt := time.Now()
+	createdAt := time.Now()
 	return &models.Article{
 		Author:         &authorUsername,
 		Slug:           &slug,
@@ -30,7 +30,7 @@ func (r *WriteArticle) Model(authorUsername string) *models.Article {
 		Description:    &r.Article.Description,
 		Body:           &r.Article.Body,
 		TagList:        &tags,
-		CreatedAt:      &createAt,
+		CreatedAt:      &createdAt,
 		UpdatedAt:      nil,
 		FavoritesCount: new(int64),
 	}
