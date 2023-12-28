@@ -46,12 +46,14 @@ func TestUnfollow(t *testing.T) {
 	handler := NewFollowerHandler(central, manager)
 
 	clearDatabase(client)
-	if err := registerUser(unfollowTestUsername, unfollowTestEmail, "", manager); err != nil {
-		log.Fatal("Could not create user", err)
+	_, _, err = registerUser(unfollowTestUsername, unfollowTestEmail, "", manager)
+	if err != nil {
+		t.Error("Could not create user", err)
 	}
 
-	if err := registerUser(followerUsername, followerEmail, "", manager); err != nil {
-		log.Fatal("Could not create user", err)
+	_, _, err = registerUser(followerUsername, followerEmail, "", manager)
+	if err != nil {
+		t.Error("Could not create user", err)
 	}
 
 	if err := followUser(unfollowTestUsername, followerUsername, handler.followUserHandler); err != nil {

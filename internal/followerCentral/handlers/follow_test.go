@@ -46,12 +46,14 @@ func TestFollow(t *testing.T) {
 	handler := NewFollowerHandler(central, manager)
 
 	clearDatabase(client)
-	if err := registerUser(followTestUsername, followTestEmail, "", manager); err != nil {
-		log.Fatal("Could not create user", err)
+	_, _, err = registerUser(followTestUsername, followTestEmail, "", manager)
+	if err != nil {
+		t.Error("Could not create user", err)
 	}
 
-	if err := registerUser(followerUsername, followerEmail, "", manager); err != nil {
-		log.Fatal("Could not create user", err)
+	_, _, err = registerUser(followerUsername, followerEmail, "", manager)
+	if err != nil {
+		t.Error("Could not create user", err)
 	}
 
 	e := echo.New()
@@ -100,11 +102,12 @@ func checkFollowResponse(t *testing.T, username string, following bool, response
 
 func checkFollowerModel(t *testing.T, followed, follower string, model *followerCentralModels.Follower) {
 	t.Helper()
+	assert.NotNil(t, model)
 	assert.Equal(t, followed, *model.Followed, "Wrong followed username")
 	assert.Equal(t, follower, *model.Follower, "Wrong follower username")
 }
 
-func registerUser(username, email, password string, manager *userServices.ProfileManager) error {
+func registerUser(username, email, password string, manager *userServices.ProfileManager) (*profileManagerModels.User, string, error) {
 	if username == "" {
 		username = "default-username"
 	}
@@ -114,8 +117,7 @@ func registerUser(username, email, password string, manager *userServices.Profil
 	if password == "" {
 		password = "default-password"
 	}
-	_, _, err := manager.Register(context.Background(), &profileManagerModels.User{Username: &username, Email: &email}, password)
-	return err
+	return manager.Register(context.Background(), &profileManagerModels.User{Username: &username, Email: &email}, password)
 }
 
 func followUser(followed, follower string, handler followUserHandler) error {
