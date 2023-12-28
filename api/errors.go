@@ -54,9 +54,9 @@ func InvalidFieldLength(field string, validationName string, validationSize stri
 	}
 }
 
-func UserNotFound(email string) *echo.HTTPError {
+func UserNotFound(identifier string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusNotFound,
-		Message: fmt.Sprintf("User with email %q not found", email),
+		Message: fmt.Sprintf("User with identifier %q not found", identifier),
 	}
 }
