@@ -26,12 +26,14 @@ type updateArticleHandler struct {
 
 func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 	authorUsername := c.Request().Header.Get("Goduit-Client-Username")
+	binder := &echo.DefaultBinder{}
 	request := new(requests.UpdateArticle)
-	if err := c.Bind(request); err != nil {
+	if err := binder.BindBody(c, request); err != nil {
 		return api.CouldNotUnmarshalBodyError
 	}
-
-	request.Article.Slug = c.Param("slug")
+	if err := binder.BindPathParams(c, request); err != nil {
+		return err
+	}
 
 	if err := request.Validate(); err != nil {
 		return err
@@ -41,12 +43,12 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	currentArticle, err := h.service.GetArticleBySlug(ctx, request.Article.Slug)
+	currentArticle, err := h.service.GetArticleBySlug(ctx, request.Slug)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
 			case app.ArticleNotFoundErrorCode:
-				return api.ArticleNotFound(request.Article.Slug)
+				return api.ArticleNotFound(request.Slug)
 			}
 		}
 		return err
@@ -56,11 +58,11 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 		return api.Forbidden
 	}
 
-	if err = h.service.UpdateArticle(ctx, request.Article.Slug, article); err != nil {
+	if err = h.service.UpdateArticle(ctx, request.Slug, article); err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
 			case app.ArticleNotFoundErrorCode:
-				return api.ArticleNotFound(request.Article.Slug)
+				return api.ArticleNotFound(request.Slug)
 			case app.ConflictErrorCode:
 				return api.ConfictError
 			}
