@@ -17,20 +17,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const followTestUsername = "follow-test-username"
-const followTestEmail = "follow.email@test.test"
-const followerUsername = "follower-username"
-const followerEmail = "follower.email@test.test"
-
 func TestFollow(t *testing.T) {
+	const followTestUsername = "follow-test-username"
+	const followTestEmail = "follow.email@test.test"
+
+	const followerUsername = "follower-username"
+	const followerEmail = "follower.email@test.test"
+
 	clearDatabase()
-	e := echo.New()
 	if err := registerAccount(followTestUsername, getUserTestEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 	if err := registerAccount(followerUsername, followerEmail, ""); err != nil {
 		log.Fatal("Could not create user", err)
 	}
+
+	e := echo.New()
 	t.Run("Should follow a user", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", followTestUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
