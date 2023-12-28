@@ -22,12 +22,13 @@ type updateProfileHandler struct {
 }
 
 func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
-	subjectEmail := c.Request().Header.Get("Goduit-Subject")
-	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
-
 	request := new(requests.UpdateProfile)
-	if err := c.Bind(request); err != nil {
+	binder := &echo.DefaultBinder{}
+	if err := binder.BindBody(c, request); err != nil {
 		return api.CouldNotUnmarshalBodyError
+	}
+	if err := binder.BindHeaders(c, request); err != nil {
+		return err
 	}
 
 	if err := request.Validate(); err != nil {
@@ -36,7 +37,7 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 
 	model := request.Model()
 
-	token, err := h.service.UpdateProfile(c.Request().Context(), subjectEmail, clientUsername, request.User.Password, model)
+	token, err := h.service.UpdateProfile(c.Request().Context(), request.SubjectEmail, request.ClientUsername, request.User.Password, model)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
