@@ -4,9 +4,9 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 // FollowerModel represents a relationship between users
 //   - "Followed" represents the username of the user to be followed
-//   - "Following" represents the username of the user that is following
+//   - "Follower" represents the username of the user that is following
 type Follower struct {
-	ID        *primitive.ObjectID `bson:"_id"`
-	Followed  *string             `bson:"followed"`
-	Following *string             `bson:"following"`
+	ID       *primitive.ObjectID `bson:"_id"`
+	Followed *string             `bson:"followed"`
+	Follower *string             `bson:"follower"`
 }
