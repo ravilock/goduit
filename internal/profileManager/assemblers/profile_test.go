@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/internal/app/models"
+	"github.com/ravilock/goduit/internal/profileManager/models"
 )
 
 func TestProfileResponse(t *testing.T) {
