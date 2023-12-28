@@ -57,12 +57,26 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 	}
 
 	if err = h.service.UpdateArticle(ctx, request.Article.Slug, article); err != nil {
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.ArticleNotFoundErrorCode:
+				return api.ArticleNotFound(request.Article.Slug)
+			case app.ConflictErrorCode:
+				return api.ConfictError
+			}
+		}
 		return err
 	}
 
 	authorProfile, err := h.profileManager.GetProfileByUsername(ctx, authorUsername)
 	if err != nil {
-		return api.UserNotFound(authorUsername)
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.UserNotFoundErrorCode:
+				return api.UserNotFound(authorUsername)
+			}
+		}
+		return err
 	}
 
 	profileResponse, err := profileManagerAssembler.ProfileResponse(authorProfile, false)

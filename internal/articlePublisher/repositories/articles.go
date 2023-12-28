@@ -61,15 +61,15 @@ func (r *ArticleRepository) UpdateArticle(ctx context.Context, slug string, arti
 	filter := bson.D{{Key: "slug", Value: slug}}
 	update := bson.D{{Key: "$set", Value: article}}
 	collection := r.DBClient.Database("conduit").Collection("articles")
-	updateResult, err := collection.UpdateOne(ctx, filter, update, nil)
+	err := collection.FindOneAndUpdate(ctx, filter, update, nil).Decode(article)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return app.ArticleNotFoundError(slug, err)
+		}
 		if mongo.IsDuplicateKeyError(err) {
 			return app.ConflictError("articles")
 		}
 		return err
-	}
-	if updateResult.MatchedCount == 0 {
-		return app.UserNotFoundError(slug, nil)
 	}
 	return nil
 }
