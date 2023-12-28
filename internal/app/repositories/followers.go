@@ -8,7 +8,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func FollowUser(follower *models.Follower, ctx context.Context) error {
+// Follow establishes a follow relationship between two users.
+//
+// The followed parameter represents the username of the user to be followed.
+//
+// The following parameter represents the username of the user that is following.
+func Follow(followed, following string, ctx context.Context) error {
+	follower := models.Follower{Following: &following, Followed: &followed}
 	collection := db.DatabaseClient.Database("conduit").Collection("followers")
 	if _, err := collection.InsertOne(ctx, follower); err != nil {
 		return err
@@ -16,11 +22,16 @@ func FollowUser(follower *models.Follower, ctx context.Context) error {
 	return nil
 }
 
-func IsFollowedBy(from, to string, ctx context.Context) (*models.Follower, error) {
+// IsFollowedBy queries for a follow relationship between two users. Returns *models.Follower.
+//
+// The followed parameter represents the username of the user to be followed.
+//
+// The following parameter represents the username of the user that is following.
+func IsFollowedBy(followed, following string, ctx context.Context) (*models.Follower, error) {
 	var follower *models.Follower
 	filter := bson.D{
-		{Key: "from", Value: from},
-		{Key: "to", Value: to},
+		{Key: "followed", Value: followed},
+		{Key: "following", Value: following},
 	}
 	collection := db.DatabaseClient.Database("conduit").Collection("followers")
 	if err := collection.FindOne(ctx, filter).Decode(&follower); err != nil {

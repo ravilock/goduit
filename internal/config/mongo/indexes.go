@@ -29,8 +29,8 @@ func ensureIndexes() {
 	followersCollection := DatabaseClient.Database("conduit").Collection("followers")
 	_, err = followersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys: bson.D{
-			{"from", 1},
-			{"to", 1},
+			{"followed", 1},
+			{"following", 1},
 		},
 		Options: options.Index().SetUnique(true),
 	})

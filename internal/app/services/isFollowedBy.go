@@ -6,11 +6,16 @@ import (
 	"github.com/ravilock/goduit/internal/app/repositories"
 )
 
-func IsFollowedBy(username, followerUsername string, ctx context.Context) bool {
-	if followerUsername == "" || username == followerUsername {
+// IsFollowedBy determines wether or not a user follows another user. Returns bool
+//
+// The followed parameter represents the username of the user to be followed.
+//
+// The following parameter represents the username of the user that is following.
+func IsFollowedBy(followed, following string, ctx context.Context) bool {
+	if following == "" || followed == following {
 		return false
 	}
-	_, err := repositories.IsFollowedBy(username, followerUsername, ctx)
+	_, err := repositories.IsFollowedBy(followed, following, ctx)
 	if err != nil {
 		return false
 	}
