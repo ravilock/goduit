@@ -60,7 +60,7 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, username string)
 	return user, nil
 }
 
-func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) (*models.User, error) {
+func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) error {
 	filter := bson.D{
 		{Key: "username", Value: clientUsername},
 		{Key: "email", Value: subjectEmail},
@@ -70,12 +70,12 @@ func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, client
 	updateResult, err := collection.UpdateOne(ctx, filter, update, nil)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			return nil, app.ConflictError("users")
+			return app.ConflictError("users")
 		}
-		return nil, err
+		return err
 	}
 	if updateResult.MatchedCount == 0 {
-		return nil, app.UserNotFoundError(*user.Email, nil)
+		return app.UserNotFoundError(*user.Email, nil)
 	}
-	return user, nil
+	return nil
 }
