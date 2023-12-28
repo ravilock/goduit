@@ -9,13 +9,17 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/models"
 )
 
-type ProfileGetter interface {
+type ProfileGetter interface { // TODO: Remove
 	GetProfileByEmail(ctx context.Context, email string) (*models.User, error)
 	GetProfileByUsername(ctx context.Context, username string) (*models.User, error)
 }
 
+type profileGetter interface {
+	GetProfileByEmail(ctx context.Context, email string) (*models.User, error)
+}
+
 type getOwnProfileHandler struct {
-	service ProfileGetter
+	service profileGetter
 }
 
 func (h *getOwnProfileHandler) GetOwnProfile(c echo.Context) error {
