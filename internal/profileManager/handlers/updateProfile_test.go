@@ -12,9 +12,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
-	"github.com/ravilock/goduit/internal/profileManager/repositories"
-	"github.com/ravilock/goduit/internal/profileManager/requests"
-	"github.com/ravilock/goduit/internal/profileManager/services"
+	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
+	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,8 +35,8 @@ func TestUpdateProfile(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error connecting to database", err)
 	}
-	repository := repositories.NewUserRepository(client)
-	manager := services.NewProfileManager(repository)
+	repository := profileManagerRepositories.NewUserRepository(client)
+	manager := profileManager.NewProfileManager(repository)
 	handler := NewProfileHandler(manager)
 	clearDatabase(client)
 	e := echo.New()
@@ -63,7 +63,7 @@ func TestUpdateProfile(t *testing.T) {
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
 	})
 	t.Run("Should update only the requested fields", func(t *testing.T) {
-		request := new(requests.UpdateProfile)
+		request := new(profileManagerRequests.UpdateProfile)
 		request.User.Username = oldUpdateProfileTestUsername
 		request.User.Email = updateProfileTestEmail
 		requestBody, err := json.Marshal(request)
@@ -88,8 +88,8 @@ func TestUpdateProfile(t *testing.T) {
 	})
 }
 
-func generateUpdateProfileBody() *requests.UpdateProfile {
-	request := new(requests.UpdateProfile)
+func generateUpdateProfileBody() *profileManagerRequests.UpdateProfile {
+	request := new(profileManagerRequests.UpdateProfile)
 	request.User.Username = updateProfileTestUsername
 	request.User.Email = updateProfileTestEmail
 	request.User.Password = updateProfileTestPassword
@@ -98,7 +98,7 @@ func generateUpdateProfileBody() *requests.UpdateProfile {
 	return request
 }
 
-func checkUpdateProfileResponse(t *testing.T, request *requests.UpdateProfile, response *responses.User) {
+func checkUpdateProfileResponse(t *testing.T, request *profileManagerRequests.UpdateProfile, response *responses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	assert.Equal(t, request.User.Username, response.User.Username, "User username should be the same")

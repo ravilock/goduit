@@ -1,6 +1,9 @@
 package handlers
 
-import "github.com/ravilock/goduit/internal/profileManager/services"
+import (
+	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
+	"github.com/ravilock/goduit/internal/profileManager/services"
+)
 
 type ProfileHandler struct {
 	registerProfileHandler
@@ -9,7 +12,7 @@ type ProfileHandler struct {
 	getOwnProfileHandler
 }
 
-func NewProfileHandler(manager *services.ProfileManager) *ProfileHandler {
+func NewProfileHandler(manager *services.ProfileManager, central *followerCentral.FollowerCentral) *ProfileHandler {
 	register := registerProfileHandler{manager}
 	login := loginHandler{manager}
 	updateProfile := updateProfileHandler{manager}

@@ -13,9 +13,9 @@ import (
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/responses"
 	"github.com/ravilock/goduit/internal/config/mongo"
-	"github.com/ravilock/goduit/internal/profileManager/repositories"
-	"github.com/ravilock/goduit/internal/profileManager/requests"
-	"github.com/ravilock/goduit/internal/profileManager/services"
+	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
+	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,8 +33,8 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error connecting to database", err)
 	}
-	repository := repositories.NewUserRepository(client)
-	manager := services.NewProfileManager(repository)
+	repository := profileManagerRepositories.NewUserRepository(client)
+	manager := profileManager.NewProfileManager(repository)
 	handler := NewProfileHandler(manager)
 	clearDatabase(client)
 	e := echo.New()
@@ -85,14 +85,14 @@ func TestLogin(t *testing.T) {
 	})
 }
 
-func generateLoginBody() *requests.Login {
-	request := new(requests.Login)
+func generateLoginBody() *profileManagerRequests.Login {
+	request := new(profileManagerRequests.Login)
 	request.User.Email = loginTestEmail
 	request.User.Password = loginTestPassword
 	return request
 }
 
-func checkLoginResponse(t *testing.T, request *requests.Login, response *responses.User) {
+func checkLoginResponse(t *testing.T, request *profileManagerRequests.Login, response *responses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	assert.NotZero(t, response.User.Token)
