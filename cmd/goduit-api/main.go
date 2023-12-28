@@ -45,8 +45,8 @@ func main() {
 	validators.InitValidator()
 
 	// Routes
-	e.GET("/healthcheck", handlers.Healthcheck)
 	apiGroup := e.Group("/api")
+	apiGroup.GET("/healthcheck", handlers.Healthcheck)
 	routers.UsersRouter(apiGroup)
 
 	// Start server

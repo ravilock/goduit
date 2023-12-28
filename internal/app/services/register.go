@@ -28,9 +28,9 @@ func Register(user *dtos.User, ctx context.Context) (*dtos.User, error) {
 
 	now := time.Now()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.RegisteredClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &jwt.RegisteredClaims{
 		Issuer:    "goduit",
-		Subject:   *user.Email,
+		Subject:   *model.Email,
 		ExpiresAt: jwt.NewNumericDate(now.Add(10 * time.Minute)),
 		NotBefore: jwt.NewNumericDate(now),
 		IssuedAt:  jwt.NewNumericDate(now),
