@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/joho/godotenv"
 	"github.com/ravilock/goduit/api/validators"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
 	"github.com/ravilock/goduit/internal/config/mongo"
@@ -20,10 +19,6 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	if err := godotenv.Load("../../.env.test"); err != nil {
-		log.Fatalln("No .env file found", err)
-	}
-
 	privateKeyFile, err := os.Open("../../jwtRS256.key")
 	if err != nil {
 		log.Fatal(err)
