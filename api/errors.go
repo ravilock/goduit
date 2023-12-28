@@ -77,6 +77,13 @@ func FollowerRelationshipNotFound(followed, follower string) *echo.HTTPError {
 	}
 }
 
+func ArticleNotFound(identifier string) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:    http.StatusNotFound,
+		Message: fmt.Sprintf("Article with identifier %q not found", identifier),
+	}
+}
+
 func InternalError(internal error) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:     http.StatusInternalServerError,
