@@ -9,4 +9,6 @@ import (
 func ProfilesRouter(apiGroup *echo.Group) {
 	profileGroup := apiGroup.Group("/profile")
 	profileGroup.GET("/:username", handlers.GetProfile, middlewares.CreateAuthMiddleware(false))
+	profileGroup.POST("/:username/follow", handlers.Follow, middlewares.CreateAuthMiddleware(false))
+	profileGroup.POST("/:username/unfollow", handlers.Unfollow, middlewares.CreateAuthMiddleware(false))
 }
