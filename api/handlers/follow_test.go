@@ -83,5 +83,13 @@ func checkFollowerModel(t *testing.T, followed, follower string, model *models.F
 }
 
 func followUser(followed, follower string) error {
-	return repositories.Follow(followed, follower, context.Background())
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", followed), nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetParamNames("username")
+	c.SetParamValues(followed)
+	req.Header.Set("Goduit-Client-Username", follower)
+	return Follow(c)
 }
