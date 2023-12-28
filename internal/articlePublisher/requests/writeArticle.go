@@ -19,12 +19,12 @@ type WriteArticle struct {
 	} `json:"article" validate:"required"`
 }
 
-func (r *WriteArticle) Model(author string) *models.Article {
+func (r *WriteArticle) Model(authorUsername string) *models.Article {
 	tags := deduplicateTags(r.Article.TagList)
 	slug := makeSlug(r.Article.Title)
 	createAt := time.Now()
 	return &models.Article{
-		Author:         &author,
+		Author:         &authorUsername,
 		Slug:           &slug,
 		Title:          &r.Article.Title,
 		Description:    &r.Article.Description,
@@ -32,7 +32,7 @@ func (r *WriteArticle) Model(author string) *models.Article {
 		TagList:        &tags,
 		CreatedAt:      &createAt,
 		UpdatedAt:      nil,
-		FavoritesCount: 0,
+		FavoritesCount: new(int64),
 	}
 }
 

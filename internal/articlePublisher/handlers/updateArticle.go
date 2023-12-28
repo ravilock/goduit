@@ -14,21 +14,24 @@ import (
 	profileManagerAssembler "github.com/ravilock/goduit/internal/profileManager/assemblers"
 )
 
-type articleWriter interface {
-	WriteArticle(ctx context.Context, article *models.Article) error
+type articleUpdater interface {
+	UpdateArticle(ctx context.Context, slug string, article *models.Article) error
+	articleGetter
 }
 
-type writeArticleHandler struct {
-	service        articleWriter
+type updateArticleHandler struct {
+	service        articleUpdater
 	profileManager profileGetter
 }
 
-func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
+func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 	authorUsername := c.Request().Header.Get("Goduit-Client-Username")
-	request := new(requests.WriteArticle)
+	request := new(requests.UpdateArticle)
 	if err := c.Bind(request); err != nil {
 		return api.CouldNotUnmarshalBodyError
 	}
+
+	request.Article.Slug = c.Param("slug")
 
 	if err := request.Validate(); err != nil {
 		return err
@@ -38,10 +41,26 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	err := h.service.WriteArticle(ctx, article)
+	currentArticle, err := h.service.GetArticleBySlug(ctx, request.Article.Slug)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
+			case app.ArticleNotFoundErrorCode:
+				return api.ArticleNotFound(request.Article.Slug)
+			}
+		}
+		return err
+	}
+
+	if authorUsername != *currentArticle.Author {
+		return api.Forbidden
+	}
+
+	if err = h.service.UpdateArticle(ctx, request.Article.Slug, article); err != nil {
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.ArticleNotFoundErrorCode:
+				return api.ArticleNotFound(request.Article.Slug)
 			case app.ConflictErrorCode:
 				return api.ConfictError
 			}
@@ -51,7 +70,13 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 
 	authorProfile, err := h.profileManager.GetProfileByUsername(ctx, authorUsername)
 	if err != nil {
-		return api.UserNotFound(authorUsername)
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.UserNotFoundErrorCode:
+				return api.UserNotFound(authorUsername)
+			}
+		}
+		return err
 	}
 
 	profileResponse, err := profileManagerAssembler.ProfileResponse(authorProfile, false)
@@ -60,5 +85,5 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 	}
 
 	response := assemblers.ArticleResponse(article, profileResponse)
-	return c.JSON(http.StatusCreated, response)
+	return c.JSON(http.StatusOK, response)
 }

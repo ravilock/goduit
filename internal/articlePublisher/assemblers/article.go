@@ -18,7 +18,7 @@ func ArticleResponse(article *models.Article, author *profileManagerResponses.Pr
 		response.Article.UpdatedAt = *article.UpdatedAt
 	}
 	response.Article.Favorited = false
-	response.Article.FavoritesCount = article.FavoritesCount
+	response.Article.FavoritesCount = *article.FavoritesCount
 	response.Article.Author = author.Profile
 	return response
 }

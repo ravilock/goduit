@@ -2,12 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
-
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
@@ -18,17 +12,22 @@ import (
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/assert"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
 )
 
 func TestUnpublishArticle(t *testing.T) {
 	const articleAuthorUsername = "article-author-username"
 	const articleAuthorEmail = "article.author.email@test.test"
 
-	const articleTitle = "Article Title"
-	const articleSlug = "article-title"
-	const articleDescription = "Article Description"
-	const articleBody = "Article Body"
-	articleTagList := []string{"test"}
+	const articleTitle = "Unpublish Article Title"
+	const articleSlug = "unpublish-article-title"
+	const articleDescription = "Unpublish Article Description"
+	const articleBody = "Unpublish Article Body"
+	articleTagList := []string{"unpublish", "article"}
 
 	databaseURI := os.Getenv("DB_URL")
 	if databaseURI == "" {
@@ -48,7 +47,7 @@ func TestUnpublishArticle(t *testing.T) {
 	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
-	_, _, err = registerUser(articleAuthorUsername, "", "", profileManager)
+	_, err = registerUser(articleAuthorUsername, "", "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
@@ -58,6 +57,7 @@ func TestUnpublishArticle(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Client-Username", articleAuthorUsername)
+		req.Header.Set("Goduit-Subject", articleAuthorEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
@@ -66,15 +66,27 @@ func TestUnpublishArticle(t *testing.T) {
 		assert.NoError(t, err)
 		err = handler.UnpublishArticle(c)
 		assert.NoError(t, err)
-		if rec.Code != http.StatusNoContent {
-			t.Errorf("Got status different than %v, got %v", http.StatusNoContent, rec.Code)
-		}
+		assert.Equal(t, http.StatusNoContent, rec.Code)
 	})
-
-	t.Run("Should only delete aritcles authored by authenticated user", func(t *testing.T) {
+	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
+		slug := "inexistent-article"
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set("Goduit-Client-Username", articleAuthorUsername)
+		req.Header.Set("Goduit-Subject", articleAuthorEmail)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("slug")
+		c.SetParamValues(slug)
+		assert.NoError(t, err)
+		err = handler.UnpublishArticle(c)
+		assert.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
+	})
+	t.Run("Should only delete aritcles authored by the currently authenticated user", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Client-Username", "not-the-author")
+		req.Header.Set("Goduit-Subject", "not.the.author.email@test.test")
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")

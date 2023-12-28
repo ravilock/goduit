@@ -20,6 +20,9 @@ func NewUserRepository(client *mongo.Client) *UserRepository {
 func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) error {
 	collection := r.DBClient.Database("conduit").Collection("users")
 	if _, err := collection.InsertOne(ctx, user); err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return app.ConflictError("users")
+		}
 		return err
 	}
 	return nil
@@ -57,7 +60,7 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, username string)
 	return user, nil
 }
 
-func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) (*models.User, error) {
+func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) error {
 	filter := bson.D{
 		{Key: "username", Value: clientUsername},
 		{Key: "email", Value: subjectEmail},
@@ -66,10 +69,13 @@ func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, client
 	collection := r.DBClient.Database("conduit").Collection("users")
 	updateResult, err := collection.UpdateOne(ctx, filter, update, nil)
 	if err != nil {
-		return nil, err
+		if mongo.IsDuplicateKeyError(err) {
+			return app.ConflictError("users")
+		}
+		return err
 	}
 	if updateResult.MatchedCount == 0 {
-		return nil, app.UserNotFoundError(*user.Email, nil)
+		return app.UserNotFoundError(*user.Email, nil)
 	}
-	return user, nil
+	return nil
 }

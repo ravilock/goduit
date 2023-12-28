@@ -2,18 +2,19 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/profileManager/assemblers"
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	"github.com/ravilock/goduit/internal/profileManager/requests"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type profileRegister interface {
-	Register(ctx context.Context, model *models.User, password string) (*models.User, string, error)
+	Register(ctx context.Context, model *models.User, password string) (string, error)
 }
 
 type registerProfileHandler struct {
@@ -32,10 +33,13 @@ func (h *registerProfileHandler) Register(c echo.Context) error {
 
 	user := request.Model()
 
-	user, token, err := h.service.Register(c.Request().Context(), user, request.User.Password)
+	token, err := h.service.Register(c.Request().Context(), user, request.User.Password)
 	if err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return api.ConfictError
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.ConflictErrorCode:
+				return api.ConfictError
+			}
 		}
 		return err
 	}

@@ -98,12 +98,14 @@ func main() {
 	profileGroup := apiGroup.Group("/profile")
 	profileGroup.GET("/:username", profileHandler.GetProfile, identity.CreateAuthMiddleware(false))
 	profileGroup.POST("/:username/follow", followerHandler.Follow, identity.CreateAuthMiddleware(true))
-	profileGroup.POST("/:username/unfollow", followerHandler.Unfollow, identity.CreateAuthMiddleware(true))
+	profileGroup.DELETE("/:username/follow", followerHandler.Unfollow, identity.CreateAuthMiddleware(true))
 	// Article Routes
 	articlesGroup := apiGroup.Group("/articles")
 	articlesGroup.POST("", articleHandler.WriteArticle, identity.CreateAuthMiddleware(true))
 	articleGroup := apiGroup.Group("/article")
 	articleGroup.GET("/:slug", articleHandler.GetArticle, identity.CreateAuthMiddleware(false))
+	articleGroup.DELETE("/:slug", articleHandler.UnpublishArticle, identity.CreateAuthMiddleware(true))
+	articleGroup.PUT("/:slug", articleHandler.UpdateArticle, identity.CreateAuthMiddleware(true))
 	// Start server
 	e.Logger.Fatal(e.Start(":6969"))
 }

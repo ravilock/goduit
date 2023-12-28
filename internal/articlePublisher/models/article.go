@@ -8,13 +8,13 @@ import (
 
 type Article struct {
 	ID             *primitive.ObjectID `bson:"_id,omitempty"`
-	Author         *string             `bson:"author"`
-	Slug           *string             `bson:"slug"`
-	Title          *string             `bson:"title"`
-	Description    *string             `bson:"description"`
-	Body           *string             `bson:"body"`
-	TagList        *[]string           `bson:"tagList"`
-	CreatedAt      *time.Time          `bson:"createdAt"`
-	UpdatedAt      *time.Time          `bson:"updatedAt"`
-	FavoritesCount int64               `bson:"favoritesCount"`
+	Author         *string             `bson:"author,omitempty"`
+	Slug           *string             `bson:"slug,omitempty"`
+	Title          *string             `bson:"title,omitempty"`
+	Description    *string             `bson:"description,omitempty"`
+	Body           *string             `bson:"body,omitempty"`
+	TagList        *[]string           `bson:"tagList,omitempty"`
+	CreatedAt      *time.Time          `bson:"createdAt,omitempty"`
+	UpdatedAt      *time.Time          `bson:"updatedAt,omitempty"`
+	FavoritesCount *int64              `bson:"favoritesCount,omitempty"`
 }

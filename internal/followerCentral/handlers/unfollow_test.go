@@ -45,12 +45,12 @@ func TestUnfollow(t *testing.T) {
 	handler := NewFollowerHandler(followerCentral, profileManager)
 
 	clearDatabase(client)
-	_, _, err = registerUser(unfollowTestUsername, unfollowTestEmail, "", profileManager)
+	_, err = registerUser(unfollowTestUsername, unfollowTestEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
 
-	_, _, err = registerUser(followerUsername, followerEmail, "", profileManager)
+	_, err = registerUser(followerUsername, followerEmail, "", profileManager)
 	if err != nil {
 		t.Error("Could not create user", err)
 	}
@@ -61,7 +61,7 @@ func TestUnfollow(t *testing.T) {
 
 	e := echo.New()
 	t.Run("Should unfollow a user", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/unfollow", unfollowTestUsername), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", unfollowTestUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -82,7 +82,7 @@ func TestUnfollow(t *testing.T) {
 		assert.Nil(t, followerModel)
 	})
 	t.Run("If the user is already not following the other user, return HTTP 200", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/unfollow", unfollowTestUsername), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", unfollowTestUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -104,7 +104,7 @@ func TestUnfollow(t *testing.T) {
 	})
 	t.Run("Should return 404 if no user is found", func(t *testing.T) {
 		inexistentUsername := "inexistent-username"
-		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/unfollow", inexistentUsername), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", inexistentUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)

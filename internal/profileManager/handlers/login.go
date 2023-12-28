@@ -14,7 +14,7 @@ import (
 )
 
 type logger interface {
-	Login(ctx context.Context, model *models.User, password string) (*models.User, string, error)
+	Login(ctx context.Context, email, password string) (*models.User, string, error)
 }
 
 type loginHandler struct {
@@ -31,9 +31,7 @@ func (h *loginHandler) Login(c echo.Context) error {
 		return err
 	}
 
-	user := request.Model()
-
-	user, token, err := h.service.Login(c.Request().Context(), user, request.User.Password)
+	user, token, err := h.service.Login(c.Request().Context(), request.User.Email, request.User.Password)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {

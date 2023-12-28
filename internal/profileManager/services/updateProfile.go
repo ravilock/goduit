@@ -10,37 +10,37 @@ import (
 )
 
 type profileUpdater interface {
-	UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) (*models.User, error)
+	UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) error
 }
 
 type updateProfileService struct {
 	repository profileUpdater
 }
 
-func (s *updateProfileService) UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (*models.User, string, error) {
+func (s *updateProfileService) UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (string, error) {
 	if shouldGenerateNewPasswordHash(password) {
 		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		fmt.Println(passwordHash, password)
 		if err != nil {
-			return nil, "", err
+			return "", err
 		}
 		passwordHashString := string(passwordHash)
 		model.PasswordHash = &passwordHashString
 	}
 
-	model, err := s.repository.UpdateProfile(ctx, subjectEmail, clientUsername, model)
+	err := s.repository.UpdateProfile(ctx, subjectEmail, clientUsername, model)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	if shouldGenerateNewToken(subjectEmail, clientUsername, model) {
 		tokenString, err := identity.GenerateToken(*model.Email, *model.Username)
 		if err != nil {
-			return nil, "", err
+			return "", err
 		}
-		return model, tokenString, nil
+		return tokenString, nil
 	}
-	return model, "", nil
+	return "", nil
 }
 
 func shouldGenerateNewPasswordHash(password string) bool {

@@ -31,12 +31,6 @@ func TestArticleSlug(t *testing.T) {
 		err := request.Validate()
 		assert.ErrorContains(t, err, api.InvalidFieldLength("Slug", "min", "5").Error())
 	})
-	t.Run("Slug should contain at most 255 chars", func(t *testing.T) {
-		request := generateArticleSlugRequest()
-		request.Slug = randomString(256)
-		err := request.Validate()
-		assert.ErrorContains(t, err, api.InvalidFieldLength("Slug", "max", "255").Error())
-	})
 }
 
 func generateArticleSlugRequest() *ArticleSlug {

@@ -3,6 +3,7 @@ package identity
 import (
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -27,7 +28,6 @@ func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			authorizationHeader := c.Request().Header.Get("Authorization")
 			if !requiredAuthentication && authorizationHeader == "" {
-				c.Set("user", "")
 				return next(c)
 			}
 			identity, err := FromToken(authorizationHeader)
@@ -59,6 +59,7 @@ func GenerateToken(userEmail, username string) (string, error) {
 }
 
 func FromToken(authorizationHeader string) (*Identity, error) {
+	authorizationHeader = strings.TrimPrefix(authorizationHeader, "Bearer ")
 	token, err := jwt.ParseWithClaims(authorizationHeader, &Identity{}, func(t *jwt.Token) (interface{}, error) {
 		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(os.Getenv("PUBLIC_KEY")))
 		if err != nil {
