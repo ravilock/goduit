@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 
-	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/app/models"
 	db "github.com/ravilock/goduit/internal/config/mongo"
@@ -60,7 +59,7 @@ func UpdateUser(user *models.User, ctx context.Context) (*models.User, error) {
 		return nil, err
 	}
 	if updateResult.MatchedCount == 0 {
-		return nil, api.UserNotFound(*user.Email)
+		return nil, app.UserNotFoundError(*user.Email, nil)
 	}
 	return user, nil
 }
