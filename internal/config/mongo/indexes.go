@@ -8,14 +8,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func ensureIndexes() {
+func ensureIndexes() error {
 	usersCollection := DatabaseClient.Database("conduit").Collection("users")
 	_, err := usersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys:    bson.D{{"username", 1}},
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	_, err = usersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
@@ -23,7 +23,7 @@ func ensureIndexes() {
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	followersCollection := DatabaseClient.Database("conduit").Collection("followers")
@@ -35,7 +35,7 @@ func ensureIndexes() {
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	_, err = followersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
@@ -45,7 +45,7 @@ func ensureIndexes() {
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	articlesCollection := DatabaseClient.Database("conduit").Collection("articles")
@@ -53,7 +53,7 @@ func ensureIndexes() {
 		Keys: bson.D{{"author", 1}},
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	_, err = articlesCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
@@ -61,13 +61,15 @@ func ensureIndexes() {
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	_, err = articlesCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys: bson.D{{"tagList", 1}},
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
