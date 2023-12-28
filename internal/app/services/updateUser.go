@@ -10,7 +10,7 @@ import (
 )
 
 func UpdateUser(user *dtos.User, ctx context.Context) (*dtos.User, error) {
-	model := transformers.DtoToModel(user)
+	model := transformers.UserDtoToModel(user)
 
 	if user.Password != nil {
 		passwordHash, err := bcrypt.GenerateFromPassword([]byte(*user.Password), bcrypt.DefaultCost)

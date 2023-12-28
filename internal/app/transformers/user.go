@@ -5,7 +5,7 @@ import (
 	"github.com/ravilock/goduit/internal/app/models"
 )
 
-func DtoToModel(user *dtos.User) *models.User {
+func UserDtoToModel(user *dtos.User) *models.User {
 	return &models.User{
 		Username: user.Username,
 		Email:    user.Email,
@@ -14,7 +14,7 @@ func DtoToModel(user *dtos.User) *models.User {
 	}
 }
 
-func ModelToUserDto(model *models.User, dto *dtos.User) *dtos.User {
+func UserModelToDto(model *models.User, dto *dtos.User) *dtos.User {
 	dto.Username = model.Username
 	dto.Email = model.Email
 	dto.Bio = model.Bio
