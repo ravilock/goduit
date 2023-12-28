@@ -14,7 +14,7 @@ import (
 )
 
 type profileRegister interface {
-	Register(ctx context.Context, model *models.User, password string) (*models.User, string, error)
+	Register(ctx context.Context, model *models.User, password string) (string, error)
 }
 
 type registerProfileHandler struct {
@@ -33,7 +33,7 @@ func (h *registerProfileHandler) Register(c echo.Context) error {
 
 	user := request.Model()
 
-	user, token, err := h.service.Register(c.Request().Context(), user, request.User.Password)
+	token, err := h.service.Register(c.Request().Context(), user, request.User.Password)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {

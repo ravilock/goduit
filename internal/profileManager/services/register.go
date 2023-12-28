@@ -16,22 +16,22 @@ type registerProfileService struct {
 	repository profileRegister
 }
 
-func (s *registerProfileService) Register(ctx context.Context, model *models.User, password string) (*models.User, string, error) {
+func (s *registerProfileService) Register(ctx context.Context, model *models.User, password string) (string, error) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 	passwordHashString := string(passwordHash)
 	model.PasswordHash = &passwordHashString
 
 	if err = s.repository.RegisterUser(ctx, model); err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	tokenString, err := identity.GenerateToken(*model.Email, *model.Username)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
-	return model, tokenString, nil
+	return tokenString, nil
 }
