@@ -30,11 +30,21 @@ func ensureIndexes() {
 	_, err = followersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys: bson.D{
 			{"followed", 1},
-			{"following", 1},
+			{"follower", 1},
 		},
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
 		panic(err)
 	}
+	_, err = followersCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{
+			{"follower", 1},
+		},
+		Options: options.Index().SetUnique(true),
+	})
+	if err != nil {
+		panic(err)
+	}
+
 }
