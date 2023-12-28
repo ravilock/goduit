@@ -15,13 +15,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testUsername = "test-username"
-const testEmail = "user.email@test.test"
-const testPassword = "user-password"
+const loginTestUsername = "login-test-username"
+const loginTestEmail = "login.test.email@test.test"
+const loginTestPassword = "login-test-password"
 
 func TestLogin(t *testing.T) {
 	clearDatabase()
-	if err := createAccount(); err != nil {
+	if err := registerAccount(loginTestUsername, loginTestEmail, loginTestPassword); err != nil {
 		log.Fatal("Could not create user", err)
 	}
 	e := echo.New()
@@ -69,30 +69,10 @@ func TestLogin(t *testing.T) {
 	})
 }
 
-func createAccount() error {
-	registerRequest := new(requests.Register)
-	registerRequest.User.Username = testUsername
-	registerRequest.User.Email = testEmail
-	registerRequest.User.Password = testPassword
-	requestBody, err := json.Marshal(registerRequest)
-	if err != nil {
-		return err
-	}
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(requestBody))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	if err := Register(c); err != nil {
-		return err
-	}
-	return nil
-}
-
 func generateLoginBody() *requests.Login {
 	request := new(requests.Login)
-	request.User.Email = testEmail
-	request.User.Password = testPassword
+	request.User.Email = loginTestEmail
+	request.User.Password = loginTestPassword
 	return request
 }
 
@@ -102,4 +82,34 @@ func checkLoginResponse(t *testing.T, request *requests.Login, response *respons
 	assert.NotZero(t, response.User.Token)
 	assert.Zero(t, response.User.Image)
 	assert.Zero(t, response.User.Bio)
+}
+
+func login(email, password string) (string, error) {
+	if email == "" {
+		email = "default.email@test.test"
+	}
+	if password == "" {
+		password = "default-password"
+	}
+	loginRequest := new(requests.Login)
+	loginRequest.User.Email = email
+	loginRequest.User.Password = password
+	requestBody, err := json.Marshal(loginRequest)
+	if err != nil {
+		return "", err
+	}
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	if err := Login(c); err != nil {
+		return "", err
+	}
+	loginResponse := new(responses.User)
+	if err = json.Unmarshal(rec.Body.Bytes(), loginResponse); err != nil {
+		return "", err
+	}
+	return loginResponse.User.Token, nil
+
 }
