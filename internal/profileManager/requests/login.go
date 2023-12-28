@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/ravilock/goduit/api/validators"
-	"github.com/ravilock/goduit/internal/profileManager/models"
 )
 
 type Login struct {
@@ -13,12 +12,6 @@ type Login struct {
 		Email    string `json:"email" validate:"required,notblank,max=256,email"`
 		Password string `json:"password" validate:"required,notblank,min=8,max=72"`
 	} `json:"user" validate:"required"`
-}
-
-func (r *Login) Model() *models.User {
-	return &models.User{
-		Email: &r.User.Email,
-	}
 }
 
 func (r *Login) Validate() error {

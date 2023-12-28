@@ -18,8 +18,8 @@ type logUserService struct {
 	repository UserGetter
 }
 
-func (s *logUserService) Login(ctx context.Context, model *models.User, password string) (*models.User, string, error) {
-	model, err := s.repository.GetUserByEmail(ctx, *model.Email)
+func (s *logUserService) Login(ctx context.Context, email, password string) (*models.User, string, error) {
+	model, err := s.repository.GetUserByEmail(ctx, email)
 	if err != nil {
 		return nil, "", err
 	}
