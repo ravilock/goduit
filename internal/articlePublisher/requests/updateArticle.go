@@ -30,7 +30,7 @@ func (r *UpdateArticle) Model(authorUsername string) *models.Article {
 		TagList:        nil,
 		CreatedAt:      nil,
 		UpdatedAt:      &updatedAt,
-		FavoritesCount: 0,
+		FavoritesCount: nil,
 	}
 }
 
