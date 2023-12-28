@@ -62,6 +62,7 @@ func TestGetProfile(t *testing.T) {
 		assert.NoError(t, err)
 		checkGetProfileResponse(t, getProfileTestUsername, true, getProfileResponse)
 	})
+  // TODO: add 404 error test
 }
 
 func checkGetProfileResponse(t *testing.T, username string, following bool, response *responses.ProfileResponse) {
