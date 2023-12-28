@@ -16,6 +16,8 @@ var FailedAuthentication *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthor
 
 var ConfictError *echo.HTTPError = echo.NewHTTPError(http.StatusConflict, "Content Already Exists")
 
+var Forbidden *echo.HTTPError = echo.NewHTTPError(http.StatusForbidden, "Forbidden operation")
+
 func UnexpectedTokenSigningMethod(algName string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusUnauthorized,
