@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/app/models"
 	db "github.com/ravilock/goduit/internal/config/mongo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,7 +28,7 @@ func GetUserByEmail(email string, ctx context.Context) (*models.User, error) {
 	collection := db.DatabaseClient.Database("conduit").Collection("users")
 	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, api.FailedLoginAttempt
+			return nil, app.UserNotFoundError(email).AddContext(err)
 		}
 		return nil, err
 	}
