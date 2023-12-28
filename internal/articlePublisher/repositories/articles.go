@@ -57,16 +57,16 @@ func (r *ArticleRepository) DeleteArticle(ctx context.Context, slug string) erro
 	return nil
 }
 
-func (r *ArticleRepository) UpdateArticle(ctx context.Context, slug string, article *models.Article) (*models.Article, error) {
+func (r *ArticleRepository) UpdateArticle(ctx context.Context, slug string, article *models.Article) error {
 	filter := bson.D{{Key: "slug", Value: slug}}
 	update := bson.D{{Key: "$set", Value: article}}
 	collection := r.DBClient.Database("conduit").Collection("articles")
 	updateResult, err := collection.UpdateOne(ctx, filter, update, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if updateResult.MatchedCount == 0 {
-		return nil, app.UserNotFoundError(slug, nil)
+		return app.UserNotFoundError(slug, nil)
 	}
-	return article, nil
+	return nil
 }
