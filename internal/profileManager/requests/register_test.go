@@ -99,8 +99,8 @@ func TestRegister(t *testing.T) {
 	})
 }
 
-func generateRegisterRequest() *Register {
-	register := new(Register)
+func generateRegisterRequest() *RegisterRequest {
+	register := new(RegisterRequest)
 	register.User.Email = "test.email@test.com"
 	register.User.Username = "test.username"
 	register.User.Password = "password123456"

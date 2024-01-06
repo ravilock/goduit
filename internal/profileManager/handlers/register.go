@@ -22,7 +22,7 @@ type registerProfileHandler struct {
 }
 
 func (h *registerProfileHandler) Register(c echo.Context) error {
-	request := new(requests.Register)
+	request := new(requests.RegisterRequest)
 	if err := c.Bind(request); err != nil {
 		return api.CouldNotUnmarshalBodyError
 	}

@@ -87,15 +87,15 @@ func TestRegister(t *testing.T) {
 	})
 }
 
-func generateRegisterBody() *profileManagerRequests.Register {
-	request := new(profileManagerRequests.Register)
+func generateRegisterBody() *profileManagerRequests.RegisterRequest {
+	request := new(profileManagerRequests.RegisterRequest)
 	request.User.Email = "test.test@test.test"
 	request.User.Username = "test-username"
 	request.User.Password = "test-password"
 	return request
 }
 
-func checkRegisterResponse(t *testing.T, request *profileManagerRequests.Register, response *profileManagerResponses.User) {
+func checkRegisterResponse(t *testing.T, request *profileManagerRequests.RegisterRequest, response *profileManagerResponses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	assert.Equal(t, request.User.Username, response.User.Username, "User Username should be the same")
@@ -104,7 +104,7 @@ func checkRegisterResponse(t *testing.T, request *profileManagerRequests.Registe
 	assert.Zero(t, response.User.Bio)
 }
 
-func checkUserModel(t *testing.T, request *profileManagerRequests.Register, user *profileManagerModels.User) {
+func checkUserModel(t *testing.T, request *profileManagerRequests.RegisterRequest, user *profileManagerModels.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, *user.Email, "User email should be the same")
 	assert.Equal(t, request.User.Username, *user.Username, "User Username should be the same")
@@ -123,7 +123,7 @@ func registerUser(username, email, password string, handler registerProfileHandl
 	if password == "" {
 		password = "default-password"
 	}
-	registerRequest := new(profileManagerRequests.Register)
+	registerRequest := new(profileManagerRequests.RegisterRequest)
 	registerRequest.User.Username = username
 	registerRequest.User.Email = email
 	registerRequest.User.Password = password
