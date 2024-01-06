@@ -89,14 +89,14 @@ func TestLogin(t *testing.T) {
 	})
 }
 
-func generateLoginBody() *profileManagerRequests.Login {
-	request := new(profileManagerRequests.Login)
+func generateLoginBody() *profileManagerRequests.LoginRequest {
+	request := new(profileManagerRequests.LoginRequest)
 	request.User.Email = loginTestEmail
 	request.User.Password = loginTestPassword
 	return request
 }
 
-func checkLoginResponse(t *testing.T, request *profileManagerRequests.Login, response *profileManagerResponses.User) {
+func checkLoginResponse(t *testing.T, request *profileManagerRequests.LoginRequest, response *profileManagerResponses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	assert.NotZero(t, response.User.Token)

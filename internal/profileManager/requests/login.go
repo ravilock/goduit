@@ -7,14 +7,16 @@ import (
 	"github.com/ravilock/goduit/api/validators"
 )
 
-type Login struct {
-	User struct {
-		Email    string `json:"email" validate:"required,notblank,max=256,email"`
-		Password string `json:"password" validate:"required,notblank,min=8,max=72"`
-	} `json:"user" validate:"required"`
+type LoginRequest struct {
+	User LoginUser `json:"user" validate:"required"`
 }
 
-func (r *Login) Validate() error {
+type LoginUser struct {
+	Email    string `json:"email" validate:"required,notblank,max=256,email"`
+	Password string `json:"password" validate:"required,notblank,min=8,max=72"`
+}
+
+func (r *LoginRequest) Validate() error {
 	if err := validators.Validate.Struct(r); err != nil {
 		if validationErrors := new(validator.ValidationErrors); errors.As(err, validationErrors) {
 			for _, validationError := range *validationErrors {

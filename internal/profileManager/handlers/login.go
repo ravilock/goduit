@@ -22,7 +22,7 @@ type loginHandler struct {
 }
 
 func (h *loginHandler) Login(c echo.Context) error {
-	request := new(requests.Login)
+	request := new(requests.LoginRequest)
 	if err := c.Bind(request); err != nil {
 		return api.CouldNotUnmarshalBodyError
 	}

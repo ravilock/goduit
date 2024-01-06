@@ -71,8 +71,8 @@ func TestLogin(t *testing.T) {
 	})
 }
 
-func generateLoginRequest() *Login {
-	login := new(Login)
+func generateLoginRequest() *LoginRequest {
+	login := new(LoginRequest)
 	login.User.Email = "test.email@test.com"
 	login.User.Password = "password123456"
 	return login
