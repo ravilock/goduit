@@ -9,10 +9,10 @@ import (
 )
 
 type RegisterRequest struct {
-	User RegisterUser `json:"user" validate:"required"`
+	User RegisterUserPayload `json:"user" validate:"required"`
 }
 
-type RegisterUser struct {
+type RegisterUserPayload struct {
 	Username string `json:"username" validate:"required,notblank,min=5,max=255"`
 	Email    string `json:"email" validate:"required,notblank,max=256,email"`
 	Password string `json:"password" validate:"required,notblank,min=8,max=72"`
