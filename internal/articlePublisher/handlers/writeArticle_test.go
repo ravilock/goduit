@@ -71,8 +71,8 @@ func TestWriteArticle(t *testing.T) {
 	// TODO: Add test for articles with the same Title/Slug
 }
 
-func generateWriteArticleBody() *articlePublisherRequests.WriteArticle {
-	request := new(articlePublisherRequests.WriteArticle)
+func generateWriteArticleBody() *articlePublisherRequests.WriteArticleRequest {
+	request := new(articlePublisherRequests.WriteArticleRequest)
 	request.Article.Title = "Test Article Name"
 	request.Article.Description = "Test Article Description"
 	request.Article.Body = "Test Article Body"
@@ -80,7 +80,7 @@ func generateWriteArticleBody() *articlePublisherRequests.WriteArticle {
 	return request
 }
 
-func checkWriteArticleResponse(t *testing.T, request *articlePublisherRequests.WriteArticle, author string, response *articlePublisherResponses.Article) {
+func checkWriteArticleResponse(t *testing.T, request *articlePublisherRequests.WriteArticleRequest, author string, response *articlePublisherResponses.Article) {
 	t.Helper()
 	assert.Equal(t, request.Article.Title, response.Article.Title, "Wrong article title")
 	assert.Equal(t, request.Article.Description, response.Article.Description, "Wrong article description")

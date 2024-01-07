@@ -108,8 +108,8 @@ func TestWriteArticle(t *testing.T) {
 	})
 }
 
-func generateWriteArticleRequest() *WriteArticle {
-	article := new(WriteArticle)
+func generateWriteArticleRequest() *WriteArticleRequest {
+	article := new(WriteArticleRequest)
 	article.Article.Title = "Test Title"
 	article.Article.Description = "Test Description"
 	article.Article.Body = "Test Body"

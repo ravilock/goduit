@@ -10,16 +10,18 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 )
 
-type WriteArticle struct {
-	Article struct {
-		Title       string   `json:"title" validate:"required,notblank,min=5,max=255"`
-		Description string   `json:"description" validate:"required,notblank,min=5,max=255"`
-		Body        string   `json:"body" validate:"required,notblank"`
-		TagList     []string `json:"tagList" validate:"min=1,max=10,unique,dive,min=3,max=30"`
-	} `json:"article" validate:"required"`
+type WriteArticleRequest struct {
+	Article WriteArticlePayload `json:"article" validate:"required"`
 }
 
-func (r *WriteArticle) Model(authorUsername string) *models.Article {
+type WriteArticlePayload struct {
+	Title       string   `json:"title" validate:"required,notblank,min=5,max=255"`
+	Description string   `json:"description" validate:"required,notblank,min=5,max=255"`
+	Body        string   `json:"body" validate:"required,notblank"`
+	TagList     []string `json:"tagList" validate:"min=1,max=10,unique,dive,min=3,max=30"`
+}
+
+func (r *WriteArticleRequest) Model(authorUsername string) *models.Article {
 	tags := deduplicateTags(r.Article.TagList)
 	slug := makeSlug(r.Article.Title)
 	createdAt := time.Now()
@@ -57,7 +59,7 @@ func makeSlug(title string) string {
 	return strings.Join(titleWords, "-")
 }
 
-func (r *WriteArticle) Validate() error {
+func (r *WriteArticleRequest) Validate() error {
 	if err := validators.Validate.Struct(r); err != nil {
 		if validationErrors := new(validator.ValidationErrors); errors.As(err, validationErrors) {
 			for _, validationError := range *validationErrors {

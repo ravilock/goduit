@@ -106,7 +106,7 @@ func createArticle(title, description, body, authorUsername string, tagList []st
 	if len(tagList) == 0 {
 		tagList = []string{"default-tag", "test"}
 	}
-	request := new(articlePublisherRequests.WriteArticle)
+	request := new(articlePublisherRequests.WriteArticleRequest)
 	request.Article.Title = title
 	request.Article.Description = description
 	request.Article.Body = body
