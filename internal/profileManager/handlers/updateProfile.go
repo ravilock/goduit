@@ -23,7 +23,7 @@ type updateProfileHandler struct {
 }
 
 func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
-	request := new(requests.UpdateProfile)
+	request := new(requests.UpdateProfileRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}
 	if err := binder.BindBody(c, request); err != nil {

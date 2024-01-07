@@ -127,8 +127,8 @@ func TestUpdateProfile(t *testing.T) {
 	})
 }
 
-func generateUpdateProfileBody() *profileManagerRequests.UpdateProfile {
-	request := new(profileManagerRequests.UpdateProfile)
+func generateUpdateProfileBody() *profileManagerRequests.UpdateProfileRequest {
+	request := new(profileManagerRequests.UpdateProfileRequest)
 	request.User.Username = uuid.NewString()
 	request.User.Email = fmt.Sprintf("%s@test.test", request.User.Username)
 	request.User.Password = uuid.NewString()
@@ -137,7 +137,7 @@ func generateUpdateProfileBody() *profileManagerRequests.UpdateProfile {
 	return request
 }
 
-func checkUpdateProfileResponse(t *testing.T, request *profileManagerRequests.UpdateProfile, response *profileManagerResponses.User) {
+func checkUpdateProfileResponse(t *testing.T, request *profileManagerRequests.UpdateProfileRequest, response *profileManagerResponses.User) {
 	t.Helper()
 	assert.Equal(t, request.User.Username, response.User.Username, "Updated user's username should be %q, got %q", request.User.Username, response.User.Username)
 	assert.Equal(t, request.User.Email, response.User.Email, "Updated user's email should be %q, got %q", request.User.Email, response.User.Email)
@@ -145,7 +145,7 @@ func checkUpdateProfileResponse(t *testing.T, request *profileManagerRequests.Up
 	assert.Equal(t, request.User.Image, response.User.Image, "Update user's image should be %q, got %q", request.User.Image, response.User.Image)
 }
 
-func checkUpdatedToken(t *testing.T, request *profileManagerRequests.UpdateProfile, token string) {
+func checkUpdatedToken(t *testing.T, request *profileManagerRequests.UpdateProfileRequest, token string) {
 	t.Helper()
 	identityClaims, err := identity.FromToken(token)
 	assert.NoError(t, err)

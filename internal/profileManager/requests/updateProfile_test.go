@@ -120,8 +120,8 @@ func TestUpdateProfile(t *testing.T) {
 	})
 }
 
-func generateUpdateProfileRequest() *UpdateProfile {
-	updateProfile := new(UpdateProfile)
+func generateUpdateProfileRequest() *UpdateProfileRequest {
+	updateProfile := new(UpdateProfileRequest)
 	updateProfile.User.Username = "test-username"
 	updateProfile.User.Email = "test-email@email.com"
 	updateProfile.User.Password = "test-password"
