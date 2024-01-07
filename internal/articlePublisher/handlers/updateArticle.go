@@ -11,6 +11,7 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/assemblers"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"github.com/ravilock/goduit/internal/articlePublisher/requests"
+	"github.com/ravilock/goduit/internal/identity"
 	profileManagerAssembler "github.com/ravilock/goduit/internal/profileManager/assemblers"
 )
 
@@ -25,13 +26,16 @@ type updateArticleHandler struct {
 }
 
 func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
-	authorUsername := c.Request().Header.Get("Goduit-Client-Username")
-	binder := &echo.DefaultBinder{}
 	request := new(requests.UpdateArticle)
+	identity := new(identity.IdentityHeaders)
+	binder := &echo.DefaultBinder{}
 	if err := binder.BindBody(c, request); err != nil {
 		return api.CouldNotUnmarshalBodyError
 	}
 	if err := binder.BindPathParams(c, request); err != nil {
+		return err
+	}
+	if err := binder.BindHeaders(c, identity); err != nil {
 		return err
 	}
 
@@ -39,7 +43,7 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 		return err
 	}
 
-	article := request.Model(authorUsername)
+	article := request.Model(identity.ClientUsername)
 
 	ctx := c.Request().Context()
 
@@ -54,7 +58,7 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 		return err
 	}
 
-	if authorUsername != *currentArticle.Author {
+	if identity.ClientUsername != *currentArticle.Author {
 		return api.Forbidden
 	}
 
@@ -70,12 +74,12 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 		return err
 	}
 
-	authorProfile, err := h.profileManager.GetProfileByUsername(ctx, authorUsername)
+	authorProfile, err := h.profileManager.GetProfileByUsername(ctx, identity.ClientUsername)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
 			case app.UserNotFoundErrorCode:
-				return api.UserNotFound(authorUsername)
+				return api.UserNotFound(identity.ClientUsername)
 			}
 		}
 		return err

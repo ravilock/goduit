@@ -11,6 +11,7 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/assemblers"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"github.com/ravilock/goduit/internal/articlePublisher/requests"
+	"github.com/ravilock/goduit/internal/identity"
 	profileManagerAssembler "github.com/ravilock/goduit/internal/profileManager/assemblers"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 )
@@ -34,10 +35,14 @@ type getArticleHandler struct {
 }
 
 func (h *getArticleHandler) GetArticle(c echo.Context) error {
-	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
 	request := new(requests.ArticleSlugRequest)
-	if err := c.Bind(request); err != nil {
-		return api.CouldNotUnmarshalBodyError
+	identity := new(identity.IdentityHeaders)
+	binder := &echo.DefaultBinder{}
+	if err := binder.BindPathParams(c, request); err != nil {
+		return err
+	}
+	if err := binder.BindHeaders(c, identity); err != nil {
+		return err
 	}
 
 	if err := request.Validate(); err != nil {
@@ -62,7 +67,7 @@ func (h *getArticleHandler) GetArticle(c echo.Context) error {
 		return err
 	}
 
-	isFollowing := h.followerCentral.IsFollowedBy(ctx, *author.Username, clientUsername)
+	isFollowing := h.followerCentral.IsFollowedBy(ctx, *author.Username, identity.ClientUsername)
 
 	authorProfile, err := profileManagerAssembler.ProfileResponse(author, isFollowing)
 	if err != nil {
