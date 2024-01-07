@@ -43,8 +43,8 @@ func TestGetProfile(t *testing.T) {
 	})
 }
 
-func generateGetProfileRequest() *GetProfile {
-	getProfile := new(GetProfile)
+func generateGetProfileRequest() *GetProfileRequest {
+	getProfile := new(GetProfileRequest)
 	getProfile.Username = "test.username"
 	return getProfile
 }

@@ -23,7 +23,7 @@ type getProfileHandler struct {
 }
 
 func (h *getProfileHandler) GetProfile(c echo.Context) error {
-	request := new(requests.GetProfile)
+	request := new(requests.GetProfileRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}
 	if err := binder.BindPathParams(c, request); err != nil {
