@@ -11,6 +11,7 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/assemblers"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"github.com/ravilock/goduit/internal/articlePublisher/requests"
+	"github.com/ravilock/goduit/internal/identity"
 	profileManagerAssembler "github.com/ravilock/goduit/internal/profileManager/assemblers"
 )
 
@@ -24,17 +25,21 @@ type writeArticleHandler struct {
 }
 
 func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
-	authorUsername := c.Request().Header.Get("Goduit-Client-Username")
 	request := new(requests.WriteArticleRequest)
-	if err := c.Bind(request); err != nil {
+	identity := new(identity.IdentityHeaders)
+	binder := &echo.DefaultBinder{}
+	if err := binder.BindBody(c, request); err != nil {
 		return api.CouldNotUnmarshalBodyError
+	}
+	if err := binder.BindHeaders(c, identity); err != nil {
+		return err
 	}
 
 	if err := request.Validate(); err != nil {
 		return err
 	}
 
-	article := request.Model(authorUsername)
+	article := request.Model(identity.ClientUsername)
 
 	ctx := c.Request().Context()
 
@@ -49,9 +54,9 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 		return err
 	}
 
-	authorProfile, err := h.profileManager.GetProfileByUsername(ctx, authorUsername)
+	authorProfile, err := h.profileManager.GetProfileByUsername(ctx, identity.ClientUsername)
 	if err != nil {
-		return api.UserNotFound(authorUsername)
+		return api.UserNotFound(identity.ClientUsername)
 	}
 
 	profileResponse, err := profileManagerAssembler.ProfileResponse(authorProfile, false)
