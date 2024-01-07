@@ -22,7 +22,7 @@ type unpublishArticleHandler struct {
 
 func (h *unpublishArticleHandler) UnpublishArticle(c echo.Context) error {
 	clientUsername := c.Request().Header.Get("Goduit-Client-Username")
-	request := new(requests.ArticleSlug)
+	request := new(requests.ArticleSlugRequest)
 	if err := c.Bind(request); err != nil {
 		return api.CouldNotUnmarshalBodyError
 	}

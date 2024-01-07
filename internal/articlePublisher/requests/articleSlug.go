@@ -7,11 +7,11 @@ import (
 	"github.com/ravilock/goduit/api/validators"
 )
 
-type ArticleSlug struct {
+type ArticleSlugRequest struct {
 	Slug string `param:"slug" validate:"required,notblank,min=5"`
 }
 
-func (r *ArticleSlug) Validate() error {
+func (r *ArticleSlugRequest) Validate() error {
 	if err := validators.Validate.Struct(r); err != nil {
 		if validationErrors := new(validator.ValidationErrors); errors.As(err, validationErrors) {
 			for _, validationError := range *validationErrors {

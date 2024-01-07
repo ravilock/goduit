@@ -33,8 +33,8 @@ func TestArticleSlug(t *testing.T) {
 	})
 }
 
-func generateArticleSlugRequest() *ArticleSlug {
-	return &ArticleSlug{
+func generateArticleSlugRequest() *ArticleSlugRequest {
+	return &ArticleSlugRequest{
 		Slug: "test-slug",
 	}
 }
