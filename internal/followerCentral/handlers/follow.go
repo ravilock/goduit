@@ -28,7 +28,7 @@ type followUserHandler struct {
 }
 
 func (h *followUserHandler) Follow(c echo.Context) error {
-	request := new(requests.Follower)
+	request := new(requests.FollowerRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}
 	if err := binder.BindPathParams(c, request); err != nil {

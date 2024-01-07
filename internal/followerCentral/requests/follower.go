@@ -7,11 +7,11 @@ import (
 	"github.com/ravilock/goduit/api/validators"
 )
 
-type Follower struct {
+type FollowerRequest struct {
 	Username string `param:"username" validate:"required,notblank,min=5,max=255"`
 }
 
-func (r *Follower) Validate() error {
+func (r *FollowerRequest) Validate() error {
 	if err := validators.Validate.Struct(r); err != nil {
 		if validationErrors := new(validator.ValidationErrors); errors.As(err, validationErrors) {
 			for _, validationError := range *validationErrors {

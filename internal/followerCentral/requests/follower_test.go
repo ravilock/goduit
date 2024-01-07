@@ -39,8 +39,8 @@ func TestFollower(t *testing.T) {
 	})
 }
 
-func generateFollowerRequest() *Follower {
-	return &Follower{
+func generateFollowerRequest() *FollowerRequest {
+	return &FollowerRequest{
 		Username: "test-username",
 	}
 }
