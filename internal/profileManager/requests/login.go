@@ -8,10 +8,10 @@ import (
 )
 
 type LoginRequest struct {
-	User LoginUserPayload `json:"user" validate:"required"`
+	User LoginPayload `json:"user" validate:"required"`
 }
 
-type LoginUserPayload struct {
+type LoginPayload struct {
 	Email    string `json:"email" validate:"required,notblank,max=256,email"`
 	Password string `json:"password" validate:"required,notblank,min=8,max=72"`
 }

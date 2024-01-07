@@ -10,10 +10,10 @@ import (
 )
 
 type UpdateProfileRequest struct {
-	User UpdateProfileUserPayload `json:"user" validate:"required"`
+	User UpdateProfilePayload `json:"user" validate:"required"`
 }
 
-type UpdateProfileUserPayload struct {
+type UpdateProfilePayload struct {
 	Username string `json:"username" validate:"required,omitempty,notblank,min=5,max=255"`
 	Email    string `json:"email" validate:"required,notblank,max=256,email"`
 	Password string `json:"password" validate:"omitempty,notblank,min=8,max=72"`
