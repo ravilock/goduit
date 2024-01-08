@@ -43,7 +43,7 @@ func TestLogin(t *testing.T) {
 	clearDatabase(client)
 	e := echo.New()
 	if _, err := registerUser(loginTestUsername, loginTestEmail, loginTestPassword, profileManager); err != nil {
-    log.Fatalf("Could not create user: %s", err)
+		log.Fatalf("Could not create user: %s", err)
 	}
 	t.Run("Should successfully login", func(t *testing.T) {
 		loginRequest := generateLoginBody()
