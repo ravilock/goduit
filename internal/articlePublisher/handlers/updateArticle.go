@@ -43,7 +43,7 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 		return err
 	}
 
-	article := request.Model(identity.ClientUsername)
+	article := request.Model()
 
 	ctx := c.Request().Context()
 
@@ -58,7 +58,7 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 		return err
 	}
 
-	if identity.ClientUsername != *currentArticle.Author {
+	if identity.Subject != *currentArticle.Author {
 		return api.Forbidden
 	}
 
@@ -74,7 +74,7 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 		return err
 	}
 
-	authorProfile, err := h.profileManager.GetProfileByUsername(ctx, identity.ClientUsername)
+	authorProfile, err := h.profileManager.GetProfileByID(ctx, identity.Subject)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {

@@ -18,9 +18,9 @@ func NewFollowerRepository(client *mongo.Client) *FollowerRepository {
 
 // Follow establishes a follow relationship between two users.
 //
-// The followed parameter represents the username of the user to be followed.
+// The followed parameter represents the ID of the user to be followed.
 //
-// The follower parameter represents the username of the user that is following.
+// The follower parameter represents the ID of the user that is following.
 func (r *FollowerRepository) Follow(ctx context.Context, followed, follower string) error {
 	followRelationship := models.Follower{Follower: &follower, Followed: &followed}
 	collection := r.DBClient.Database("conduit").Collection("followers")
@@ -32,9 +32,9 @@ func (r *FollowerRepository) Follow(ctx context.Context, followed, follower stri
 
 // Unfollow de-establishes a follow relationship between two users
 //
-// The followed parameter represents the username of the user to be followed.
+// The followed parameter represents the ID of the user to be followed.
 //
-// The follower parameter represents the username of the user that is following.
+// The follower parameter represents the ID of the user that is following.
 func (r *FollowerRepository) Unfollow(ctx context.Context, followed, follower string) error {
 	filter := bson.D{
 		{Key: "followed", Value: followed},
@@ -50,9 +50,9 @@ func (r *FollowerRepository) Unfollow(ctx context.Context, followed, follower st
 
 // IsFollowedBy queries for a follow relationship between two users. Returns *models.Follower.
 //
-// The followed parameter represents the username of the user to be followed.
+// The followed parameter represents the ID of the user to be followed.
 //
-// The follower parameter represents the username of the user that is following.
+// The follower parameter represents the ID of the user that is following.
 func (r *FollowerRepository) IsFollowedBy(ctx context.Context, followed, follower string) (*models.Follower, error) {
 	var followRelationship *models.Follower
 	filter := bson.D{

@@ -15,6 +15,7 @@ import (
 	"github.com/ravilock/goduit/api/validators"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
+	"github.com/ravilock/goduit/internal/identity"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"go.mongodb.org/mongo-driver/bson"
@@ -74,7 +75,7 @@ func clearDatabase(client *mongo.Client) {
 	}
 }
 
-func registerUser(username, email, password string, manager *profileManager.ProfileManager) (string, error) {
+func registerUser(username, email, password string, manager *profileManager.ProfileManager) (*identity.Identity, error) {
 	if username == "" {
 		username = "default-username"
 	}
@@ -84,7 +85,11 @@ func registerUser(username, email, password string, manager *profileManager.Prof
 	if password == "" {
 		password = "default-password"
 	}
-	return manager.Register(context.Background(), &profileManagerModels.User{Username: &username, Email: &email}, password)
+	token, err := manager.Register(context.Background(), &profileManagerModels.User{Username: &username, Email: &email}, password)
+	if err != nil {
+		return nil, err
+	}
+	return identity.FromToken(token)
 }
 
 func makeSlug(title string) string {
@@ -93,7 +98,7 @@ func makeSlug(title string) string {
 	return strings.Join(titleWords, "-")
 }
 
-func createArticle(title, description, body, authorUsername string, tagList []string, handler writeArticleHandler) error {
+func createArticle(title, description, body string, authorIdentity *identity.Identity, tagList []string, handler writeArticleHandler) error {
 	if title == "" {
 		title = "Default Title"
 	}
@@ -118,7 +123,9 @@ func createArticle(title, description, body, authorUsername string, tagList []st
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/api/articles", bytes.NewBuffer(requestBody))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Goduit-Client-Username", authorUsername)
+	req.Header.Set("Goduit-Subject", authorIdentity.Subject)
+	req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
+	req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	if err := handler.WriteArticle(c); err != nil {

@@ -20,7 +20,7 @@ import (
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRegister(t *testing.T) {
@@ -43,47 +43,47 @@ func TestRegister(t *testing.T) {
 	t.Run("Should create new user", func(t *testing.T) {
 		registerRequest := generateRegisterBody()
 		requestBody, err := json.Marshal(registerRequest)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		err = handler.Register(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusCreated {
 			t.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
 		}
 		registerResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), registerResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkRegisterResponse(t, registerRequest, registerResponse)
 		userModel, err := profileManagerRepository.GetUserByEmail(context.Background(), registerRequest.User.Email)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkUserModel(t, registerRequest, userModel)
 	})
 	t.Run("Should not create user with duplicated email", func(t *testing.T) {
 		registerRequest := generateRegisterBody()
 		registerRequest.User.Username = "different-username"
 		requestBody, err := json.Marshal(registerRequest)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		err = handler.Register(c)
-		assert.ErrorIs(t, err, api.ConfictError)
+		require.ErrorIs(t, err, api.ConfictError)
 	})
 	t.Run("Should not create user with duplicated username", func(t *testing.T) {
 		registerRequest := generateRegisterBody()
 		registerRequest.User.Email = "different-email@test.test"
 		requestBody, err := json.Marshal(registerRequest)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		err = handler.Register(c)
-		assert.ErrorIs(t, err, api.ConfictError)
+		require.ErrorIs(t, err, api.ConfictError)
 	})
 }
 
@@ -97,47 +97,18 @@ func generateRegisterBody() *profileManagerRequests.RegisterRequest {
 
 func checkRegisterResponse(t *testing.T, request *profileManagerRequests.RegisterRequest, response *profileManagerResponses.User) {
 	t.Helper()
-	assert.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
-	assert.Equal(t, request.User.Username, response.User.Username, "User Username should be the same")
-	assert.NotZero(t, response.User.Token)
-	assert.Zero(t, response.User.Image)
-	assert.Zero(t, response.User.Bio)
+	require.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
+	require.Equal(t, request.User.Username, response.User.Username, "User Username should be the same")
+	require.NotZero(t, response.User.Token)
+	require.Zero(t, response.User.Image)
+	require.Zero(t, response.User.Bio)
 }
 
 func checkUserModel(t *testing.T, request *profileManagerRequests.RegisterRequest, user *profileManagerModels.User) {
 	t.Helper()
-	assert.Equal(t, request.User.Email, *user.Email, "User email should be the same")
-	assert.Equal(t, request.User.Username, *user.Username, "User Username should be the same")
-	assert.NotZero(t, *user.PasswordHash)
-	assert.Zero(t, *user.Image)
-	assert.Zero(t, *user.Bio)
-}
-
-func registerUser(username, email, password string, handler registerProfileHandler) error {
-	if username == "" {
-		username = "default-username"
-	}
-	if email == "" {
-		email = "default.email@test.test"
-	}
-	if password == "" {
-		password = "default-password"
-	}
-	registerRequest := new(profileManagerRequests.RegisterRequest)
-	registerRequest.User.Username = username
-	registerRequest.User.Email = email
-	registerRequest.User.Password = password
-	requestBody, err := json.Marshal(registerRequest)
-	if err != nil {
-		return err
-	}
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(requestBody))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	if err := handler.Register(c); err != nil {
-		return err
-	}
-	return nil
+	require.Equal(t, request.User.Email, *user.Email, "User email should be the same")
+	require.Equal(t, request.User.Username, *user.Username, "User Username should be the same")
+	require.NotZero(t, *user.PasswordHash)
+	require.Zero(t, *user.Image)
+	require.Zero(t, *user.Bio)
 }

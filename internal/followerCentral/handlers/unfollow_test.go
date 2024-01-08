@@ -18,13 +18,13 @@ import (
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func TestUnfollow(t *testing.T) {
-	const unfollowTestUsername = "unfollow-test-username"
-	const unfollowTestEmail = "unfollow.email@test.test"
+	const followedTestUsername = "followed-test-username"
+	const followedTestEmail = "followed.email@test.test"
 
 	const followerUsername = "follower-username"
 	const followerEmail = "follower.email@test.test"
@@ -45,62 +45,66 @@ func TestUnfollow(t *testing.T) {
 	handler := NewFollowerHandler(followerCentral, profileManager)
 
 	clearDatabase(client)
-	_, err = registerUser(unfollowTestUsername, unfollowTestEmail, "", profileManager)
+	followedIdentity, err := registerUser(followedTestUsername, followedTestEmail, "", profileManager)
 	if err != nil {
-		t.Error("Could not create user", err)
+		log.Fatalf("Could not create user: %s", err)
 	}
 
-	_, err = registerUser(followerUsername, followerEmail, "", profileManager)
+	followerIdentity, err := registerUser(followerUsername, followerEmail, "", profileManager)
 	if err != nil {
-		t.Error("Could not create user", err)
+		log.Fatalf("Could not create user: %s", err)
 	}
 
-	if err := followUser(unfollowTestUsername, followerUsername, handler.followUserHandler); err != nil {
+	if err := followUser(followedTestUsername, followerUsername, handler.followUserHandler); err != nil {
 		t.Error("Failed to setup user following relationship", err)
 	}
 
 	e := echo.New()
 	t.Run("Should unfollow a user", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", unfollowTestUsername), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", followedTestUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
-		c.SetParamValues(unfollowTestUsername)
-		req.Header.Set("Goduit-Client-Username", followerUsername)
+		c.SetParamValues(followedTestUsername)
+		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
+		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
+		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
 		err := handler.Unfollow(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		followResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
-		assert.NoError(t, err)
-		checkFollowResponse(t, unfollowTestUsername, false, followResponse)
-		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), unfollowTestUsername, followerUsername)
-		assert.ErrorIs(t, err, mongo.ErrNoDocuments)
-		assert.Nil(t, followerModel)
+		require.NoError(t, err)
+		checkFollowResponse(t, followedTestUsername, false, followResponse)
+		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), followedIdentity.Subject, followedIdentity.Subject)
+		require.ErrorIs(t, err, mongo.ErrNoDocuments)
+		require.Nil(t, followerModel)
 	})
 	t.Run("If the user is already not following the other user, return HTTP 200", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", unfollowTestUsername), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", followedTestUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
-		c.SetParamValues(unfollowTestUsername)
-		req.Header.Set("Goduit-Client-Username", followerUsername)
+		c.SetParamValues(followedTestUsername)
+		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
+		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
+		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
 		err := handler.Unfollow(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		followResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
-		assert.NoError(t, err)
-		checkFollowResponse(t, unfollowTestUsername, false, followResponse)
-		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), unfollowTestUsername, followerUsername)
-		assert.ErrorIs(t, err, mongo.ErrNoDocuments)
-		assert.Nil(t, followerModel)
+		require.NoError(t, err)
+		checkFollowResponse(t, followedTestUsername, false, followResponse)
+		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), followedIdentity.Subject, followedIdentity.Subject)
+		require.ErrorIs(t, err, mongo.ErrNoDocuments)
+		require.Nil(t, followerModel)
 	})
 	t.Run("Should return 404 if no user is found", func(t *testing.T) {
 		inexistentUsername := "inexistent-username"
@@ -110,8 +114,10 @@ func TestUnfollow(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
 		c.SetParamValues(inexistentUsername)
-		req.Header.Set("Goduit-Client-Username", followerUsername)
+		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
+		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
+		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
 		err := handler.Unfollow(c)
-		assert.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
+		require.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
 	})
 }

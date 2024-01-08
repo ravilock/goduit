@@ -9,11 +9,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserGetter interface {
-	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
-	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
-}
-
 type logUserService struct {
 	repository UserGetter
 }
@@ -31,7 +26,7 @@ func (s *logUserService) Login(ctx context.Context, email, password string) (*mo
 		return nil, "", err
 	}
 
-	tokenString, err := identity.GenerateToken(*model.Email, *model.Username)
+	tokenString, err := identity.GenerateToken(*model.Email, *model.Username, model.ID.Hex())
 	if err != nil {
 		return nil, "", err
 	}

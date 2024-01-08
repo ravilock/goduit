@@ -19,12 +19,10 @@ import (
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetArticle(t *testing.T) {
-	const articleAuthorUsername = "article-author-username"
-
 	const articleTitle = "Article Title"
 	const articleSlug = "article-title"
 	const articleDescription = "Article Description"
@@ -49,13 +47,13 @@ func TestGetArticle(t *testing.T) {
 	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
-	_, err = registerUser(articleAuthorUsername, "", "", profileManager)
+	authorIdentity, err := registerUser("", "", "", profileManager)
 	if err != nil {
-		t.Error("Could not create user", err)
+		log.Fatalf("Could not create user: %s", err)
 	}
 
-	if err := createArticle(articleTitle, articleDescription, articleBody, articleAuthorUsername, articleTagList, handler.writeArticleHandler); err != nil {
-		log.Fatal("Could not create article")
+	if err := createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler); err != nil {
+		log.Fatalf("Could not create article: %s", err)
 	}
 	e := echo.New()
 	t.Run("Should get an article", func(t *testing.T) {
@@ -66,14 +64,14 @@ func TestGetArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(articleSlug)
 		err := handler.GetArticle(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		getArticleResponse := new(articlePublisherResponses.Article)
 		err = json.Unmarshal(rec.Body.Bytes(), getArticleResponse)
-		assert.NoError(t, err)
-		checkGetArticleResponse(t, articleTitle, articleSlug, articleAuthorUsername, articleTagList, getArticleResponse)
+		require.NoError(t, err)
+		checkGetArticleResponse(t, articleTitle, articleSlug, authorIdentity.Username, articleTagList, getArticleResponse)
 	})
 	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
 		inexistentSlug := "inexistent-slug"
@@ -84,15 +82,15 @@ func TestGetArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(inexistentSlug)
 		err := handler.GetArticle(c)
-		assert.ErrorContains(t, err, api.ArticleNotFound(inexistentSlug).Error())
+		require.ErrorContains(t, err, api.ArticleNotFound(inexistentSlug).Error())
 	})
 	// TODO: Add test for when the user favorited the article
 }
 
 func checkGetArticleResponse(t *testing.T, title, slug, authorUsername string, tagList []string, response *articlePublisherResponses.Article) {
 	t.Helper()
-	assert.Equal(t, authorUsername, response.Article.Author.Username, "Article's author username is wrong")
-	assert.Equal(t, title, response.Article.Title, "Wrong article title")
-	assert.Equal(t, slug, response.Article.Slug, "Wrong article slug")
-	assert.Equal(t, tagList, response.Article.TagList, "Wrong article tag list")
+	require.Equal(t, authorUsername, response.Article.Author.Username, "Article's author username is wrong")
+	require.Equal(t, title, response.Article.Title, "Wrong article title")
+	require.Equal(t, slug, response.Article.Slug, "Wrong article slug")
+	require.Equal(t, tagList, response.Article.TagList, "Wrong article tag list")
 }

@@ -19,13 +19,15 @@ var (
 )
 
 type Identity struct {
-	Username string `json:"username,omitempty"`
+	UserEmail string `json:"userId,omitempty"`
+	Username  string `json:"username,omitempty"`
 	jwt.RegisteredClaims
 }
 
 type IdentityHeaders struct {
-	SubjectEmail   string `header:"Goduit-Subject"`
+	Subject        string `header:"Goduit-Subject"`
 	ClientUsername string `header:"Goduit-Client-Username"`
+	ClientEmail    string `header:"Goduit-Client-Email"`
 }
 
 func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
@@ -40,20 +42,22 @@ func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 				return api.FailedAuthentication
 			}
 			headers := c.Request().Header
-			headers.Set("Goduit-Client-Username", identity.Username)
 			headers.Set("Goduit-Subject", identity.Subject)
+			headers.Set("Goduit-Client-Username", identity.Username)
+			headers.Set("Goduit-Client-Email", identity.UserEmail)
 			return next(c)
 		}
 	}
 }
 
-func GenerateToken(userEmail, username string) (string, error) {
+func GenerateToken(userEmail, username, userID string) (string, error) {
 	now := time.Now()
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &Identity{
-		Username: username,
+		UserEmail: userEmail,
+		Username:  username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "goduit",
-			Subject:   userEmail,
+			Subject:   userID,
 			ExpiresAt: jwt.NewNumericDate(now.Add(10 * time.Minute)),
 			NotBefore: jwt.NewNumericDate(now),
 			IssuedAt:  jwt.NewNumericDate(now),

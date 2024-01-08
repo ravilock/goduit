@@ -20,11 +20,11 @@ type UpdateArticlePayload struct {
 	Body        string `json:"body" validate:"required,notblank"`
 }
 
-func (r *UpdateArticle) Model(authorUsername string) *models.Article {
+func (r *UpdateArticle) Model() *models.Article {
 	slug := makeSlug(r.Article.Title)
 	updatedAt := time.Now()
 	return &models.Article{
-		Author:         &authorUsername,
+		Author:         nil,
 		Slug:           &slug,
 		Title:          &r.Article.Title,
 		Description:    &r.Article.Description,

@@ -39,7 +39,7 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 
 	model := request.Model()
 
-	token, err := h.service.UpdateProfile(c.Request().Context(), identity.SubjectEmail, identity.ClientUsername, request.User.Password, model)
+	token, err := h.service.UpdateProfile(c.Request().Context(), identity.ClientEmail, identity.ClientUsername, request.User.Password, model)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {

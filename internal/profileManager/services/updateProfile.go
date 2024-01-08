@@ -32,7 +32,7 @@ func (s *updateProfileService) UpdateProfile(ctx context.Context, subjectEmail, 
 	}
 
 	if shouldGenerateNewToken(subjectEmail, clientUsername, model) {
-		tokenString, err := identity.GenerateToken(*model.Email, *model.Username)
+		tokenString, err := identity.GenerateToken(*model.Email, *model.Username, model.ID.Hex())
 		if err != nil {
 			return "", err
 		}

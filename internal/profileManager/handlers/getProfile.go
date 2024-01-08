@@ -49,7 +49,7 @@ func (h *getProfileHandler) GetProfile(c echo.Context) error {
 		return err
 	}
 
-	isFollowing := h.followerCentral.IsFollowedBy(ctx, request.Username, identity.ClientUsername)
+	isFollowing := h.followerCentral.IsFollowedBy(ctx, profile.ID.Hex(), identity.Subject)
 
 	response, err := assemblers.ProfileResponse(profile, isFollowing)
 	if err != nil {

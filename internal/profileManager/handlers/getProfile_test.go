@@ -18,7 +18,7 @@ import (
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const getProfileTestUsername = "get-profile-test-username"
@@ -41,8 +41,9 @@ func TestGetProfile(t *testing.T) {
 	handler := NewProfileHandler(profileManager, followerCentral)
 	clearDatabase(client)
 	e := echo.New()
-	if err := registerUser(getProfileTestUsername, getProfileTestEmail, "", handler.registerProfileHandler); err != nil {
-		log.Fatal("Could not create user", err)
+	identity, err := registerUser(getProfileTestUsername, getProfileTestEmail, "", profileManager)
+	if err != nil {
+		log.Fatalf("Could not create user: %s", err)
 	}
 	t.Run("Should get user profile", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", getProfileTestUsername), nil)
@@ -52,34 +53,39 @@ func TestGetProfile(t *testing.T) {
 		c.SetParamNames("username")
 		c.SetParamValues(getProfileTestUsername)
 		err := handler.GetProfile(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		getProfileResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), getProfileResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkGetProfileResponse(t, getProfileTestUsername, false, getProfileResponse)
 	})
 	t.Run("Should return following as true if logged user follows profile", func(t *testing.T) {
 		followerUsername := "follower-username"
-		err := followerCentralRepository.Follow(context.Background(), getProfileTestUsername, followerUsername)
-		assert.NoError(t, err)
+		followerEmail := "follower.email@test.test"
+		followerIdentity, err := registerUser(followerUsername, followerEmail, "", profileManager)
+		require.NoError(t, err, "Could not register user", err)
+		err = followerCentralRepository.Follow(context.Background(), identity.Subject, followerIdentity.Subject)
+		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", getProfileTestUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Client-Username", followerUsername)
+		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
+		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
+		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
 		c.SetParamValues(getProfileTestUsername)
 		err = handler.GetProfile(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		getProfileResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), getProfileResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkGetProfileResponse(t, getProfileTestUsername, true, getProfileResponse)
 	})
 	t.Run("Should return http 404 if no user is found", func(t *testing.T) {
@@ -91,14 +97,14 @@ func TestGetProfile(t *testing.T) {
 		c.SetParamNames("username")
 		c.SetParamValues(inexistentUsername)
 		err := handler.GetProfile(c)
-		assert.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
+		require.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
 	})
 }
 
 func checkGetProfileResponse(t *testing.T, username string, following bool, response *profileManagerResponses.ProfileResponse) {
 	t.Helper()
-	assert.Equal(t, username, response.Profile.Username, "User username should be the same")
-	assert.Equal(t, following, response.Profile.Following, "Wrong user following")
-	assert.Zero(t, response.Profile.Image)
-	assert.Zero(t, response.Profile.Bio)
+	require.Equal(t, username, response.Profile.Username, "User username should be the same")
+	require.Equal(t, following, response.Profile.Following, "Wrong user following")
+	require.Zero(t, response.Profile.Image)
+	require.Zero(t, response.Profile.Bio)
 }

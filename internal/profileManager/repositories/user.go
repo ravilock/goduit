@@ -2,11 +2,15 @@ package repositories
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type UserRepository struct {
@@ -17,15 +21,21 @@ func NewUserRepository(client *mongo.Client) *UserRepository {
 	return &UserRepository{client}
 }
 
-func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) error {
+func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) (*models.User, error) {
 	collection := r.DBClient.Database("conduit").Collection("users")
-	if _, err := collection.InsertOne(ctx, user); err != nil {
+	result, err := collection.InsertOne(ctx, user)
+	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			return app.ConflictError("users")
+			return nil, app.ConflictError("users")
 		}
-		return err
+		return nil, err
 	}
-	return nil
+	newId, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, errors.New("Could not convert user ID")
+	}
+	user.ID = &newId
+	return user, nil
 }
 
 func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
@@ -60,6 +70,26 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, username string)
 	return user, nil
 }
 
+func (r *UserRepository) GetUserByID(ctx context.Context, ID string) (*models.User, error) {
+	var user *models.User
+	userID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse ID: %s into ObjectID: %w", ID, err)
+	}
+	filter := bson.D{{
+		Key:   "_id",
+		Value: userID,
+	}}
+	collection := r.DBClient.Database("conduit").Collection("users")
+	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, app.UserNotFoundError(ID, err)
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
 func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) error {
 	filter := bson.D{
 		{Key: "username", Value: clientUsername},
@@ -67,15 +97,13 @@ func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, client
 	}
 	update := bson.D{{Key: "$set", Value: user}}
 	collection := r.DBClient.Database("conduit").Collection("users")
-	updateResult, err := collection.UpdateOne(ctx, filter, update, nil)
+	returnDocumentOption := options.After
+	err := collection.FindOneAndUpdate(ctx, filter, update, &options.FindOneAndUpdateOptions{ReturnDocument: &returnDocumentOption}).Decode(user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return app.ConflictError("users")
 		}
 		return err
-	}
-	if updateResult.MatchedCount == 0 {
-		return app.UserNotFoundError(*user.Email, nil)
 	}
 	return nil
 }

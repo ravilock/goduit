@@ -50,7 +50,7 @@ func (h *unfollowUserHandler) Unfollow(c echo.Context) error {
 		return err
 	}
 
-	err = h.service.Unfollow(ctx, request.Username, identity.ClientUsername)
+	err = h.service.Unfollow(ctx, followedUser.ID.Hex(), identity.Subject)
 	if err != nil {
 		return err
 	}

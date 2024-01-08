@@ -11,8 +11,8 @@ import (
 )
 
 type profileGetter interface {
-	GetProfileByEmail(ctx context.Context, email string) (*models.User, error)
 	GetProfileByUsername(ctx context.Context, username string) (*models.User, error)
+	GetProfileByID(ctx context.Context, ID string) (*models.User, error)
 }
 
 type getOwnProfileHandler struct {
@@ -26,7 +26,7 @@ func (h *getOwnProfileHandler) GetOwnProfile(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.service.GetProfileByEmail(c.Request().Context(), identity.SubjectEmail)
+	user, err := h.service.GetProfileByID(c.Request().Context(), identity.Subject)
 	if err != nil {
 		return err
 	}

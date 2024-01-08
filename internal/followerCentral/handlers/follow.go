@@ -55,7 +55,7 @@ func (h *followUserHandler) Follow(c echo.Context) error {
 		return err
 	}
 
-	err = h.service.Follow(ctx, request.Username, identity.ClientUsername)
+	err = h.service.Follow(ctx, followedUser.ID.Hex(), identity.Subject)
 	if err != nil {
 		return err
 	}

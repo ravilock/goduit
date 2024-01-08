@@ -21,7 +21,7 @@ type articleGetter interface {
 }
 
 type profileGetter interface {
-	GetProfileByUsername(ctx context.Context, username string) (*profileManagerModels.User, error)
+	GetProfileByID(ctx context.Context, ID string) (*profileManagerModels.User, error)
 }
 
 type isFollowedChecker interface {
@@ -62,12 +62,12 @@ func (h *getArticleHandler) GetArticle(c echo.Context) error {
 		return err
 	}
 
-	author, err := h.profileManager.GetProfileByUsername(ctx, *article.Author)
+	author, err := h.profileManager.GetProfileByID(ctx, *article.Author)
 	if err != nil {
 		return err
 	}
 
-	isFollowing := h.followerCentral.IsFollowedBy(ctx, *author.Username, identity.ClientUsername)
+	isFollowing := h.followerCentral.IsFollowedBy(ctx, author.ID.Hex(), identity.Subject)
 
 	authorProfile, err := profileManagerAssembler.ProfileResponse(author, isFollowing)
 	if err != nil {
