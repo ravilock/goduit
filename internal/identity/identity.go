@@ -25,7 +25,7 @@ type Identity struct {
 }
 
 type IdentityHeaders struct {
-	SubjectID      string `header:"Goduit-Subject"`
+	Subject      string `header:"Goduit-Subject"`
 	ClientUsername string `header:"Goduit-Client-Username"`
 	ClientEmail    string `header:"Goduit-Client-Email"`
 }

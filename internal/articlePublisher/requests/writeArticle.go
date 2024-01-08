@@ -21,17 +21,17 @@ type WriteArticlePayload struct {
 	TagList     []string `json:"tagList" validate:"min=1,max=10,unique,dive,min=3,max=30"`
 }
 
-func (r *WriteArticleRequest) Model(authorUsername string) *models.Article {
+func (r *WriteArticleRequest) Model(authorID string) *models.Article {
 	tags := deduplicateTags(r.Article.TagList)
 	slug := makeSlug(r.Article.Title)
 	createdAt := time.Now()
 	return &models.Article{
-		Author:         &authorUsername,
+		Author:         &authorID,
 		Slug:           &slug,
 		Title:          &r.Article.Title,
 		Description:    &r.Article.Description,
 		Body:           &r.Article.Body,
-		TagList:        &tags,
+		TagList:        tags,
 		CreatedAt:      &createdAt,
 		UpdatedAt:      nil,
 		FavoritesCount: new(int64),

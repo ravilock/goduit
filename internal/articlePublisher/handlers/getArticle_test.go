@@ -23,8 +23,6 @@ import (
 )
 
 func TestGetArticle(t *testing.T) {
-	const articleAuthorUsername = "article-author-username"
-
 	const articleTitle = "Article Title"
 	const articleSlug = "article-title"
 	const articleDescription = "Article Description"
@@ -49,13 +47,13 @@ func TestGetArticle(t *testing.T) {
 	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
-	_, err = registerUser(articleAuthorUsername, "", "", profileManager)
+	authorIdentity, err := registerUser("", "", "", profileManager)
 	if err != nil {
-		t.Error("Could not create user", err)
+		log.Fatalf("Could not create user: %s", err)
 	}
 
-	if err := createArticle(articleTitle, articleDescription, articleBody, articleAuthorUsername, articleTagList, handler.writeArticleHandler); err != nil {
-		log.Fatal("Could not create article")
+	if err := createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler); err != nil {
+		log.Fatalf("Could not create article: %s", err)
 	}
 	e := echo.New()
 	t.Run("Should get an article", func(t *testing.T) {
@@ -73,7 +71,7 @@ func TestGetArticle(t *testing.T) {
 		getArticleResponse := new(articlePublisherResponses.Article)
 		err = json.Unmarshal(rec.Body.Bytes(), getArticleResponse)
 		require.NoError(t, err)
-		checkGetArticleResponse(t, articleTitle, articleSlug, articleAuthorUsername, articleTagList, getArticleResponse)
+		checkGetArticleResponse(t, articleTitle, articleSlug, authorIdentity.Username, articleTagList, getArticleResponse)
 	})
 	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
 		inexistentSlug := "inexistent-slug"

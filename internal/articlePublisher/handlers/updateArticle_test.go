@@ -25,9 +25,6 @@ import (
 )
 
 func TestUpdateArticle(t *testing.T) {
-	const articleAuthorUsername = "update-article-teste-username"
-	const articleAuthorEmail = "update.article.test@test.test"
-
 	const articleTitle = "Update Article Title"
 	const articleSlug = "update-article-title"
 	const articleDescription = "Update Article Description"
@@ -52,9 +49,9 @@ func TestUpdateArticle(t *testing.T) {
 	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
-	_, err = registerUser(articleAuthorUsername, articleAuthorEmail, "", profileManager)
+	authorIdentity, err := registerUser("", "", "", profileManager)
 	if err != nil {
-		t.Error("Could not create user", err)
+		log.Fatalf("Could not create user: %s", err)
 	}
 	e := echo.New()
 	t.Run("Should update an article", func(t *testing.T) {
@@ -63,13 +60,14 @@ func TestUpdateArticle(t *testing.T) {
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", articleSlug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Client-Username", articleAuthorUsername)
-		req.Header.Set("Goduit-Subject", articleAuthorEmail)
+		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
+		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
+		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(articleSlug)
-		err = createArticle(articleTitle, articleDescription, articleBody, articleAuthorUsername, articleTagList, handler.writeArticleHandler)
+		err = createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler)
 		require.NoError(t, err)
 		err = handler.UpdateArticle(c)
 		require.NoError(t, err)
@@ -77,7 +75,7 @@ func TestUpdateArticle(t *testing.T) {
 		updateArticleResponse := new(articlePublisherResponses.Article)
 		err = json.Unmarshal(rec.Body.Bytes(), updateArticleResponse)
 		require.NoError(t, err)
-		checkUpdateArticleResponse(t, updateArticleRequest, articleAuthorUsername, updateArticleResponse, articleTagList)
+		checkUpdateArticleResponse(t, updateArticleRequest, authorIdentity.Username, updateArticleResponse, articleTagList)
 	})
 	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
 		updateArticleRequest := generateUpdateArticleBody()
@@ -85,8 +83,9 @@ func TestUpdateArticle(t *testing.T) {
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", articleSlug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Client-Username", articleAuthorUsername)
-		req.Header.Set("Goduit-Subject", articleAuthorEmail)
+		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
+		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
+		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
@@ -107,7 +106,7 @@ func TestUpdateArticle(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(articleSlug)
-		err = createArticle(articleTitle, articleDescription, articleBody, articleAuthorUsername, articleTagList, handler.writeArticleHandler)
+		err = createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler)
 		require.NoError(t, err)
 		err = handler.UpdateArticle(c)
 		require.ErrorContains(t, err, api.Forbidden.Error())

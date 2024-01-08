@@ -41,8 +41,9 @@ func TestGetProfile(t *testing.T) {
 	handler := NewProfileHandler(profileManager, followerCentral)
 	clearDatabase(client)
 	e := echo.New()
-	if _, err := registerUser(getProfileTestUsername, getProfileTestEmail, "", handler.registerProfileHandler); err != nil {
-		log.Fatalf("Could not create user")
+	identity, err := registerUser(getProfileTestUsername, getProfileTestEmail, "", profileManager)
+	if err != nil {
+		log.Fatalf("Could not create user: %s", err)
 	}
 	t.Run("Should get user profile", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", getProfileTestUsername), nil)
@@ -64,9 +65,9 @@ func TestGetProfile(t *testing.T) {
 	t.Run("Should return following as true if logged user follows profile", func(t *testing.T) {
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
-		followerIdentity, err := registerUser(followerUsername, followerEmail, "", handler.registerProfileHandler)
-		require.NoError(t, err, "Could not register user")
-		err = followerCentralRepository.Follow(context.Background(), getProfileTestUsername, followerUsername)
+		followerIdentity, err := registerUser(followerUsername, followerEmail, "", profileManager)
+		require.NoError(t, err, "Could not register user", err)
+		err = followerCentralRepository.Follow(context.Background(), identity.Subject, followerIdentity.Subject)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", getProfileTestUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

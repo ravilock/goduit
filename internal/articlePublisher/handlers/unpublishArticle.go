@@ -49,7 +49,7 @@ func (h *unpublishArticleHandler) UnpublishArticle(c echo.Context) error {
 		return err
 	}
 
-	if identity.ClientUsername != *article.Author {
+	if identity.Subject != *article.Author {
 		return api.Forbidden
 	}
 

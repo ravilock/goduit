@@ -1,22 +1,16 @@
 package handlers
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api/validators"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
 	"github.com/ravilock/goduit/internal/identity"
-	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
-	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
+	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
+	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -74,7 +68,7 @@ func clearDatabase(client *mongo.Client) {
 	}
 }
 
-func registerUser(username, email, password string, handler registerProfileHandler) (*identity.Identity, error) {
+func registerUser(username, email, password string, manager *profileManager.ProfileManager) (*identity.Identity, error) {
 	if username == "" {
 		username = "default-username"
 	}
@@ -84,28 +78,9 @@ func registerUser(username, email, password string, handler registerProfileHandl
 	if password == "" {
 		password = "default-password"
 	}
-	registerRequest := new(profileManagerRequests.RegisterRequest)
-	registerRequest.User.Username = username
-	registerRequest.User.Email = email
-	registerRequest.User.Password = password
-	requestBody, err := json.Marshal(registerRequest)
+	token, err := manager.Register(context.Background(), &profileManagerModels.User{Username: &username, Email: &email}, password)
 	if err != nil {
 		return nil, err
 	}
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(requestBody))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	if err := handler.Register(c); err != nil {
-		return nil, err
-	}
-	if rec.Code != http.StatusCreated {
-		return nil, fmt.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
-	}
-	response := new(profileManagerResponses.User)
-	if err := json.Unmarshal(rec.Body.Bytes(), response); err != nil {
-		return nil, err
-	}
-	return identity.FromToken(response.User.Token)
+	return identity.FromToken(token)
 }

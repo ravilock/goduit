@@ -27,7 +27,7 @@ func (h *getOwnProfileHandler) GetOwnProfile(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.service.GetProfileByID(c.Request().Context(), identity.SubjectID)
+	user, err := h.service.GetProfileByID(c.Request().Context(), identity.Subject)
 	if err != nil {
 		return err
 	}

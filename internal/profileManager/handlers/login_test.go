@@ -42,8 +42,8 @@ func TestLogin(t *testing.T) {
 	handler := NewProfileHandler(profileManager, followerCentral)
 	clearDatabase(client)
 	e := echo.New()
-	if _, err := registerUser(loginTestUsername, loginTestEmail, loginTestPassword, handler.registerProfileHandler); err != nil {
-		log.Fatal("Could not create user", err)
+	if _, err := registerUser(loginTestUsername, loginTestEmail, loginTestPassword, profileManager); err != nil {
+    log.Fatalf("Could not create user: %s", err)
 	}
 	t.Run("Should successfully login", func(t *testing.T) {
 		loginRequest := generateLoginBody()

@@ -45,8 +45,8 @@ func TestUpdateProfile(t *testing.T) {
 	t.Run("Should fully update an authenticated user's profile", func(t *testing.T) {
 		oldUpdateProfileTestUsername := uuid.NewString()
 		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
-		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", handler.registerProfileHandler)
-		require.NoError(t, err, "Could Not Create User")
+		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", profileManager)
+		require.NoError(t, err, "Could Not Create User", err)
 		updateProfileRequest := generateUpdateProfileBody()
 		requestBody, err := json.Marshal(updateProfileRequest)
 		require.NoError(t, err)
@@ -74,8 +74,8 @@ func TestUpdateProfile(t *testing.T) {
 		oldUpdateProfileTestUsername := uuid.NewString()
 		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
 		oldUpdateProfileTestPassword := uuid.NewString()
-		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, oldUpdateProfileTestPassword, handler.registerProfileHandler)
-		require.NoError(t, err, "Could Not Create User")
+		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, oldUpdateProfileTestPassword, profileManager)
+		require.NoError(t, err, "Could Not Create User", err)
 		updateProfileRequest := generateUpdateProfileBody()
 		updateProfileRequest.User.Password = ""
 		requestBody, err := json.Marshal(updateProfileRequest)
@@ -84,7 +84,7 @@ func TestUpdateProfile(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Subject", identity.Subject)
 		req.Header.Set("Goduit-Client-Email", identity.UserEmail)
-    req.Header.Set("Goduit-Client-Username", identity.Username)
+		req.Header.Set("Goduit-Client-Username", identity.Username)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		err = handler.UpdateProfile(c)
@@ -102,8 +102,8 @@ func TestUpdateProfile(t *testing.T) {
 	t.Run("Should not generate new token if not necessary", func(t *testing.T) {
 		oldUpdateProfileTestUsername := uuid.NewString()
 		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
-		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", handler.registerProfileHandler)
-		require.NoError(t, err, "Could Not Create User")
+		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", profileManager)
+		require.NoError(t, err, "Could Not Create User", err)
 		updateProfileRequest := generateUpdateProfileBody()
 		updateProfileRequest.User.Password = ""
 		updateProfileRequest.User.Username = oldUpdateProfileTestUsername

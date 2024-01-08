@@ -39,8 +39,8 @@ func TestGetOwnProfile(t *testing.T) {
 	clearDatabase(client)
 	e := echo.New()
 	t.Run("Should get user's authenticated profile", func(t *testing.T) {
-		identity, err := registerUser(getOwnProfileTestUsername, getOwnProfileTestEmail, "", handler.registerProfileHandler)
-		require.NoError(t, err, "Could Not Create User")
+		identity, err := registerUser(getOwnProfileTestUsername, getOwnProfileTestEmail, "", profileManager)
+		require.NoError(t, err, "Could Not Create User", err)
 		req := httptest.NewRequest(http.MethodGet, "/user", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Subject", identity.Subject)

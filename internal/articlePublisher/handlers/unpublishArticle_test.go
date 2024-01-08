@@ -21,9 +21,6 @@ import (
 )
 
 func TestUnpublishArticle(t *testing.T) {
-	const articleAuthorUsername = "article-author-username"
-	const articleAuthorEmail = "article.author.email@test.test"
-
 	const articleTitle = "Unpublish Article Title"
 	const articleSlug = "unpublish-article-title"
 	const articleDescription = "Unpublish Article Description"
@@ -48,22 +45,23 @@ func TestUnpublishArticle(t *testing.T) {
 	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
-	_, err = registerUser(articleAuthorUsername, "", "", profileManager)
+	authorIdentity, err := registerUser("", "", "", profileManager)
 	if err != nil {
-		t.Error("Could not create user", err)
+		log.Fatalf("Could not create user: %s", err)
 	}
 
 	e := echo.New()
 	t.Run("Should delete an article", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Client-Username", articleAuthorUsername)
-		req.Header.Set("Goduit-Subject", articleAuthorEmail)
+		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
+		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
+		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(articleSlug)
-		err := createArticle(articleTitle, articleDescription, articleBody, articleAuthorUsername, articleTagList, handler.writeArticleHandler)
+		err := createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler)
 		require.NoError(t, err)
 		err = handler.UnpublishArticle(c)
 		require.NoError(t, err)
@@ -73,8 +71,9 @@ func TestUnpublishArticle(t *testing.T) {
 		slug := "inexistent-article"
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Client-Username", articleAuthorUsername)
-		req.Header.Set("Goduit-Subject", articleAuthorEmail)
+		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
+		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
+		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
@@ -92,7 +91,7 @@ func TestUnpublishArticle(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(articleSlug)
-		err := createArticle(articleTitle, articleDescription, articleBody, articleAuthorUsername, articleTagList, handler.writeArticleHandler)
+		err := createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler)
 		require.NoError(t, err)
 		err = handler.UnpublishArticle(c)
 		require.ErrorContains(t, err, api.Forbidden.Error())

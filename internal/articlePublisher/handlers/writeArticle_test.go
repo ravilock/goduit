@@ -23,9 +23,6 @@ import (
 )
 
 func TestWriteArticle(t *testing.T) {
-	const createArticleTestUsername = "create-article-test-username"
-	const createArticleTestEmail = "create.article.test@test.test"
-
 	databaseURI := os.Getenv("DB_URL")
 	if databaseURI == "" {
 		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
@@ -44,9 +41,9 @@ func TestWriteArticle(t *testing.T) {
 	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
-	_, err = registerUser(createArticleTestUsername, createArticleTestEmail, "", profileManager)
+	authorIdentity, err := registerUser("", "", "", profileManager)
 	if err != nil {
-		t.Error("Could not create user", err)
+		log.Fatalf("Could not create user: %s", err)
 	}
 	e := echo.New()
 	t.Run("Should create an article", func(t *testing.T) {
@@ -55,7 +52,9 @@ func TestWriteArticle(t *testing.T) {
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/api/articles", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Client-Username", createArticleTestUsername)
+		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
+		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
+		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		err = handler.WriteArticle(c)
@@ -66,7 +65,7 @@ func TestWriteArticle(t *testing.T) {
 		createArticleResponse := new(articlePublisherResponses.Article)
 		err = json.Unmarshal(rec.Body.Bytes(), createArticleResponse)
 		require.NoError(t, err)
-		checkWriteArticleResponse(t, createArticleRequest, createArticleTestUsername, createArticleResponse)
+		checkWriteArticleResponse(t, createArticleRequest, authorIdentity.Username, createArticleResponse)
 	})
 	// TODO: Add test for articles with the same Title/Slug
 }

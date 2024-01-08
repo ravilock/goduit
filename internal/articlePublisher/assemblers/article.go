@@ -12,7 +12,7 @@ func ArticleResponse(article *models.Article, author *profileManagerResponses.Pr
 	response.Article.Title = *article.Title
 	response.Article.Description = *article.Description
 	response.Article.Body = *article.Body
-	response.Article.TagList = *article.TagList
+	response.Article.TagList = article.TagList
 	response.Article.CreatedAt = *article.CreatedAt
 	if article.UpdatedAt != nil {
 		response.Article.UpdatedAt = *article.UpdatedAt

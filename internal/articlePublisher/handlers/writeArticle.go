@@ -39,7 +39,7 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 		return err
 	}
 
-	article := request.Model(identity.ClientUsername)
+	article := request.Model(identity.Subject)
 
 	ctx := c.Request().Context()
 
@@ -54,7 +54,7 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 		return err
 	}
 
-	authorProfile, err := h.profileManager.GetProfileByUsername(ctx, identity.ClientUsername)
+	authorProfile, err := h.profileManager.GetProfileByID(ctx, identity.Subject)
 	if err != nil {
 		return api.UserNotFound(identity.ClientUsername)
 	}
