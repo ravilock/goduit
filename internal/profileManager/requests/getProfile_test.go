@@ -4,42 +4,42 @@ import (
 	"testing"
 
 	"github.com/ravilock/goduit/api"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetProfile(t *testing.T) {
 	t.Run("Valid request should not return errors", func(t *testing.T) {
 		request := generateGetProfileRequest()
 		err := request.Validate()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Username is required", func(t *testing.T) {
 		request := generateGetProfileRequest()
 		request.Username = ""
 		err := request.Validate()
-		assert.ErrorContains(t, err, api.RequiredFieldError("Username").Error())
+		require.ErrorContains(t, err, api.RequiredFieldError("Username").Error())
 	})
 
 	t.Run("Username should not be blank", func(t *testing.T) {
 		request := generateGetProfileRequest()
 		request.Username = " "
 		err := request.Validate()
-		assert.ErrorContains(t, err, api.RequiredFieldError("Username").Error())
+		require.ErrorContains(t, err, api.RequiredFieldError("Username").Error())
 	})
 
 	t.Run("Username should contain at least 5 chars", func(t *testing.T) {
 		request := generateGetProfileRequest()
 		request.Username = "user"
 		err := request.Validate()
-		assert.ErrorContains(t, err, api.InvalidFieldLength("Username", "min", "5").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLength("Username", "min", "5").Error())
 	})
 
 	t.Run("Username should contain at most 255 chars", func(t *testing.T) {
 		request := generateGetProfileRequest()
 		request.Username = randomString(256)
 		err := request.Validate()
-		assert.ErrorContains(t, err, api.InvalidFieldLength("Username", "max", "255").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLength("Username", "max", "255").Error())
 	})
 }
 

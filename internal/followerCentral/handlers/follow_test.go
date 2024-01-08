@@ -20,7 +20,7 @@ import (
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFollow(t *testing.T) {
@@ -66,16 +66,16 @@ func TestFollow(t *testing.T) {
 		c.SetParamValues(followTestUsername)
 		req.Header.Set("Goduit-Client-Username", followerUsername)
 		err := handler.Follow(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		followResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkFollowResponse(t, followTestUsername, true, followResponse)
 		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), followTestUsername, followerUsername)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkFollowerModel(t, followTestUsername, followerUsername, followerModel)
 	})
 	t.Run("Should return 404 if no user is found", func(t *testing.T) {
@@ -88,23 +88,23 @@ func TestFollow(t *testing.T) {
 		c.SetParamValues(inexistentUsername)
 		req.Header.Set("Goduit-Client-Username", followerUsername)
 		err := handler.Follow(c)
-		assert.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
+		require.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
 	})
 }
 
 func checkFollowResponse(t *testing.T, username string, following bool, response *profileManagerResponses.ProfileResponse) {
 	t.Helper()
-	assert.Equal(t, username, response.Profile.Username, "User username should be the same")
-	assert.Equal(t, following, response.Profile.Following)
-	assert.Zero(t, response.Profile.Image)
-	assert.Zero(t, response.Profile.Bio)
+	require.Equal(t, username, response.Profile.Username, "User username should be the same")
+	require.Equal(t, following, response.Profile.Following)
+	require.Zero(t, response.Profile.Image)
+	require.Zero(t, response.Profile.Bio)
 }
 
 func checkFollowerModel(t *testing.T, followed, follower string, model *followerCentralModels.Follower) {
 	t.Helper()
-	assert.NotNil(t, model)
-	assert.Equal(t, followed, *model.Followed, "Wrong followed username")
-	assert.Equal(t, follower, *model.Follower, "Wrong follower username")
+	require.NotNil(t, model)
+	require.Equal(t, followed, *model.Followed, "Wrong followed username")
+	require.Equal(t, follower, *model.Follower, "Wrong follower username")
 }
 
 func registerUser(username, email, password string, manager *profileManager.ProfileManager) (string, error) {

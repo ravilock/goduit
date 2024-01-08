@@ -21,7 +21,7 @@ import (
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -45,25 +45,26 @@ func TestUpdateProfile(t *testing.T) {
 	t.Run("Should fully update an authenticated user's profile", func(t *testing.T) {
 		oldUpdateProfileTestUsername := uuid.NewString()
 		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
-		err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", handler.registerProfileHandler)
-		assert.NoError(t, err)
+		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", handler.registerProfileHandler)
+		require.NoError(t, err, "Could Not Create User")
 		updateProfileRequest := generateUpdateProfileBody()
 		requestBody, err := json.Marshal(updateProfileRequest)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, "/user", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", oldUpdateProfileTestEmail)
-		req.Header.Set("Goduit-Client-Username", oldUpdateProfileTestUsername)
+		req.Header.Set("Goduit-Subject", identity.Subject)
+		req.Header.Set("Goduit-Client-Username", identity.Username)
+		req.Header.Set("Goduit-Client-Email", identity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		err = handler.UpdateProfile(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		updateProfileResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), updateProfileResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
 		checkUpdatedToken(t, updateProfileRequest, updateProfileResponse.User.Token)
 		checkProfilePassword(t, updateProfileRequest.User.Username, updateProfileRequest.User.Password, profileManagerRepository)
@@ -73,26 +74,27 @@ func TestUpdateProfile(t *testing.T) {
 		oldUpdateProfileTestUsername := uuid.NewString()
 		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
 		oldUpdateProfileTestPassword := uuid.NewString()
-		err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, oldUpdateProfileTestPassword, handler.registerProfileHandler)
-		assert.NoError(t, err)
+		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, oldUpdateProfileTestPassword, handler.registerProfileHandler)
+		require.NoError(t, err, "Could Not Create User")
 		updateProfileRequest := generateUpdateProfileBody()
 		updateProfileRequest.User.Password = ""
 		requestBody, err := json.Marshal(updateProfileRequest)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, "/user", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", oldUpdateProfileTestEmail)
-		req.Header.Set("Goduit-Client-Username", oldUpdateProfileTestUsername)
+		req.Header.Set("Goduit-Subject", identity.Subject)
+		req.Header.Set("Goduit-Client-Email", identity.UserEmail)
+    req.Header.Set("Goduit-Client-Username", identity.Username)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		err = handler.UpdateProfile(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		updateProfileResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), updateProfileResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
 		checkUpdatedToken(t, updateProfileRequest, updateProfileResponse.User.Token)
 		checkProfilePassword(t, updateProfileRequest.User.Username, oldUpdateProfileTestPassword, profileManagerRepository)
@@ -100,30 +102,31 @@ func TestUpdateProfile(t *testing.T) {
 	t.Run("Should not generate new token if not necessary", func(t *testing.T) {
 		oldUpdateProfileTestUsername := uuid.NewString()
 		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
-		err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", handler.registerProfileHandler)
-		assert.NoError(t, err)
+		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", handler.registerProfileHandler)
+		require.NoError(t, err, "Could Not Create User")
 		updateProfileRequest := generateUpdateProfileBody()
 		updateProfileRequest.User.Password = ""
 		updateProfileRequest.User.Username = oldUpdateProfileTestUsername
 		updateProfileRequest.User.Email = oldUpdateProfileTestEmail
 		requestBody, err := json.Marshal(updateProfileRequest)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, "/user", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", oldUpdateProfileTestEmail)
-		req.Header.Set("Goduit-Client-Username", oldUpdateProfileTestUsername)
+		req.Header.Set("Goduit-Subject", identity.Subject)
+		req.Header.Set("Goduit-Client-Username", identity.Username)
+		req.Header.Set("Goduit-Client-Email", identity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		err = handler.UpdateProfile(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		updateProfileResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), updateProfileResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
-		assert.Empty(t, "", "Should have not generated new token")
+		require.Empty(t, "", "Should have not generated new token")
 	})
 }
 
@@ -139,24 +142,24 @@ func generateUpdateProfileBody() *profileManagerRequests.UpdateProfileRequest {
 
 func checkUpdateProfileResponse(t *testing.T, request *profileManagerRequests.UpdateProfileRequest, response *profileManagerResponses.User) {
 	t.Helper()
-	assert.Equal(t, request.User.Username, response.User.Username, "Updated user's username should be %q, got %q", request.User.Username, response.User.Username)
-	assert.Equal(t, request.User.Email, response.User.Email, "Updated user's email should be %q, got %q", request.User.Email, response.User.Email)
-	assert.Equal(t, request.User.Bio, response.User.Bio, "Update user's bio should be %q, got %q", request.User.Bio, response.User.Bio)
-	assert.Equal(t, request.User.Image, response.User.Image, "Update user's image should be %q, got %q", request.User.Image, response.User.Image)
+	require.Equal(t, request.User.Username, response.User.Username, "Updated user's username should be %q, got %q", request.User.Username, response.User.Username)
+	require.Equal(t, request.User.Email, response.User.Email, "Updated user's email should be %q, got %q", request.User.Email, response.User.Email)
+	require.Equal(t, request.User.Bio, response.User.Bio, "Update user's bio should be %q, got %q", request.User.Bio, response.User.Bio)
+	require.Equal(t, request.User.Image, response.User.Image, "Update user's image should be %q, got %q", request.User.Image, response.User.Image)
 }
 
 func checkUpdatedToken(t *testing.T, request *profileManagerRequests.UpdateProfileRequest, token string) {
 	t.Helper()
 	identityClaims, err := identity.FromToken(token)
-	assert.NoError(t, err)
-	assert.Equal(t, request.User.Username, identityClaims.Username, "Token's username should be %q, got %q", request.User.Username, identityClaims.Username)
-	assert.Equal(t, request.User.Email, identityClaims.Subject, "Token's email should be %q, got %q", request.User.Email, identityClaims.Subject)
+	require.NoError(t, err)
+	require.Equal(t, request.User.Username, identityClaims.Username, "Token's username should be %q, got %q", request.User.Username, identityClaims.Username)
+	require.Equal(t, request.User.Email, identityClaims.UserEmail, "Token's email should be %q, got %q", request.User.Email, identityClaims.Subject)
 }
 
 func checkProfilePassword(t *testing.T, username, password string, repository *profileManagerRepositories.UserRepository) {
 	t.Helper()
 	user, err := repository.GetUserByUsername(context.Background(), username)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	err = bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(password))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }

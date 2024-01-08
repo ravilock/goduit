@@ -4,32 +4,32 @@ import (
 	"testing"
 
 	"github.com/ravilock/goduit/api"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestArticleSlug(t *testing.T) {
 	t.Run("Valid request should not return errors", func(t *testing.T) {
 		request := generateArticleSlugRequest()
 		err := request.Validate()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 	t.Run("Slug is required", func(t *testing.T) {
 		request := generateArticleSlugRequest()
 		request.Slug = ""
 		err := request.Validate()
-		assert.ErrorContains(t, err, api.RequiredFieldError("Slug").Error())
+		require.ErrorContains(t, err, api.RequiredFieldError("Slug").Error())
 	})
 	t.Run("Slug should not be blank", func(t *testing.T) {
 		request := generateArticleSlugRequest()
 		request.Slug = " "
 		err := request.Validate()
-		assert.ErrorContains(t, err, api.RequiredFieldError("Slug").Error())
+		require.ErrorContains(t, err, api.RequiredFieldError("Slug").Error())
 	})
 	t.Run("Slug should contain at least 5 chars", func(t *testing.T) {
 		request := generateArticleSlugRequest()
 		request.Slug = "1234"
 		err := request.Validate()
-		assert.ErrorContains(t, err, api.InvalidFieldLength("Slug", "min", "5").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLength("Slug", "min", "5").Error())
 	})
 }
 

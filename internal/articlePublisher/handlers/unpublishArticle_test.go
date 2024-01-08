@@ -2,6 +2,12 @@ package handlers
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
@@ -11,12 +17,7 @@ import (
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/stretchr/testify/assert"
-	"log"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUnpublishArticle(t *testing.T) {
@@ -63,10 +64,10 @@ func TestUnpublishArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(articleSlug)
 		err := createArticle(articleTitle, articleDescription, articleBody, articleAuthorUsername, articleTagList, handler.writeArticleHandler)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		err = handler.UnpublishArticle(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusNoContent, rec.Code)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusNoContent, rec.Code)
 	})
 	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
 		slug := "inexistent-article"
@@ -78,9 +79,9 @@ func TestUnpublishArticle(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(slug)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		err = handler.UnpublishArticle(c)
-		assert.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
+		require.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
 	})
 	t.Run("Should only delete aritcles authored by the currently authenticated user", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
@@ -92,8 +93,8 @@ func TestUnpublishArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(articleSlug)
 		err := createArticle(articleTitle, articleDescription, articleBody, articleAuthorUsername, articleTagList, handler.writeArticleHandler)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		err = handler.UnpublishArticle(c)
-		assert.ErrorContains(t, err, api.Forbidden.Error())
+		require.ErrorContains(t, err, api.Forbidden.Error())
 	})
 }

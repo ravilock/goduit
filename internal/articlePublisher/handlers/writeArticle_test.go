@@ -19,7 +19,7 @@ import (
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWriteArticle(t *testing.T) {
@@ -52,20 +52,20 @@ func TestWriteArticle(t *testing.T) {
 	t.Run("Should create an article", func(t *testing.T) {
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/api/articles", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Client-Username", createArticleTestUsername)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		err = handler.WriteArticle(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusCreated {
 			t.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
 		}
 		createArticleResponse := new(articlePublisherResponses.Article)
 		err = json.Unmarshal(rec.Body.Bytes(), createArticleResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkWriteArticleResponse(t, createArticleRequest, createArticleTestUsername, createArticleResponse)
 	})
 	// TODO: Add test for articles with the same Title/Slug
@@ -82,10 +82,10 @@ func generateWriteArticleBody() *articlePublisherRequests.WriteArticleRequest {
 
 func checkWriteArticleResponse(t *testing.T, request *articlePublisherRequests.WriteArticleRequest, author string, response *articlePublisherResponses.Article) {
 	t.Helper()
-	assert.Equal(t, request.Article.Title, response.Article.Title, "Wrong article title")
-	assert.Equal(t, request.Article.Description, response.Article.Description, "Wrong article description")
-	assert.Equal(t, request.Article.Body, response.Article.Body, "Wrong article body")
-	assert.Equal(t, makeSlug(request.Article.Title), response.Article.Slug, "Wrong article body")
-	assert.Equal(t, request.Article.TagList, response.Article.TagList, "Wrong article body")
-	assert.Equal(t, author, response.Article.Author.Username, "Wrong article author username")
+	require.Equal(t, request.Article.Title, response.Article.Title, "Wrong article title")
+	require.Equal(t, request.Article.Description, response.Article.Description, "Wrong article description")
+	require.Equal(t, request.Article.Body, response.Article.Body, "Wrong article body")
+	require.Equal(t, makeSlug(request.Article.Title), response.Article.Slug, "Wrong article body")
+	require.Equal(t, request.Article.TagList, response.Article.TagList, "Wrong article body")
+	require.Equal(t, author, response.Article.Author.Username, "Wrong article author username")
 }

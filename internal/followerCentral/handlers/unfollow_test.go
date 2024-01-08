@@ -18,7 +18,7 @@ import (
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -69,17 +69,17 @@ func TestUnfollow(t *testing.T) {
 		c.SetParamValues(unfollowTestUsername)
 		req.Header.Set("Goduit-Client-Username", followerUsername)
 		err := handler.Unfollow(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		followResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkFollowResponse(t, unfollowTestUsername, false, followResponse)
 		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), unfollowTestUsername, followerUsername)
-		assert.ErrorIs(t, err, mongo.ErrNoDocuments)
-		assert.Nil(t, followerModel)
+		require.ErrorIs(t, err, mongo.ErrNoDocuments)
+		require.Nil(t, followerModel)
 	})
 	t.Run("If the user is already not following the other user, return HTTP 200", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", unfollowTestUsername), nil)
@@ -90,17 +90,17 @@ func TestUnfollow(t *testing.T) {
 		c.SetParamValues(unfollowTestUsername)
 		req.Header.Set("Goduit-Client-Username", followerUsername)
 		err := handler.Unfollow(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
 		followResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkFollowResponse(t, unfollowTestUsername, false, followResponse)
 		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), unfollowTestUsername, followerUsername)
-		assert.ErrorIs(t, err, mongo.ErrNoDocuments)
-		assert.Nil(t, followerModel)
+		require.ErrorIs(t, err, mongo.ErrNoDocuments)
+		require.Nil(t, followerModel)
 	})
 	t.Run("Should return 404 if no user is found", func(t *testing.T) {
 		inexistentUsername := "inexistent-username"
@@ -112,6 +112,6 @@ func TestUnfollow(t *testing.T) {
 		c.SetParamValues(inexistentUsername)
 		req.Header.Set("Goduit-Client-Username", followerUsername)
 		err := handler.Unfollow(c)
-		assert.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
+		require.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
 	})
 }
