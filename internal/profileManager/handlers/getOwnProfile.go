@@ -11,7 +11,6 @@ import (
 )
 
 type profileGetter interface {
-	GetProfileByEmail(ctx context.Context, email string) (*models.User, error)
 	GetProfileByUsername(ctx context.Context, username string) (*models.User, error)
 	GetProfileByID(ctx context.Context, ID string) (*models.User, error)
 }
