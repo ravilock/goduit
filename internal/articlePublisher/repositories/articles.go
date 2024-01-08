@@ -21,6 +21,9 @@ func NewArticleRepository(client *mongo.Client) *ArticleRepository {
 func (r *ArticleRepository) WriteArticle(ctx context.Context, article *models.Article) error {
 	collection := r.DBClient.Database("conduit").Collection("articles")
 	if _, err := collection.InsertOne(ctx, article); err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return app.ConflictError("articles")
+		}
 		return err
 	}
 	return nil

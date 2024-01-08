@@ -43,7 +43,7 @@ func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
 		return err
 	}
 
-	article := request.Model(identity.ClientUsername)
+	article := request.Model()
 
 	ctx := c.Request().Context()
 
