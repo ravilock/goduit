@@ -9,7 +9,7 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 )
 
-type UpdateArticle struct {
+type UpdateArticleRequest struct {
 	Slug    string               `param:"slug" validate:"required,notblank,min=5"`
 	Article UpdateArticlePayload `json:"article" validate:"required"`
 }
@@ -20,7 +20,7 @@ type UpdateArticlePayload struct {
 	Body        string `json:"body" validate:"required,notblank"`
 }
 
-func (r *UpdateArticle) Model() *models.Article {
+func (r *UpdateArticleRequest) Model() *models.Article {
 	slug := makeSlug(r.Article.Title)
 	updatedAt := time.Now()
 	return &models.Article{
@@ -36,7 +36,7 @@ func (r *UpdateArticle) Model() *models.Article {
 	}
 }
 
-func (r *UpdateArticle) Validate() error {
+func (r *UpdateArticleRequest) Validate() error {
 	if err := validators.Validate.Struct(r); err != nil {
 		if validationErrors := new(validator.ValidationErrors); errors.As(err, validationErrors) {
 			for _, validationError := range *validationErrors {

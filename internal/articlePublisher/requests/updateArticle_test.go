@@ -29,7 +29,7 @@ func TestUpdateArticle(t *testing.T) {
 		request := generateUpdateArticleRequest()
 		request.Slug = "1234"
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Slug", "min", "5").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Slug", "min", "5").Error())
 	})
 	t.Run("Title is required", func(t *testing.T) {
 		request := generateUpdateArticleRequest()
@@ -47,13 +47,13 @@ func TestUpdateArticle(t *testing.T) {
 		request := generateUpdateArticleRequest()
 		request.Article.Title = "1234"
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Title", "min", "5").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Title", "min", "5").Error())
 	})
 	t.Run("Title should contain at most 255 chars", func(t *testing.T) {
 		request := generateUpdateArticleRequest()
 		request.Article.Title = randomString(256)
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Title", "max", "255").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Title", "max", "255").Error())
 	})
 	t.Run("Description is required", func(t *testing.T) {
 		request := generateUpdateArticleRequest()
@@ -71,13 +71,13 @@ func TestUpdateArticle(t *testing.T) {
 		request := generateUpdateArticleRequest()
 		request.Article.Description = "1234"
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Description", "min", "5").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Description", "min", "5").Error())
 	})
 	t.Run("Description should contain at most 255 chars", func(t *testing.T) {
 		request := generateUpdateArticleRequest()
 		request.Article.Description = randomString(256)
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Description", "max", "255").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Description", "max", "255").Error())
 	})
 	t.Run("Body is required", func(t *testing.T) {
 		request := generateUpdateArticleRequest()
@@ -93,8 +93,8 @@ func TestUpdateArticle(t *testing.T) {
 	})
 }
 
-func generateUpdateArticleRequest() *UpdateArticle {
-	article := new(UpdateArticle)
+func generateUpdateArticleRequest() *UpdateArticleRequest {
+	article := new(UpdateArticleRequest)
 	article.Slug = "test-slug"
 	article.Article.Title = "Test Title"
 	article.Article.Description = "Test Description"

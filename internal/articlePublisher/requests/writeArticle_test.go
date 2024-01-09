@@ -29,13 +29,13 @@ func TestWriteArticle(t *testing.T) {
 		request := generateWriteArticleRequest()
 		request.Article.Title = "1234"
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Title", "min", "5").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Title", "min", "5").Error())
 	})
 	t.Run("Title should contain at most 255 chars", func(t *testing.T) {
 		request := generateWriteArticleRequest()
 		request.Article.Title = randomString(256)
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Title", "max", "255").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Title", "max", "255").Error())
 	})
 	t.Run("Description is required", func(t *testing.T) {
 		request := generateWriteArticleRequest()
@@ -53,13 +53,13 @@ func TestWriteArticle(t *testing.T) {
 		request := generateWriteArticleRequest()
 		request.Article.Description = "1234"
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Description", "min", "5").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Description", "min", "5").Error())
 	})
 	t.Run("Description should contain at most 255 chars", func(t *testing.T) {
 		request := generateWriteArticleRequest()
 		request.Article.Description = randomString(256)
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Description", "max", "255").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Description", "max", "255").Error())
 	})
 	t.Run("Body is required", func(t *testing.T) {
 		request := generateWriteArticleRequest()
@@ -83,7 +83,7 @@ func TestWriteArticle(t *testing.T) {
 		request := generateWriteArticleRequest()
 		request.Article.TagList = []string{}
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("TagList", "min", "1").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("TagList", "min", "1").Error())
 	})
 	t.Run("TagList should have at most 10 tags", func(t *testing.T) {
 		request := generateWriteArticleRequest()
@@ -92,19 +92,19 @@ func TestWriteArticle(t *testing.T) {
 			request.Article.TagList = append(request.Article.TagList, randomString(30))
 		}
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("TagList", "max", "10").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("TagList", "max", "10").Error())
 	})
 	t.Run("Each Tag on TagList should have at least 3 chars", func(t *testing.T) {
 		request := generateWriteArticleRequest()
 		request.Article.TagList = []string{"12"}
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("TagList[0]", "min", "3").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("TagList[0]", "min", "3").Error())
 	})
 	t.Run("Each Tag on TagList should have at most 30 chars", func(t *testing.T) {
 		request := generateWriteArticleRequest()
 		request.Article.TagList = []string{randomString(31)}
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("TagList[0]", "max", "30").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("TagList[0]", "max", "30").Error())
 	})
 }
 

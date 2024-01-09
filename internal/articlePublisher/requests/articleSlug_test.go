@@ -29,7 +29,7 @@ func TestArticleSlug(t *testing.T) {
 		request := generateArticleSlugRequest()
 		request.Slug = "1234"
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Slug", "min", "5").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Slug", "min", "5").Error())
 	})
 }
 
