@@ -6,8 +6,8 @@ import (
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 )
 
-func ArticleResponse(article *models.Article, author *profileManagerResponses.ProfileResponse) *responses.Article {
-	response := new(responses.Article)
+func ArticleResponse(article *models.Article, author *profileManagerResponses.ProfileResponse) *responses.ArticleResponse {
+	response := new(responses.ArticleResponse)
 	response.Article.Slug = *article.Slug
 	response.Article.Title = *article.Title
 	response.Article.Description = *article.Description
