@@ -102,6 +102,7 @@ func main() {
 	// Article Routes
 	articlesGroup := apiGroup.Group("/articles")
 	articlesGroup.POST("", articleHandler.WriteArticle, identity.CreateAuthMiddleware(true))
+	articlesGroup.GET("", articleHandler.ListArticles, identity.CreateAuthMiddleware(false))
 	articleGroup := apiGroup.Group("/article")
 	articleGroup.GET("/:slug", articleHandler.GetArticle, identity.CreateAuthMiddleware(false))
 	articleGroup.DELETE("/:slug", articleHandler.UnpublishArticle, identity.CreateAuthMiddleware(true))
