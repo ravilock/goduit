@@ -68,7 +68,7 @@ func TestGetArticle(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
 		}
-		getArticleResponse := new(articlePublisherResponses.Article)
+		getArticleResponse := new(articlePublisherResponses.ArticleResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), getArticleResponse)
 		require.NoError(t, err)
 		checkGetArticleResponse(t, articleTitle, articleSlug, authorIdentity.Username, articleTagList, getArticleResponse)
@@ -87,7 +87,7 @@ func TestGetArticle(t *testing.T) {
 	// TODO: Add test for when the user favorited the article
 }
 
-func checkGetArticleResponse(t *testing.T, title, slug, authorUsername string, tagList []string, response *articlePublisherResponses.Article) {
+func checkGetArticleResponse(t *testing.T, title, slug, authorUsername string, tagList []string, response *articlePublisherResponses.ArticleResponse) {
 	t.Helper()
 	require.Equal(t, authorUsername, response.Article.Author.Username, "Article's author username is wrong")
 	require.Equal(t, title, response.Article.Title, "Wrong article title")

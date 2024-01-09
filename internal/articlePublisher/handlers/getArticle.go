@@ -22,6 +22,7 @@ type articleGetter interface {
 
 type profileGetter interface {
 	GetProfileByID(ctx context.Context, ID string) (*profileManagerModels.User, error)
+	GetProfileByUsername(ctx context.Context, username string) (*profileManagerModels.User, error)
 }
 
 type isFollowedChecker interface {

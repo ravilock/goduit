@@ -72,7 +72,7 @@ func TestUpdateArticle(t *testing.T) {
 		err = handler.UpdateArticle(c)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, rec.Code)
-		updateArticleResponse := new(articlePublisherResponses.Article)
+		updateArticleResponse := new(articlePublisherResponses.ArticleResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), updateArticleResponse)
 		require.NoError(t, err)
 		checkUpdateArticleResponse(t, updateArticleRequest, authorIdentity.Username, updateArticleResponse, articleTagList)
@@ -113,15 +113,15 @@ func TestUpdateArticle(t *testing.T) {
 	})
 }
 
-func generateUpdateArticleBody() *articlePublisherRequests.UpdateArticle {
-	request := new(articlePublisherRequests.UpdateArticle)
+func generateUpdateArticleBody() *articlePublisherRequests.UpdateArticleRequest {
+	request := new(articlePublisherRequests.UpdateArticleRequest)
 	request.Article.Title = "New Article Name"
 	request.Article.Description = "New Article Description"
 	request.Article.Body = "New Article Body"
 	return request
 }
 
-func checkUpdateArticleResponse(t *testing.T, request *articlePublisherRequests.UpdateArticle, author string, response *articlePublisherResponses.Article, tagList []string) {
+func checkUpdateArticleResponse(t *testing.T, request *articlePublisherRequests.UpdateArticleRequest, author string, response *articlePublisherResponses.ArticleResponse, tagList []string) {
 	t.Helper()
 	require.Equal(t, request.Article.Title, response.Article.Title, "Wrong article title")
 	require.Equal(t, request.Article.Description, response.Article.Description, "Wrong article description")
