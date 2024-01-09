@@ -29,6 +29,32 @@ func (r *ArticleRepository) WriteArticle(ctx context.Context, article *models.Ar
 	return nil
 }
 
+func (r *ArticleRepository) ListArticles(ctx context.Context, author, tag string, limit, offset int64) ([]*models.Article, error) {
+	filter := bson.D{}
+	if author != "" {
+		filter = append(filter, bson.E{Key: "author", Value: author})
+	}
+	if tag != "" {
+		filter = append(filter, bson.E{
+			Key: "tagList", Value: bson.D{{
+				Key:   "$all",
+				Value: []string{tag},
+			}},
+		})
+	}
+	opt := options.Find().SetLimit(limit).SetSkip(offset).SetSort(bson.D{{Key: "_id", Value: 1}})
+	collection := r.DBClient.Database("conduit").Collection("articles")
+	results := []*models.Article{}
+	cursor, err := collection.Find(ctx, filter, opt)
+	if err != nil {
+		return results, err
+	}
+	if err = cursor.All(ctx, &results); err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 func (r *ArticleRepository) GetArticleBySlug(ctx context.Context, slug string) (*models.Article, error) {
 	var article *models.Article
 	filter := bson.D{{
