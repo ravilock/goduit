@@ -20,7 +20,7 @@ func ToHTTP(err validator.FieldError) *echo.HTTPError {
 	case "required", "notblank":
 		return api.RequiredFieldError(err.Field())
 	case "min", "max":
-		return api.InvalidFieldLength(err.Field(), tag, err.Param())
+		return api.InvalidFieldLimit(err.Field(), tag, err.Param())
 	case "email", "http_url|base64":
 		return api.InvalidFieldError(err.Field(), err.Value())
 	case "unique":
