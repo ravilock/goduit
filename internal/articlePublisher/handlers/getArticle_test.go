@@ -52,7 +52,7 @@ func TestGetArticle(t *testing.T) {
 		log.Fatalf("Could not create user: %s", err)
 	}
 
-	if err := createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler); err != nil {
+	if _, err := createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler); err != nil {
 		log.Fatalf("Could not create article: %s", err)
 	}
 	e := echo.New()
