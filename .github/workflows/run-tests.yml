@@ -10,7 +10,7 @@ jobs:
       - name: Create Public a Private Keys
         run: sh scripts/generateJWTRS256Keys.sh
       - name: Start Containers
-        run:
+        run: |
           echo ---Building and starting up docker---
           docker compose up -d
           echo ---Containers up--
