@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -181,13 +180,8 @@ func TestListArticles(t *testing.T) {
 		for i := 0; i < limit-offset; i++ {
 			article1 := &articles1[i]
 			article2 := &articles2[i]
-      require.True(t, checkArticlesAreTheSame(article1, article2))
-			fmt.Println(article1.Slug)
-			fmt.Println("-----")
-			fmt.Println(article2.Slug)
-			fmt.Println("---------------- EOC ---------------------")
+			require.True(t, checkArticlesAreTheSame(article1, article2))
 		}
-		require.True(t, false)
 	})
 }
 
