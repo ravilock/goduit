@@ -1,0 +1,18 @@
+name: Integration Tests
+on: [push]
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create Public a Private Keys
+        run: sh scripts/generateJWTRS256Keys.sh
+      - name: Start Containers
+        run: |
+          echo ---Building and starting up docker---
+          docker compose up -d
+          echo ---Containers up--
+      - name: Test Locally With Containers
+        run: docker-compose exec -T web go test -p 1 ./... -count=1
