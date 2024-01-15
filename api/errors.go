@@ -10,7 +10,7 @@ import (
 
 var CouldNotUnmarshalBodyError *echo.HTTPError = echo.NewHTTPError(http.StatusBadRequest, "Could Not Unmarshall Body")
 
-var FailedLoginAttempt *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Login failed; Invalid user ID or password.")
+var FailedLoginAttempt *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Login failed; Invalid email or password.")
 
 var FailedAuthentication *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Invalid, Empty or Expired Token")
 
@@ -53,15 +53,10 @@ func UniqueFieldError(field string) *echo.HTTPError {
 	}
 }
 
-func InvalidFieldLength(field string, validationName string, validationSize string) *echo.HTTPError {
-	sizeMessage := "short"
-	if validationName == "max" {
-		sizeMessage = "long"
-	}
-
+func InvalidFieldLimit(field string, validationName string, validationSize string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusBadRequest,
-		Message: fmt.Sprintf("value in field '%s' is too %s. %s=%s", field, sizeMessage, validationName, validationSize),
+		Message: fmt.Sprintf("Field '%s' %s value/length is %s", field, validationName, validationSize),
 	}
 }
 

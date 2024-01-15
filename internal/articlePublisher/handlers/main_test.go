@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api/validators"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
+	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
 	"github.com/ravilock/goduit/internal/identity"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
@@ -98,7 +100,32 @@ func makeSlug(title string) string {
 	return strings.Join(titleWords, "-")
 }
 
-func createArticle(title, description, body string, authorIdentity *identity.Identity, tagList []string, handler writeArticleHandler) error {
+func createArticles(n int, authorIdentity *identity.Identity, handler writeArticleHandler) ([]*articlePublisherResponses.ArticleResponse, error) {
+	articles := []*articlePublisherResponses.ArticleResponse{}
+	body := randomString(2500)
+	description := randomString(255)
+	tags := []string{randomString(10), authorIdentity.Username, authorIdentity.Subject}
+	for i := 0; i < n; i++ {
+		title := randomString(255)
+		response, err := createArticle(title, description, body, authorIdentity, tags, handler)
+		if err != nil {
+			return nil, err
+		}
+		articles = append(articles, response)
+	}
+	return articles, nil
+}
+
+func randomString(n int) string {
+	letters := []rune("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+func createArticle(title, description, body string, authorIdentity *identity.Identity, tagList []string, handler writeArticleHandler) (*articlePublisherResponses.ArticleResponse, error) {
 	if title == "" {
 		title = "Default Title"
 	}
@@ -118,7 +145,7 @@ func createArticle(title, description, body string, authorIdentity *identity.Ide
 	request.Article.TagList = tagList
 	requestBody, err := json.Marshal(request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/api/articles", bytes.NewBuffer(requestBody))
@@ -129,7 +156,11 @@ func createArticle(title, description, body string, authorIdentity *identity.Ide
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	if err := handler.WriteArticle(c); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	response := new(articlePublisherResponses.ArticleResponse)
+	if err := json.Unmarshal(rec.Body.Bytes(), response); err != nil {
+		return nil, err
+	}
+	return response, nil
 }

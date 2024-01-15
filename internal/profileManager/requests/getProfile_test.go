@@ -32,14 +32,14 @@ func TestGetProfile(t *testing.T) {
 		request := generateGetProfileRequest()
 		request.Username = "user"
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Username", "min", "5").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Username", "min", "5").Error())
 	})
 
 	t.Run("Username should contain at most 255 chars", func(t *testing.T) {
 		request := generateGetProfileRequest()
 		request.Username = randomString(256)
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Username", "max", "255").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Username", "max", "255").Error())
 	})
 }
 

@@ -62,7 +62,7 @@ func TestWriteArticle(t *testing.T) {
 		if rec.Code != http.StatusCreated {
 			t.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
 		}
-		createArticleResponse := new(articlePublisherResponses.Article)
+		createArticleResponse := new(articlePublisherResponses.ArticleResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), createArticleResponse)
 		require.NoError(t, err)
 		checkWriteArticleResponse(t, createArticleRequest, authorIdentity.Username, createArticleResponse)
@@ -79,7 +79,7 @@ func generateWriteArticleBody() *articlePublisherRequests.WriteArticleRequest {
 	return request
 }
 
-func checkWriteArticleResponse(t *testing.T, request *articlePublisherRequests.WriteArticleRequest, author string, response *articlePublisherResponses.Article) {
+func checkWriteArticleResponse(t *testing.T, request *articlePublisherRequests.WriteArticleRequest, author string, response *articlePublisherResponses.ArticleResponse) {
 	t.Helper()
 	require.Equal(t, request.Article.Title, response.Article.Title, "Wrong article title")
 	require.Equal(t, request.Article.Description, response.Article.Description, "Wrong article description")

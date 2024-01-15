@@ -46,21 +46,21 @@ func TestLogin(t *testing.T) {
 		request := generateLoginRequest()
 		request.User.Password = "pass"
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Password", "min", "8").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Password", "min", "8").Error())
 	})
 
 	t.Run("Email should contain at most 256 chars", func(t *testing.T) {
 		request := generateLoginRequest()
 		request.User.Email = randomString(256) + "@hotmail.com"
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Email", "max", "256").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Email", "max", "256").Error())
 	})
 
 	t.Run("Password should contain at most 72 chars", func(t *testing.T) {
 		request := generateLoginRequest()
 		request.User.Password = randomString(73)
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldLength("Password", "max", "72").Error())
+		require.ErrorContains(t, err, api.InvalidFieldLimit("Password", "max", "72").Error())
 	})
 
 	t.Run("Email should be a valid email", func(t *testing.T) {
