@@ -71,7 +71,7 @@ func main() {
 	// handlers
 	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral)
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
-	articleHandler := articleHandlers.NewArticlehandler(articlePublisher, profileManager, followerCentral)
+	articleHandler := articleHandlers.NewArticleHandler(articlePublisher, profileManager, followerCentral)
 	// Echo instance
 	e := echo.New()
 
