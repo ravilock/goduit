@@ -11,7 +11,7 @@ import (
 
 type WriteCommentRequest struct {
 	Slug    string              `param:"slug" validate:"required,notblank,min=5"`
-	Comment WriteArticlePayload `json:"comment" validate:"required"`
+	Comment WriteCommentPayload `json:"comment" validate:"required"`
 }
 
 type WriteCommentPayload struct {
