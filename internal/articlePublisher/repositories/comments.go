@@ -34,7 +34,7 @@ func (r *CommentRepository) WriteComment(ctx context.Context, comment *models.Co
 	return nil
 }
 
-func (r *CommentRepository) ListComments(ctx context.Context, article primitive.ObjectID) ([]*models.Comment, error) {
+func (r *CommentRepository) ListComments(ctx context.Context, article string) ([]*models.Comment, error) {
 	filter := bson.D{{
 		Key:   "article",
 		Value: article,
