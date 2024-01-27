@@ -63,15 +63,18 @@ func main() {
 	// repositories
 	userRepository := profileRepositories.NewUserRepository(client)
 	followerRepository := followerRepositories.NewFollowerRepository(client)
+	commentRepository := articleRepositories.NewCommentRepository(client)
 	articlePublisherRepository := articleRepositories.NewArticleRepository(client)
 	// services
 	profileManager := profileServices.NewProfileManager(userRepository)
 	followerCentral := followerServices.NewFollowerCentral(followerRepository)
+	commentPublisher := articleServices.NewCommentPublisher(commentRepository)
 	articlePublisher := articleServices.NewArticlePublisher(articlePublisherRepository)
 	// handlers
 	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral)
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
 	articleHandler := articleHandlers.NewArticleHandler(articlePublisher, profileManager, followerCentral)
+	commentHandler := articleHandlers.NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
 	// Echo instance
 	e := echo.New()
 
@@ -107,6 +110,7 @@ func main() {
 	articleGroup.GET("/:slug", articleHandler.GetArticle, identity.CreateAuthMiddleware(false))
 	articleGroup.DELETE("/:slug", articleHandler.UnpublishArticle, identity.CreateAuthMiddleware(true))
 	articleGroup.PUT("/:slug", articleHandler.UpdateArticle, identity.CreateAuthMiddleware(true))
+	articleGroup.POST("/:slug/comments", commentHandler.WriteComment, identity.CreateAuthMiddleware(true))
 	// Start server
 	e.Logger.Fatal(e.Start(":6969"))
 }
