@@ -15,7 +15,7 @@ type WriteCommentRequest struct {
 }
 
 type WriteCommentPayload struct {
-	Body string `json:"body" validate:"required,notblank,min=5,max=255"`
+	Body string `json:"body" validate:"required,notblank,min=5,max=140"`
 }
 
 func (r *WriteCommentRequest) Model(authorID string) *models.Comment {
