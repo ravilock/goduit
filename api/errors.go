@@ -81,6 +81,13 @@ func ArticleNotFound(identifier string) *echo.HTTPError {
 	}
 }
 
+func CommentNotFound(identifier string) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:    http.StatusNotFound,
+		Message: fmt.Sprintf("Comment with identifier %q not found", identifier),
+	}
+}
+
 func InternalError(internal error) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:     http.StatusInternalServerError,
