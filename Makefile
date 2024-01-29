@@ -2,8 +2,6 @@ SVC_API := web
 SVC_DB := mongo mongo-express
 LOGS_CMD := docker-compose logs --follow --tail=5
 
-BENCH_FUNC := .
-
 run: run-all
 
 run-all: run-db run-api
@@ -39,9 +37,6 @@ test:
 
 test-verbose:
 	@docker-compose exec $(SVC_API) go test -p 1 ./... -v -count=1
-
-benchmark:
-	@docker-compose exec $(SVC_API) go test ./... -bench=$(BENCH_FUNC)
 
 bash:
 	@docker-compose exec $(SVC_API) sh
