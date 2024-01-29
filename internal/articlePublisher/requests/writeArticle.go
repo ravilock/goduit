@@ -55,8 +55,7 @@ func deduplicateTags(tags []string) []string {
 
 func makeSlug(title string) string {
 	loweredTitle := strings.ToLower(title)
-	titleWords := strings.Split(loweredTitle, " ")
-	return strings.Join(titleWords, "-")
+	return strings.ReplaceAll(loweredTitle, " ", "-")
 }
 
 func (r *WriteArticleRequest) Validate() error {

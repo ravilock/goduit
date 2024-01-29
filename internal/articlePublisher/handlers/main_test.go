@@ -96,8 +96,7 @@ func registerUser(username, email, password string, manager *profileManager.Prof
 
 func makeSlug(title string) string {
 	loweredTitle := strings.ToLower(title)
-	titleWords := strings.Split(loweredTitle, " ")
-	return strings.Join(titleWords, "-")
+	return strings.ReplaceAll(loweredTitle, " ", "-")
 }
 
 func createArticles(n int, authorIdentity *identity.Identity, handler writeArticleHandler) ([]*articlePublisherResponses.ArticleResponse, error) {

@@ -116,3 +116,10 @@ func generateWriteArticleRequest() *WriteArticleRequest {
 	article.Article.TagList = []string{"Test Tag"}
 	return article
 }
+
+func BenchmarkMakeSlug(b *testing.B) {
+	title := randomString(255)
+	for i := 0; i < b.N; i++ {
+		makeSlug(title)
+	}
+}
