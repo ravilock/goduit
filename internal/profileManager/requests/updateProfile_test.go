@@ -158,7 +158,7 @@ func TestUpdateProfile(t *testing.T) {
 		defer server.Close()
 		request := generateUpdateProfileRequest(server.URL)
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidFieldError("Email", request.User.Email).Error())
+		require.ErrorContains(t, err, api.InvalidImageURLError(server.URL, "application/json").Error())
 	})
 }
 
