@@ -8,9 +8,11 @@ import (
 
 type CommentHandler struct {
 	writeCommentHandler
+	listCommentsHandler
 }
 
 func NewCommentHandler(publisher *services.CommentPublisher, articlePublisher *services.ArticlePublisher, manager *profileManager.ProfileManager, central *followerCentral.FollowerCentral) *CommentHandler {
 	writeComment := writeCommentHandler{publisher, articlePublisher, manager}
-	return &CommentHandler{writeComment}
+	listComments := listCommentsHandler{publisher, articlePublisher, manager, central}
+	return &CommentHandler{writeComment, listComments}
 }
