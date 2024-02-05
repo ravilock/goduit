@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -153,6 +152,14 @@ func TestUpdateProfile(t *testing.T) {
 		err := request.Validate()
 		require.ErrorContains(t, err, api.InvalidFieldError("Email", request.User.Email).Error())
 	})
+
+	t.Run("Should not accept image URLs that responds with a myme type header different than image", func(t *testing.T) {
+		server := mockInvalidImageURL(t)
+		defer server.Close()
+		request := generateUpdateProfileRequest(server.URL)
+		err := request.Validate()
+		require.ErrorContains(t, err, api.InvalidFieldError("Email", request.User.Email).Error())
+	})
 }
 
 func generateUpdateProfileRequest(imageURL string) *UpdateProfileRequest {
@@ -168,6 +175,15 @@ func generateUpdateProfileRequest(imageURL string) *UpdateProfileRequest {
 func mockValidImageURL(t *testing.T) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "image/png")
+		w.WriteHeader(200)
+		_, err := w.Write(nil)
+		require.NoError(t, err)
+	}))
+}
+
+func mockInvalidImageURL(t *testing.T) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(200)
 		_, err := w.Write(nil)
 		require.NoError(t, err)
