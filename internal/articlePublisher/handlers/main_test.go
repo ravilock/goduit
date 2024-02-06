@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api/validators"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
@@ -79,10 +81,10 @@ func clearDatabase(client *mongo.Client) {
 
 func registerUser(username, email, password string, manager *profileManager.ProfileManager) (*identity.Identity, error) {
 	if username == "" {
-		username = "default-username"
+		username = uuid.NewString()
 	}
 	if email == "" {
-		email = "default.email@test.test"
+		email = fmt.Sprintf("%s@test.test", uuid.NewString())
 	}
 	if password == "" {
 		password = "default-password"
@@ -158,6 +160,35 @@ func createArticle(title, description, body string, authorIdentity *identity.Ide
 		return nil, err
 	}
 	response := new(articlePublisherResponses.ArticleResponse)
+	if err := json.Unmarshal(rec.Body.Bytes(), response); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func createComment(comment, articleSlug string, authorIdentity *identity.Identity, handler writeCommentHandler) (*articlePublisherResponses.CommentResponse, error) {
+	if comment == "" {
+		comment = uuid.NewString()
+	}
+	request := new(articlePublisherRequests.WriteCommentRequest)
+	request.Comment.Body = comment
+	request.Slug = articleSlug
+	requestBody, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/article/%s/comments", articleSlug), bytes.NewBuffer(requestBody))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Goduit-Subject", authorIdentity.Subject)
+	req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
+	req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	if err := handler.WriteComment(c); err != nil {
+		return nil, err
+	}
+	response := new(articlePublisherResponses.CommentResponse)
 	if err := json.Unmarshal(rec.Body.Bytes(), response); err != nil {
 		return nil, err
 	}
