@@ -52,6 +52,26 @@ func (r *CommentRepository) ListComments(ctx context.Context, article string) ([
 	return results, nil
 }
 
+func (r *CommentRepository) GetCommentByID(ctx context.Context, ID string) (*models.Comment, error) {
+	var comment *models.Comment
+	commentID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.D{{
+		Key:   "_id",
+		Value: commentID,
+	}}
+	collection := r.DBClient.Database("conduit").Collection("comments")
+	if err := collection.FindOne(ctx, filter).Decode(&comment); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, app.CommentNotFoundError(ID, err)
+		}
+		return nil, err
+	}
+	return comment, nil
+}
+
 func (r *CommentRepository) DeleteComment(ctx context.Context, ID string) error {
 	commentID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
