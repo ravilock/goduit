@@ -128,7 +128,7 @@ func randomString(n int) string {
 
 func createArticle(title, description, body string, authorIdentity *identity.Identity, tagList []string, handler writeArticleHandler) (*articlePublisherResponses.ArticleResponse, error) {
 	if title == "" {
-		title = "Default Title"
+		title = "Default Title" + uuid.NewString()
 	}
 	if description == "" {
 		description = "Default Description"
