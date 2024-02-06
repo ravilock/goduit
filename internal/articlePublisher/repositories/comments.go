@@ -52,10 +52,14 @@ func (r *CommentRepository) ListComments(ctx context.Context, article string) ([
 	return results, nil
 }
 
-func (r *CommentRepository) DeleteComment(ctx context.Context, ID primitive.ObjectID) error {
+func (r *CommentRepository) DeleteComment(ctx context.Context, ID string) error {
+	commentID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return err
+	}
 	filter := bson.D{{
 		Key:   "_id",
-		Value: ID,
+		Value: commentID,
 	}}
 	collection := r.DBClient.Database("conduit").Collection("comments")
 	result, err := collection.DeleteOne(ctx, filter)
@@ -63,7 +67,7 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, ID primitive.Obje
 		return err
 	}
 	if result.DeletedCount == 0 {
-		return app.CommentNotFoundError(ID.Hex(), nil)
+		return app.CommentNotFoundError(ID, nil)
 	}
 	return nil
 }
