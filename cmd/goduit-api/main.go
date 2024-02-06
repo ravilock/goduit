@@ -116,6 +116,7 @@ func main() {
 	articleGroup.PUT("/:slug", articleHandler.UpdateArticle, requiredAuthMiddleware)
 	articleGroup.POST("/:slug/comments", commentHandler.WriteComment, requiredAuthMiddleware)
 	articleGroup.GET("/:slug/comments", commentHandler.ListComments, optionalAuthMiddleware)
+	articleGroup.DELETE("/:slug/comments/:id", commentHandler.DeleteComment, requiredAuthMiddleware)
 	// Start server
 	e.Logger.Fatal(e.Start(":6969"))
 }
