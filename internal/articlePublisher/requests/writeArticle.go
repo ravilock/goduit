@@ -24,7 +24,7 @@ type WriteArticlePayload struct {
 func (r *WriteArticleRequest) Model(authorID string) *models.Article {
 	tags := deduplicateTags(r.Article.TagList)
 	slug := makeSlug(r.Article.Title)
-	createdAt := time.Now()
+	createdAt := time.Now().Truncate(time.Millisecond)
 	return &models.Article{
 		Author:         &authorID,
 		Slug:           &slug,
@@ -55,8 +55,7 @@ func deduplicateTags(tags []string) []string {
 
 func makeSlug(title string) string {
 	loweredTitle := strings.ToLower(title)
-	titleWords := strings.Split(loweredTitle, " ")
-	return strings.Join(titleWords, "-")
+	return strings.ReplaceAll(loweredTitle, " ", "-")
 }
 
 func (r *WriteArticleRequest) Validate() error {

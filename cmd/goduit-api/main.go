@@ -63,26 +63,33 @@ func main() {
 	// repositories
 	userRepository := profileRepositories.NewUserRepository(client)
 	followerRepository := followerRepositories.NewFollowerRepository(client)
+	commentRepository := articleRepositories.NewCommentRepository(client)
 	articlePublisherRepository := articleRepositories.NewArticleRepository(client)
 	// services
 	profileManager := profileServices.NewProfileManager(userRepository)
 	followerCentral := followerServices.NewFollowerCentral(followerRepository)
+	commentPublisher := articleServices.NewCommentPublisher(commentRepository)
 	articlePublisher := articleServices.NewArticlePublisher(articlePublisherRepository)
 	// handlers
 	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral)
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
-	articleHandler := articleHandlers.NewArticlehandler(articlePublisher, profileManager, followerCentral)
+	articleHandler := articleHandlers.NewArticleHandler(articlePublisher, profileManager, followerCentral)
+	commentHandler := articleHandlers.NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
 	// Echo instance
 	e := echo.New()
 
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 
 	// Start Validator
 	if err := validators.InitValidator(); err != nil {
 		log.Fatal("Could not init validator", err)
 	}
+
+	optionalAuthMiddleware := identity.CreateAuthMiddleware(false)
+	requiredAuthMiddleware := identity.CreateAuthMiddleware(true)
 
 	// Routes
 	apiGroup := e.Group("/api")
@@ -92,21 +99,24 @@ func main() {
 	usersGroup.POST("", profileHandler.Register)
 	usersGroup.POST("/login", profileHandler.Login)
 	userGroup := apiGroup.Group("/user")
-	userGroup.GET("", profileHandler.GetOwnProfile, identity.CreateAuthMiddleware(true))
-	userGroup.PUT("", profileHandler.UpdateProfile, identity.CreateAuthMiddleware(true))
+	userGroup.GET("", profileHandler.GetOwnProfile, requiredAuthMiddleware)
+	userGroup.PUT("", profileHandler.UpdateProfile, requiredAuthMiddleware)
 	// Profile Routes
 	profileGroup := apiGroup.Group("/profile")
-	profileGroup.GET("/:username", profileHandler.GetProfile, identity.CreateAuthMiddleware(false))
-	profileGroup.POST("/:username/follow", followerHandler.Follow, identity.CreateAuthMiddleware(true))
-	profileGroup.DELETE("/:username/follow", followerHandler.Unfollow, identity.CreateAuthMiddleware(true))
+	profileGroup.GET("/:username", profileHandler.GetProfile, optionalAuthMiddleware)
+	profileGroup.POST("/:username/follow", followerHandler.Follow, requiredAuthMiddleware)
+	profileGroup.DELETE("/:username/follow", followerHandler.Unfollow, requiredAuthMiddleware)
 	// Article Routes
 	articlesGroup := apiGroup.Group("/articles")
-	articlesGroup.POST("", articleHandler.WriteArticle, identity.CreateAuthMiddleware(true))
-	articlesGroup.GET("", articleHandler.ListArticles, identity.CreateAuthMiddleware(false))
+	articlesGroup.POST("", articleHandler.WriteArticle, requiredAuthMiddleware)
+	articlesGroup.GET("", articleHandler.ListArticles, optionalAuthMiddleware)
 	articleGroup := apiGroup.Group("/article")
-	articleGroup.GET("/:slug", articleHandler.GetArticle, identity.CreateAuthMiddleware(false))
-	articleGroup.DELETE("/:slug", articleHandler.UnpublishArticle, identity.CreateAuthMiddleware(true))
-	articleGroup.PUT("/:slug", articleHandler.UpdateArticle, identity.CreateAuthMiddleware(true))
+	articleGroup.GET("/:slug", articleHandler.GetArticle, optionalAuthMiddleware)
+	articleGroup.DELETE("/:slug", articleHandler.UnpublishArticle, requiredAuthMiddleware)
+	articleGroup.PUT("/:slug", articleHandler.UpdateArticle, requiredAuthMiddleware)
+	articleGroup.POST("/:slug/comments", commentHandler.WriteComment, requiredAuthMiddleware)
+	articleGroup.GET("/:slug/comments", commentHandler.ListComments, optionalAuthMiddleware)
+	articleGroup.DELETE("/:slug/comments/:id", commentHandler.DeleteComment, requiredAuthMiddleware)
 	// Start server
 	e.Logger.Fatal(e.Start(":6969"))
 }

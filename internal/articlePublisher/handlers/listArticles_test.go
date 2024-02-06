@@ -41,7 +41,7 @@ func TestListArticles(t *testing.T) {
 	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
 	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
 	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewArticlehandler(articlePublisher, profileManager, followerCentral)
+	handler := NewArticleHandler(articlePublisher, profileManager, followerCentral)
 
 	clearDatabase(client)
 	authorIdentity1, err := registerUser(authorUsername1, authorEmail1, "", profileManager)

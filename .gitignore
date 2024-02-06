@@ -17,5 +17,9 @@ error.json
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# profilings
+prof.cpu
+prof.mem
+
 # other tools
 .tool-versions

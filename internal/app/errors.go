@@ -9,6 +9,7 @@ type ErrorCode uint
 const (
 	UserNotFoundErrorCode ErrorCode = iota + 1
 	ArticleNotFoundErrorCode
+	CommentNotFoundErrorCode
 	WrongPasswordErrorCode
 	ConflictErrorCode
 )
@@ -40,6 +41,14 @@ func ArticleNotFoundError(identifier string, originalError error) *AppError {
 	return &AppError{
 		ErrorCode:     ArticleNotFoundErrorCode,
 		CustomMessage: fmt.Sprintf("Article with identifier %q was not found", identifier),
+		OriginalError: originalError,
+	}
+}
+
+func CommentNotFoundError(identifier string, originalError error) *AppError {
+	return &AppError{
+		ErrorCode:     CommentNotFoundErrorCode,
+		CustomMessage: fmt.Sprintf("Comment with identifier %q was not found", identifier),
 		OriginalError: originalError,
 	}
 }

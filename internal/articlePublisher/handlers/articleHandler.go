@@ -15,7 +15,7 @@ type ArticleHandler struct {
 	listArticlesHandler
 }
 
-func NewArticlehandler(publisher *services.ArticlePublisher, manager *profileManager.ProfileManager, central *followerCentral.FollowerCentral) *ArticleHandler {
+func NewArticleHandler(publisher *services.ArticlePublisher, manager *profileManager.ProfileManager, central *followerCentral.FollowerCentral) *ArticleHandler {
 	writeArticle := writeArticleHandler{publisher, manager}
 	getArticle := getArticleHandler{publisher, manager, central}
 	unpublishArticle := unpublishArticleHandler{publisher}

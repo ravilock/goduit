@@ -10,7 +10,7 @@ import (
 
 var CouldNotUnmarshalBodyError *echo.HTTPError = echo.NewHTTPError(http.StatusBadRequest, "Could Not Unmarshall Body")
 
-var FailedLoginAttempt *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Login failed; Invalid email or password.")
+var FailedLoginAttempt *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Failed Login Attempt: Invalid Email or Password.")
 
 var FailedAuthentication *echo.HTTPError = echo.NewHTTPError(http.StatusUnauthorized, "Invalid, Empty or Expired Token")
 
@@ -46,6 +46,13 @@ func InvalidFieldError(field string, value any) *echo.HTTPError {
 	}
 }
 
+func InvalidImageURLError(imageURL, contentType string) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:    http.StatusBadRequest,
+		Message: fmt.Sprintf("%q is not valid as an image URL: URL Content-Type: %s", imageURL, contentType),
+	}
+}
+
 func UniqueFieldError(field string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusBadRequest,
@@ -78,6 +85,13 @@ func ArticleNotFound(identifier string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusNotFound,
 		Message: fmt.Sprintf("Article with identifier %q not found", identifier),
+	}
+}
+
+func CommentNotFound(identifier string) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:    http.StatusNotFound,
+		Message: fmt.Sprintf("Comment with identifier %q not found", identifier),
 	}
 }
 

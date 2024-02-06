@@ -71,5 +71,12 @@ func ensureIndexes(client *mongo.Client) error {
 		return err
 	}
 
+	commentsCollection := client.Database("conduit").Collection("comments")
+	_, err = commentsCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{Key: "article", Value: 1}},
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }

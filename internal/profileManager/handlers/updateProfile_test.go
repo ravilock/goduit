@@ -42,12 +42,14 @@ func TestUpdateProfile(t *testing.T) {
 	handler := NewProfileHandler(profileManager, followerCentral)
 	clearDatabase(client)
 	e := echo.New()
+	imageServer := mockValidImageURL(t)
+	defer imageServer.Close()
 	t.Run("Should fully update an authenticated user's profile", func(t *testing.T) {
 		oldUpdateProfileTestUsername := uuid.NewString()
 		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
 		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", profileManager)
 		require.NoError(t, err, "Could Not Create User", err)
-		updateProfileRequest := generateUpdateProfileBody()
+		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
 		requestBody, err := json.Marshal(updateProfileRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, "/user", bytes.NewBuffer(requestBody))
@@ -76,7 +78,7 @@ func TestUpdateProfile(t *testing.T) {
 		oldUpdateProfileTestPassword := uuid.NewString()
 		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, oldUpdateProfileTestPassword, profileManager)
 		require.NoError(t, err, "Could Not Create User", err)
-		updateProfileRequest := generateUpdateProfileBody()
+		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
 		updateProfileRequest.User.Password = ""
 		requestBody, err := json.Marshal(updateProfileRequest)
 		require.NoError(t, err)
@@ -104,7 +106,7 @@ func TestUpdateProfile(t *testing.T) {
 		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
 		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", profileManager)
 		require.NoError(t, err, "Could Not Create User", err)
-		updateProfileRequest := generateUpdateProfileBody()
+		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
 		updateProfileRequest.User.Password = ""
 		updateProfileRequest.User.Username = oldUpdateProfileTestUsername
 		updateProfileRequest.User.Email = oldUpdateProfileTestEmail
@@ -130,13 +132,13 @@ func TestUpdateProfile(t *testing.T) {
 	})
 }
 
-func generateUpdateProfileBody() *profileManagerRequests.UpdateProfileRequest {
+func generateUpdateProfileBody(imageURL string) *profileManagerRequests.UpdateProfileRequest {
 	request := new(profileManagerRequests.UpdateProfileRequest)
 	request.User.Username = uuid.NewString()
 	request.User.Email = fmt.Sprintf("%s@test.test", request.User.Username)
 	request.User.Password = uuid.NewString()
 	request.User.Bio = uuid.NewString()
-	request.User.Image = fmt.Sprintf("https://update.profile.test.image.com/image?img=%s", uuid.NewString())
+	request.User.Image = imageURL
 	return request
 }
 
@@ -162,4 +164,13 @@ func checkProfilePassword(t *testing.T, username, password string, repository *p
 	require.NoError(t, err)
 	err = bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(password))
 	require.NoError(t, err)
+}
+
+func mockValidImageURL(t *testing.T) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "image/png")
+		w.WriteHeader(200)
+		_, err := w.Write(nil)
+		require.NoError(t, err)
+	}))
 }
