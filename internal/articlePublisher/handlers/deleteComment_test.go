@@ -45,7 +45,7 @@ func TestDeleteComment(t *testing.T) {
 	handler := NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
 	clearDatabase(client)
 	e := echo.New()
-	t.Run("Should create a commentary", func(t *testing.T) {
+	t.Run("Should delete a commentary", func(t *testing.T) {
 		authorIdentity, err := registerUser("", "", "", profileManager)
 		require.NoError(t, err)
 		article, err := createArticle("", "", "", authorIdentity, []string{}, articleHandler.writeArticleHandler)

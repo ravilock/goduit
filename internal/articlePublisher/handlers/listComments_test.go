@@ -51,7 +51,7 @@ func TestListComments(t *testing.T) {
 	handler := NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
 	clearDatabase(client)
 	e := echo.New()
-	t.Run("Should create a commentary", func(t *testing.T) {
+	t.Run("Should list commentaries", func(t *testing.T) {
 		authorIdentity, err := registerUser("", "", "", profileManager)
 		if err != nil {
 			log.Fatalf("Could not create user: %s", err)
