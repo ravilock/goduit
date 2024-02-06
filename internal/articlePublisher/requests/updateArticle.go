@@ -22,7 +22,7 @@ type UpdateArticlePayload struct {
 
 func (r *UpdateArticleRequest) Model() *models.Article {
 	slug := makeSlug(r.Article.Title)
-	updatedAt := time.Now()
+	updatedAt := time.Now().Truncate(time.Millisecond)
 	return &models.Article{
 		Author:         nil,
 		Slug:           &slug,

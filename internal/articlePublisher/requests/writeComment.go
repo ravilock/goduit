@@ -19,7 +19,7 @@ type WriteCommentPayload struct {
 }
 
 func (r *WriteCommentRequest) Model(authorID string) *models.Comment {
-	createdAt := time.Now()
+	createdAt := time.Now().Truncate(time.Millisecond)
 	return &models.Comment{
 		Author:    &authorID,
 		Body:      &r.Comment.Body,
