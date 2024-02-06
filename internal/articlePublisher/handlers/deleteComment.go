@@ -8,12 +8,14 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"github.com/ravilock/goduit/internal/articlePublisher/requests"
 	"github.com/ravilock/goduit/internal/identity"
 )
 
 type commentDeleter interface {
 	DeleteComment(ctx context.Context, ID string) error
+	GetCommentByID(ctx context.Context, ID string) (*models.Comment, error)
 }
 
 type deleteCommentHandler struct {
@@ -47,6 +49,21 @@ func (h *deleteCommentHandler) DeleteComment(c echo.Context) error {
 			}
 		}
 		return err
+	}
+
+	comment, err := h.service.GetCommentByID(ctx, request.ID)
+	if err != nil {
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.CommentNotFoundErrorCode:
+				return api.CommentNotFound(request.ID)
+			}
+		}
+		return err
+	}
+
+	if identity.Subject != *comment.Author {
+		return api.Forbidden
 	}
 
 	if err := h.service.DeleteComment(ctx, request.ID); err != nil {
