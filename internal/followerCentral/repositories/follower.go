@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/followerCentral/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -25,6 +26,9 @@ func (r *FollowerRepository) Follow(ctx context.Context, followed, follower stri
 	followRelationship := models.Follower{Follower: &follower, Followed: &followed}
 	collection := r.DBClient.Database("conduit").Collection("followers")
 	if _, err := collection.InsertOne(ctx, followRelationship); err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return app.ConflictError("followers")
+		}
 		return err
 	}
 	return nil

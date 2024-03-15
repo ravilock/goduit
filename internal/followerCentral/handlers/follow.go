@@ -57,6 +57,13 @@ func (h *followUserHandler) Follow(c echo.Context) error {
 
 	err = h.service.Follow(ctx, followedUser.ID.Hex(), identity.Subject)
 	if err != nil {
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.ConflictErrorCode:
+				return api.ConfictError
+			}
+		}
+
 		return err
 	}
 
