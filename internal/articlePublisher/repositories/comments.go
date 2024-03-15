@@ -39,7 +39,7 @@ func (r *CommentRepository) ListComments(ctx context.Context, article string) ([
 		Key:   "article",
 		Value: article,
 	}}
-	opt := options.Find().SetSort(bson.D{{Key: "_id", Value: 1}})
+	opt := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}})
 	collection := r.DBClient.Database("conduit").Collection("comments")
 	results := []*models.Comment{}
 	cursor, err := collection.Find(ctx, filter, opt)
