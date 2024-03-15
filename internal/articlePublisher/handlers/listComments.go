@@ -71,6 +71,7 @@ func (h *listCommentsHandler) ListComments(c echo.Context) error {
 			continue
 		}
 
+		// TODO: Avaliar se eu devo apenas "pular" o comentário se o author não foi encontrado (ou atribuir para "deletado")
 		author, err := h.profileManager.GetProfileByID(ctx, *comment.Author)
 		if err != nil {
 			if appError := new(app.AppError); errors.As(err, &appError) {
