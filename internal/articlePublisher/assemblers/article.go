@@ -13,10 +13,8 @@ func ArticleResponse(article *models.Article, author *profileManagerResponses.Pr
 	response.Article.Description = *article.Description
 	response.Article.Body = *article.Body
 	response.Article.TagList = article.TagList
-	response.Article.CreatedAt = *article.CreatedAt
-	if article.UpdatedAt != nil {
-		response.Article.UpdatedAt = *article.UpdatedAt
-	}
+	response.Article.CreatedAt = article.CreatedAt
+	response.Article.UpdatedAt = article.UpdatedAt
 	response.Article.Favorited = false
 	response.Article.FavoritesCount = *article.FavoritesCount
 	response.Article.Author = author.Profile

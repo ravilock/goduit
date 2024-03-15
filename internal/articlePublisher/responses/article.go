@@ -15,8 +15,8 @@ type Article struct {
 	Description    string                          `json:"description"`
 	Body           string                          `json:"body"`
 	TagList        []string                        `json:"tagList"`
-	CreatedAt      time.Time                       `json:"createdAt"`
-	UpdatedAt      time.Time                       `json:"updatedAt,omitempty"`
+	CreatedAt      *time.Time                      `json:"createdAt"`
+	UpdatedAt      *time.Time                      `json:"updatedAt,omitempty"`
 	Favorited      bool                            `json:"favorited"`
 	FavoritesCount int64                           `json:"favoritesCount"`
 	Author         profileManagerResponses.Profile `json:"author"`

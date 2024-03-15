@@ -10,10 +10,8 @@ func CommentResponse(comment *models.Comment, author *profileManagerResponses.Pr
 	response := new(responses.CommentResponse)
 	response.Comment.ID = comment.ID.Hex()
 	response.Comment.Body = *comment.Body
-	response.Comment.CreatedAt = *comment.CreatedAt
-	if comment.UpdatedAt != nil {
-		response.Comment.UpdatedAt = *comment.UpdatedAt
-	}
+	response.Comment.CreatedAt = comment.CreatedAt
+	response.Comment.UpdatedAt = comment.UpdatedAt
 	response.Comment.Author = author.Profile
 	return response
 }

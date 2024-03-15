@@ -11,8 +11,8 @@ type CommentResponse struct {
 
 type Comment struct {
 	ID        string                          `json:"id"`
-	CreatedAt time.Time                       `json:"createdAt"`
-	UpdatedAt time.Time                       `json:"updatedAt,omitempty"`
+	CreatedAt *time.Time                      `json:"createdAt"`
+	UpdatedAt *time.Time                      `json:"updatedAt,omitempty"`
 	Body      string                          `json:"body"`
 	Author    profileManagerResponses.Profile `json:"author"`
 }
