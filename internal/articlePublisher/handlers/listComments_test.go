@@ -51,7 +51,7 @@ func TestListComments(t *testing.T) {
 	handler := NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
 	clearDatabase(client)
 	e := echo.New()
-	t.Run("Should list commentaries", func(t *testing.T) {
+	t.Run("Should list comments", func(t *testing.T) {
 		authorIdentity, err := registerUser("", "", "", profileManager)
 		if err != nil {
 			log.Fatalf("Could not create user: %s", err)
@@ -84,7 +84,7 @@ func TestListComments(t *testing.T) {
 		listCommentsResponse := new(articlePublisherResponses.CommentsResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), listCommentsResponse)
 		require.NoError(t, err)
-		checkListCommentsResponse(t, listCommentsResponse, 2, comment1, comment2)
+		checkListCommentsResponse(t, listCommentsResponse, 2, comment2, comment1)
 	})
 	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
 		authorIdentity, err := registerUser("", "", "", profileManager)
