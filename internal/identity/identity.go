@@ -58,7 +58,7 @@ func GenerateToken(userEmail, username, userID string) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "goduit",
 			Subject:   userID,
-			ExpiresAt: jwt.NewNumericDate(now.Add(10 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(time.Hour)),
 			NotBefore: jwt.NewNumericDate(now),
 			IssuedAt:  jwt.NewNumericDate(now),
 			ID:        uuid.NewString(),
