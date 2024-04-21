@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ravilock/goduit/api/validators"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
@@ -78,7 +79,13 @@ func registerUser(username, email, password string, manager *profileManager.Prof
 	if password == "" {
 		password = "default-password"
 	}
-	token, err := manager.Register(context.Background(), &profileManagerModels.User{Username: &username, Email: &email}, password)
+	createdAt := time.Now().Truncate(time.Millisecond)
+	token, err := manager.Register(context.Background(), &profileManagerModels.User{
+		Username:    &username,
+		Email:       &email,
+		CreatedAt:   &createdAt,
+		LastSession: &createdAt,
+	}, password)
 	if err != nil {
 		return nil, err
 	}

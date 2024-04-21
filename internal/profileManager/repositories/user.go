@@ -103,6 +103,9 @@ func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, client
 		if mongo.IsDuplicateKeyError(err) {
 			return app.ConflictError("users")
 		}
+		if err == mongo.ErrNoDocuments {
+			return app.UserNotFoundError(fmt.Sprintf("%s+%s", subjectEmail, clientUsername), err)
+		}
 		return err
 	}
 	return nil

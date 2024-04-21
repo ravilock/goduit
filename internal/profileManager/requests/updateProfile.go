@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/ravilock/goduit/api"
@@ -24,11 +25,13 @@ type UpdateProfilePayload struct {
 }
 
 func (r *UpdateProfileRequest) Model() *models.User {
+	updatedAt := time.Now().Truncate(time.Millisecond)
 	model := &models.User{
-		Username: &r.User.Username,
-		Email:    &r.User.Email,
-		Bio:      &r.User.Bio,
-		Image:    &r.User.Image,
+		Username:  &r.User.Username,
+		Email:     &r.User.Email,
+		Bio:       &r.User.Bio,
+		Image:     &r.User.Image,
+		UpdatedAt: &updatedAt,
 	}
 	return model
 }

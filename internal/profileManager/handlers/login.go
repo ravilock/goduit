@@ -3,7 +3,9 @@ package handlers
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
@@ -13,12 +15,13 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/requests"
 )
 
-type logger interface {
+type authenticator interface {
 	Login(ctx context.Context, email, password string) (*models.User, string, error)
+	profileUpdater
 }
 
 type loginHandler struct {
-	service logger
+	service authenticator
 }
 
 func (h *loginHandler) Login(c echo.Context) error {
@@ -31,7 +34,8 @@ func (h *loginHandler) Login(c echo.Context) error {
 		return err
 	}
 
-	user, token, err := h.service.Login(c.Request().Context(), request.User.Email, request.User.Password)
+	ctx := c.Request().Context()
+	user, token, err := h.service.Login(ctx, request.User.Email, request.User.Password)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -42,6 +46,12 @@ func (h *loginHandler) Login(c echo.Context) error {
 			}
 		}
 		return err
+	}
+
+	lastSession := time.Now().Truncate(time.Millisecond)
+	user.LastSession = &lastSession
+	if err := h.service.UpdateProfile(context.Background(), *user.Email, *user.Username, "", user); err != nil {
+		log.Println("Error Updating Last Session", err)
 	}
 
 	response := assemblers.UserResponse(user, token)
