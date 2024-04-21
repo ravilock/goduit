@@ -2,6 +2,7 @@ package requests
 
 import (
 	"errors"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/ravilock/goduit/api/validators"
@@ -19,11 +20,15 @@ type RegisterPayload struct {
 }
 
 func (r *RegisterRequest) Model() *models.User {
+	createdAt := time.Now().Truncate(time.Millisecond)
 	return &models.User{
-		Username: &r.User.Username,
-		Email:    &r.User.Email,
-		Bio:      new(string),
-		Image:    new(string),
+		Username:    &r.User.Username,
+		Email:       &r.User.Email,
+		Bio:         new(string),
+		Image:       new(string),
+		CreatedAt:   &createdAt,
+		UpdatedAt:   nil,
+		LastSession: &createdAt,
 	}
 }
 
