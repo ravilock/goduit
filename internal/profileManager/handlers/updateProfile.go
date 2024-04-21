@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -44,6 +45,8 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 			switch appError.ErrorCode {
 			case app.ConflictErrorCode:
 				return api.ConfictError
+			case app.UserNotFoundErrorCode:
+				return api.UserNotFound(fmt.Sprintf("%s+%s", identityHeaders.ClientEmail, identityHeaders.ClientUsername))
 			}
 		}
 		return err
