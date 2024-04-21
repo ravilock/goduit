@@ -56,14 +56,12 @@ func (h *loginHandler) Login(c echo.Context) error {
 
 	response := assemblers.UserResponse(user, token)
 
-	if err := c.JSON(http.StatusOK, response); err != nil {
-		return err
-	}
-
-	lastSession := time.Now().Truncate(time.Millisecond)
-	user.LastSession = &lastSession
-	if err := h.service.UpdateProfile(ctx, *user.Email, *user.Username, "", user); err != nil {
-		log.Println("Error Updating Last Session", err)
-	}
-	return nil
+	go func() {
+		lastSession := time.Now().Truncate(time.Millisecond)
+		user.LastSession = &lastSession
+		if err := h.service.UpdateProfile(context.Background(), *user.Email, *user.Username, "", user); err != nil {
+			log.Println("Error Updating Last Session", err)
+		}
+	}()
+	return c.JSON(http.StatusOK, response)
 }
