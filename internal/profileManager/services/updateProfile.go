@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 
-	"github.com/ravilock/goduit/internal/identity"
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,11 +15,11 @@ type updateProfileService struct {
 	repository profileUpdater
 }
 
-func (s *updateProfileService) UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (string, error) {
+func (s *updateProfileService) UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) error {
 	if shouldGenerateNewPasswordHash(password) {
 		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			return "", err
+			return err
 		}
 		passwordHashString := string(passwordHash)
 		model.PasswordHash = &passwordHashString
@@ -28,23 +27,12 @@ func (s *updateProfileService) UpdateProfile(ctx context.Context, subjectEmail, 
 
 	err := s.repository.UpdateProfile(ctx, subjectEmail, clientUsername, model)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	if shouldGenerateNewToken(subjectEmail, clientUsername, model) {
-		tokenString, err := identity.GenerateToken(*model.Email, *model.Username, model.ID.Hex())
-		if err != nil {
-			return "", err
-		}
-		return tokenString, nil
-	}
-	return "", nil
+	return nil
 }
 
 func shouldGenerateNewPasswordHash(password string) bool {
 	return password != ""
-}
-
-func shouldGenerateNewToken(subjectEmail, clientUsername string, model *models.User) bool {
-	return subjectEmail != *model.Email || clientUsername != *model.Username
 }

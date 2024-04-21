@@ -15,7 +15,8 @@ import (
 )
 
 type profileUpdater interface {
-	UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (string, error)
+	logger
+	UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) error
 }
 
 type updateProfileHandler struct {
@@ -24,12 +25,12 @@ type updateProfileHandler struct {
 
 func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 	request := new(requests.UpdateProfileRequest)
-	identity := new(identity.IdentityHeaders)
+	identityHeaders := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}
 	if err := binder.BindBody(c, request); err != nil {
 		return api.CouldNotUnmarshalBodyError
 	}
-	if err := binder.BindHeaders(c, identity); err != nil {
+	if err := binder.BindHeaders(c, identityHeaders); err != nil {
 		return err
 	}
 
@@ -39,8 +40,7 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 
 	model := request.Model()
 
-	token, err := h.service.UpdateProfile(c.Request().Context(), identity.ClientEmail, identity.ClientUsername, request.User.Password, model)
-	if err != nil {
+	if err := h.service.UpdateProfile(c.Request().Context(), identityHeaders.ClientEmail, identityHeaders.ClientUsername, request.User.Password, model); err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
 			case app.ConflictErrorCode:
@@ -50,7 +50,20 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(model, token)
+	var tokenString string
+	var err error
+	if shouldGenerateNewToken(identityHeaders, model) {
+		tokenString, err = identity.GenerateToken(*model.Email, *model.Username, model.ID.Hex())
+		if err != nil {
+			return err
+		}
+	}
+
+	response := assemblers.UserResponse(model, tokenString)
 
 	return c.JSON(http.StatusOK, response)
+}
+
+func shouldGenerateNewToken(identityHeaders *identity.IdentityHeaders, model *models.User) bool {
+	return identityHeaders.ClientEmail != *model.Email || identityHeaders.ClientUsername != *model.Username
 }
