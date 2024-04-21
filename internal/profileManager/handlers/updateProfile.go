@@ -15,7 +15,6 @@ import (
 )
 
 type profileUpdater interface {
-	logger
 	UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) error
 }
 

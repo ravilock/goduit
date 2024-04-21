@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -47,6 +48,8 @@ func TestLogin(t *testing.T) {
 	}
 	t.Run("Should successfully login", func(t *testing.T) {
 		loginRequest := generateLoginBody()
+		preLoginModel, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
+		require.NoError(t, err)
 		requestBody, err := json.Marshal(loginRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
@@ -62,6 +65,9 @@ func TestLogin(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), loginResponse)
 		require.NoError(t, err)
 		checkLoginResponse(t, loginRequest, loginResponse)
+		model, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
+		require.NoError(t, err)
+		require.True(t, model.LastSession.After(*preLoginModel.LastSession), "User Last Session Was not Updated")
 	})
 	t.Run("Should return 401 if email is not found", func(t *testing.T) {
 		loginRequest := generateLoginBody()
