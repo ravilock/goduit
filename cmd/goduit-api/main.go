@@ -8,8 +8,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/ravilock/goduit/api/validators"
 	articleHandlers "github.com/ravilock/goduit/internal/articlePublisher/handlers"
+	articleProducers "github.com/ravilock/goduit/internal/articlePublisher/producers"
 	articleRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
 	articleServices "github.com/ravilock/goduit/internal/articlePublisher/services"
 	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
@@ -60,10 +62,32 @@ func main() {
 		log.Fatal("Error connecting to database", err)
 	}
 	defer mongo.DisconnectDatabase(client)
+	articleQueueName := os.Getenv("NEW_ARTICLE_QUEUE")
+	if articleQueueName == "" {
+		log.Fatal("You must sey your 'NEW_ARTICLE_QUEUE' environmental variable.")
+	}
+	queueURI := os.Getenv("RABBIT_MQ_URL")
+	if queueURI == "" {
+		log.Fatal("You must sey your 'RABBIT_MQ_URL' environmental variable.")
+	}
+	conn, err := amqp.Dial(queueURI)
+	if err != nil {
+		log.Fatal("Error connecting to rabbitMQ", err)
+	}
+	defer conn.Close()
+	publisherChannel, err := conn.Channel()
+	if err != nil {
+		log.Fatal("Error creating rabbitMQ channel", err)
+	}
+	defer publisherChannel.Close()
 	// repositories
 	userRepository := profileRepositories.NewUserRepository(client)
 	followerRepository := followerRepositories.NewFollowerRepository(client)
 	commentRepository := articleRepositories.NewCommentRepository(client)
+	articleProducer, err := articleProducers.NewArticleProducer(publisherChannel, articleQueueName)
+	if err != nil {
+		log.Fatalf("Error declaring %s queue %s", articleQueueName, err.Error())
+	}
 	articlePublisherRepository := articleRepositories.NewArticleRepository(client)
 	// services
 	profileManager := profileServices.NewProfileManager(userRepository)
@@ -73,7 +97,7 @@ func main() {
 	// handlers
 	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral)
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
-	articleHandler := articleHandlers.NewArticleHandler(articlePublisher, profileManager, followerCentral)
+	articleHandler := articleHandlers.NewArticleHandler(articlePublisher, profileManager, followerCentral, articleProducer)
 	commentHandler := articleHandlers.NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
 	// Echo instance
 	e := echo.New()
