@@ -1,10 +1,13 @@
 SVC_API := web
+SVC_CONSUMER := feed-producer
 SVC_DB := mongo mongo-express
+SVC_QUEUE := queue
 LOGS_CMD := docker-compose logs --follow --tail=5
 
 run: run-all
 
-run-all: run-db run-api
+run-all:
+	@docker-compose up -d
 
 run-api:
 	@docker-compose up -d $(SVC_API)
@@ -12,10 +15,16 @@ run-api:
 run-db:
 	@docker-compose up -d $(SVC_DB)
 
+run-consumer:
+	@docker-compose up -d $(SVC_CONSUMER)
+
+run-queue:
+	@docker-compose up -d $(SVC_QUEUE)
+
 stop: stop-all
 
 stop-all:
-	@docker-compose stop
+	docker-compose stop
 
 stop-api:
 	@docker-compose stop $(SVC_API)
@@ -23,8 +32,14 @@ stop-api:
 stop-db:
 	@docker-compose stop $(SVC_DB)
 
+stop-consumer:
+	@docker-compose stop $(SVC_CONSUMER)
+
+stop-queue:
+	@docker-compose stop $(SVC_QUEUE)
+
 logs-api:
-	@$(LOGS_CMD) $(SVC_API)
+	@$(LOGS_CMD) $(SVC_API) $(SVC_CONSUMER)
 
 logs-db:
 	@$(LOGS_CMD) $(SVC_DB)
