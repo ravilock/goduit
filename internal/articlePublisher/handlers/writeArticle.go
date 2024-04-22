@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -19,9 +20,14 @@ type articleWriter interface {
 	WriteArticle(ctx context.Context, article *models.Article) error
 }
 
+type publisher interface {
+	Publish(ctx context.Context, article *models.Article) error
+}
+
 type writeArticleHandler struct {
 	service        articleWriter
 	profileManager profileGetter
+	publisher      publisher
 }
 
 func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
@@ -52,6 +58,10 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 			}
 		}
 		return err
+	}
+
+	if err := h.publisher.Publish(ctx, article); err != nil {
+		log.Printf("Failed to publish article to queue", err)
 	}
 
 	authorProfile, err := h.profileManager.GetProfileByID(ctx, identity.Subject)
