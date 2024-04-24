@@ -6,11 +6,13 @@ type FollowerCentral struct {
 	followUserService
 	unfollowUserService
 	isFollowedByService
+	getFollowersService
 }
 
 func NewFollowerCentral(followerRepository *repositories.FollowerRepository) *FollowerCentral {
 	follow := followUserService{followerRepository}
 	unfollow := unfollowUserService{followerRepository}
 	isFollowedBy := isFollowedByService{followerRepository}
-	return &FollowerCentral{follow, unfollow, isFollowedBy}
+	getFollowers := getFollowersService{followerRepository}
+	return &FollowerCentral{follow, unfollow, isFollowedBy, getFollowers}
 }
