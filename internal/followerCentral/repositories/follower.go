@@ -69,3 +69,22 @@ func (r *FollowerRepository) IsFollowedBy(ctx context.Context, followed, followe
 	}
 	return followRelationship, nil
 }
+
+// GetFollowers queries for all followers that a given user might have. Returns []*models.Follower.
+//
+// The followed parameter represents the ID of the user to be followed.
+func (r *FollowerRepository) GetFollowers(ctx context.Context, followed string) ([]*models.Follower, error) { // Possibly needs pagination
+	filter := bson.D{
+		{Key: "followed", Value: followed},
+	}
+	collection := r.DBClient.Database("conduit").Collection("followers")
+	results := []*models.Follower{}
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	if err = cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
