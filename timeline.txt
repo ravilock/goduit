@@ -1,0 +1,1 @@
+Quando a timeline encerra (posts novos dos últimos 3 dias), passamos a redirecionar os posts por tempo ou a posts sugeridos
