@@ -18,6 +18,7 @@ import (
 	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerServices "github.com/ravilock/goduit/internal/followerCentral/services"
 	"github.com/ravilock/goduit/internal/identity"
+	"github.com/ravilock/goduit/internal/password"
 	profileHandlers "github.com/ravilock/goduit/internal/profileManager/handlers"
 	profileRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileServices "github.com/ravilock/goduit/internal/profileManager/services"
@@ -66,7 +67,7 @@ func main() {
 	commentRepository := articleRepositories.NewCommentRepository(client)
 	articlePublisherRepository := articleRepositories.NewArticleRepository(client)
 	// services
-	profileManager := profileServices.NewProfileManager(userRepository)
+	profileManager := profileServices.NewProfileManager(userRepository, &password.Bcrypt{})
 	followerCentral := followerServices.NewFollowerCentral(followerRepository)
 	commentPublisher := articleServices.NewCommentPublisher(commentRepository)
 	articlePublisher := articleServices.NewArticlePublisher(articlePublisherRepository)

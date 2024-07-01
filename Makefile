@@ -1,6 +1,12 @@
 SVC_API := web
 SVC_DB := mongo mongo-express
 LOGS_CMD := docker-compose logs --follow --tail=5
+MOCKS_COMMAND := $(shell { command -v mockery; } 2>/dev/null)
+
+.PHONY: mocks
+
+setup:
+	@docker-compose build
 
 run: run-all
 
@@ -40,3 +46,16 @@ test-verbose:
 
 bash:
 	@docker-compose exec $(SVC_API) sh
+
+mocks:
+ifndef MOCKS_COMMAND
+	@echo "\nCommand 'mockery' not found!\n"
+	@echo "Please, run the following command to install it:"
+	@echo "\nMacOSX:"
+	@echo "brew install mockery"
+	@echo "\nGNU/Linux:"
+	@echo "More info, take a look at: https://vektra.github.io/mockery/latest/installation/#github-release-recommended"
+	@exit 1
+endif
+	@rm -rf mocks
+	@mockery --all --with-expecter

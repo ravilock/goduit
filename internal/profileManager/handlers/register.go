@@ -13,12 +13,12 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/requests"
 )
 
-type profileRegister interface {
+type ProfileRegister interface {
 	Register(ctx context.Context, model *models.User, password string) (string, error)
 }
 
 type registerProfileHandler struct {
-	service profileRegister
+	service ProfileRegister
 }
 
 func (h *registerProfileHandler) Register(c echo.Context) error {
