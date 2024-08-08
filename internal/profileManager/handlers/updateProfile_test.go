@@ -13,10 +13,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
 	"github.com/ravilock/goduit/internal/identity"
+	"github.com/ravilock/goduit/internal/mongo"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"

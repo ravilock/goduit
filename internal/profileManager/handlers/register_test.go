@@ -12,9 +12,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/internal/config/mongo"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
+	"github.com/ravilock/goduit/internal/mongo"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
