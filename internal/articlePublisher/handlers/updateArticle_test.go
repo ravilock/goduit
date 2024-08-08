@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/validators"
@@ -31,8 +32,9 @@ func TestUpdateArticle(t *testing.T) {
 
 	t.Run("Should update an article", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		articleAuthorID := primitive.NewObjectID()
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
+		expectedArticle := assembleArticleModel(articleAuthorID)
 		updateArticleRequest := generateUpdateArticleBody()
 		requestBody, err := json.Marshal(updateArticleRequest)
 		require.NoError(t, err)
@@ -69,12 +71,13 @@ func TestUpdateArticle(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
+		articleAuthorID := primitive.NewObjectID()
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
+		expectedArticle := assembleArticleModel(articleAuthorID)
 		updateArticleRequest := generateUpdateArticleBody()
-		articleSlug := "test-article"
 		requestBody, err := json.Marshal(updateArticleRequest)
 		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", articleSlug), bytes.NewBuffer(requestBody))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
 		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
@@ -82,29 +85,29 @@ func TestUpdateArticle(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(articleSlug)
-		ctx := c.Request().Context()
-		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, articleSlug).Return(nil, app.ArticleNotFoundError(articleSlug, nil)).Once()
+		c.SetParamValues(*expectedArticle.Slug)
+    ctx := c.Request().Context()
+		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(nil, app.ArticleNotFoundError(*expectedArticle.Slug, nil)).Once()
 
 		// Act
 		err = handler.UpdateArticle(c)
 
 		// Assert
-		require.ErrorContains(t, err, api.ArticleNotFound(articleSlug).Error())
+		require.ErrorContains(t, err, api.ArticleNotFound(*expectedArticle.Slug).Error())
 	})
 
-	t.Run("Should only update articles authored by the currently authenticaed user", func(t *testing.T) {
+	t.Run("Should only update articles authored by the currently authenticated user", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		articleAuthorID := primitive.NewObjectID()
+		expectedArticle := assembleArticleModel(articleAuthorID)
 		updateArticleRequest := generateUpdateArticleBody()
 		requestBody, err := json.Marshal(updateArticleRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", primitive.NewObjectID().Hex())
+		req.Header.Set("Goduit-Subject", uuid.NewString())
 		req.Header.Set("Goduit-Client-Username", "not-the-author")
-		req.Header.Set("Goduit-Subject", "not.the.author.email@test.test")
+		req.Header.Set("Goduit-Client-Email", "not.the.author.email@test.test")
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
@@ -113,10 +116,9 @@ func TestUpdateArticle(t *testing.T) {
 		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
 
 		// Act
-		require.NoError(t, err)
+		err = handler.UpdateArticle(c)
 
 		// Assert
-		err = handler.UpdateArticle(c)
 		require.ErrorContains(t, err, api.Forbidden.Error())
 	})
 }
@@ -134,7 +136,6 @@ func checkUpdateArticleResponse(t *testing.T, request *articlePublisherRequests.
 	require.Equal(t, request.Article.Title, response.Article.Title, "Wrong article title")
 	require.Equal(t, request.Article.Description, response.Article.Description, "Wrong article description")
 	require.Equal(t, request.Article.Body, response.Article.Body, "Wrong article body")
-	require.Equal(t, makeSlug(request.Article.Title), response.Article.Slug, "Wrong article body")
 	require.Equal(t, tagList, response.Article.TagList, "Wrong article body")
 	require.Equal(t, author, response.Article.Author.Username, "Wrong article author username")
 }

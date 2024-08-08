@@ -28,8 +28,9 @@ func TestListArticles(t *testing.T) {
 	t.Run("Should list all articles", func(t *testing.T) {
 		// Arrange
 		limit := 30
-		expectedAuthor := assembleRandomUser()
-		expectedArticles := assembleRandomArticles(limit, *expectedAuthor.ID)
+		articleAuthorID := primitive.NewObjectID()
+		expectedArticles := assembleRandomArticles(limit, articleAuthorID)
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		req := httptest.NewRequest(http.MethodGet, "/api/articles", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
@@ -39,8 +40,8 @@ func TestListArticles(t *testing.T) {
 		c.Request().URL.RawQuery = urlValues.Encode()
 		ctx := c.Request().Context()
 		articleListerMock.EXPECT().ListArticles(ctx, "", "", int64(limit), int64(0)).Return(expectedArticles, nil).Once()
-		profileGetterMock.EXPECT().GetProfileByID(ctx, expectedAuthor.ID.Hex()).Return(expectedAuthor, nil).Times(limit)
-		isFollowedCheckerMock.EXPECT().IsFollowedBy(ctx, expectedAuthor.ID.Hex(), "").Return(false).Times(limit)
+		profileGetterMock.EXPECT().GetProfileByID(ctx, articleAuthorID.Hex()).Return(expectedAuthor, nil).Times(limit)
+		isFollowedCheckerMock.EXPECT().IsFollowedBy(ctx, articleAuthorID.Hex(), "").Return(false).Times(limit)
 
 		// Act
 		err := handler.ListArticles(c)
@@ -57,12 +58,13 @@ func TestListArticles(t *testing.T) {
 	t.Run("Should filter articles based on tag", func(t *testing.T) {
 		// Arrange
 		limit := 30
-		expectedAuthor := assembleRandomUser()
-		possibleArticles := assembleRandomArticles(limit, *expectedAuthor.ID)
+		articleAuthorID := primitive.NewObjectID()
+		possibleArticles := assembleRandomArticles(limit, articleAuthorID)
 		tag := possibleArticles[0].TagList[0]
 		expectedArticles := slices.DeleteFunc(possibleArticles, func(article *models.Article) bool {
 			return !slices.Contains(article.TagList, tag)
 		})
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		req := httptest.NewRequest(http.MethodGet, "/api/articles", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
@@ -91,8 +93,9 @@ func TestListArticles(t *testing.T) {
 	t.Run("Should filter articles based on author", func(t *testing.T) {
 		// Arrange
 		limit := 30
-		expectedAuthor := assembleRandomUser()
-		expectedArticles := assembleRandomArticles(limit, *expectedAuthor.ID)
+		articleAuthorID := primitive.NewObjectID()
+		expectedArticles := assembleRandomArticles(limit, articleAuthorID)
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		req := httptest.NewRequest(http.MethodGet, "/api/articles", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()

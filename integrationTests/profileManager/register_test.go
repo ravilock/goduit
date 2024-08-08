@@ -44,7 +44,7 @@ func TestRegister(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, registerEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		requestTime := time.Now()
+		requestTime := time.Now().UTC().Truncate(time.Millisecond)
 
 		// Act
 		res, err := httpClient.Do(req)

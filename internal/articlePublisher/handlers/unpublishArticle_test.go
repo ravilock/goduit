@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/validators"
@@ -23,8 +24,9 @@ func TestUnpublishArticle(t *testing.T) {
 
 	t.Run("Should delete an article", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		articleAuthorID := primitive.NewObjectID()
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
+		expectedArticle := assembleArticleModel(articleAuthorID)
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
@@ -48,9 +50,10 @@ func TestUnpublishArticle(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		slug := "inexistent-article"
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", slug), nil)
+		articleAuthorID := primitive.NewObjectID()
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
+		expectedArticle := assembleArticleModel(articleAuthorID)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
 		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
@@ -58,26 +61,25 @@ func TestUnpublishArticle(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(slug)
-		ctx := c.Request().Context()
-		articleUnpublisherMock.EXPECT().GetArticleBySlug(ctx, slug).Return(nil, app.ArticleNotFoundError(slug, nil)).Once()
+		c.SetParamValues(*expectedArticle.Slug)
+		articleUnpublisherMock.EXPECT().GetArticleBySlug(c.Request().Context(), *expectedArticle.Slug).Return(nil, app.ArticleNotFoundError(*expectedArticle.Slug, nil)).Once()
 
 		// Act
 		err := handler.UnpublishArticle(c)
 
 		// Assert
-		require.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
+		require.ErrorContains(t, err, api.ArticleNotFound(*expectedArticle.Slug).Error())
 	})
 
 	t.Run("Should only delete aritcles authored by the currently authenticated user", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		articleAuthorID := primitive.NewObjectID()
+		expectedArticle := assembleArticleModel(articleAuthorID)
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", primitive.NewObjectID().Hex())
+		req.Header.Set("Goduit-Subject", uuid.NewString())
 		req.Header.Set("Goduit-Client-Username", "not-the-author")
-		req.Header.Set("Goduit-Subject", "not.the.author.email@test.test")
+		req.Header.Set("Goduit-Client-Email", "not.the.author.email@test.test")
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")

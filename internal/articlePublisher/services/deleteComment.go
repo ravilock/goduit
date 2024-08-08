@@ -1,7 +1,7 @@
 package services
 
 import (
-	"golang.org/x/net/context"
+	"context"
 )
 
 type commentDeleter interface {

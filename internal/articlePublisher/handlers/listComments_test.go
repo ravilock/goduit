@@ -1,19 +1,26 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app"
-	"github.com/ravilock/goduit/internal/articlePublisher/models"
 
+	"github.com/ravilock/goduit/internal/articlePublisher/requests"
+	"github.com/ravilock/goduit/internal/profileManager/models"
+
+	articlePublisherModels "github.com/ravilock/goduit/internal/articlePublisher/models"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/stretchr/testify/require"
 )
@@ -31,11 +38,18 @@ func TestListComments(t *testing.T) {
 
 	t.Run("Should list comments", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
-		comment1 := assembleCommentModel(*expectedAuthor.ID, *expectedArticle.ID, "test comment body")
-		comment2 := assembleCommentModel(*expectedAuthor.ID, *expectedArticle.ID, "test comment body 2")
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s/comments", *expectedArticle.Slug), nil)
+		articleAuthorID := primitive.NewObjectID()
+		articleAuthor := assembleArticleAuthor(articleAuthorID.Hex())
+		authorMap := map[string]*models.User{
+			articleAuthorID.Hex(): articleAuthor,
+		}
+		expectedArticle := assembleArticleModel(articleAuthorID)
+		comment1 := assembleCommentModel(articleAuthorID.Hex(), expectedArticle.ID.Hex())
+		comment2 := assembleCommentModel(articleAuthorID.Hex(), expectedArticle.ID.Hex())
+		listCommentsRequest := generateListCommentsRequest(*expectedArticle.Slug)
+		requestBody, err := json.Marshal(listCommentsRequest)
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s/comments", listCommentsRequest.Slug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -43,12 +57,12 @@ func TestListComments(t *testing.T) {
 		c.SetParamValues(*expectedArticle.Slug)
 		ctx := c.Request().Context()
 		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
-		commentListerMock.EXPECT().ListComments(ctx, expectedArticle.ID.Hex()).Return([]*models.Comment{comment1, comment2}, nil).Once()
-		profileGetterMock.EXPECT().GetProfileByID(ctx, *comment1.Author).Return(expectedAuthor, nil).Once()
-		isFollowedCheckerMock.EXPECT().IsFollowedBy(ctx, *comment1.Author, "").Return(false).Once()
+		commentListerMock.EXPECT().ListComments(ctx, expectedArticle.ID.Hex()).Return([]*articlePublisherModels.Comment{comment1, comment2}, nil).Once()
+		profileGetterMock.EXPECT().GetProfileByID(ctx, articleAuthorID.Hex()).Return(articleAuthor, nil).Once()
+		isFollowedCheckerMock.EXPECT().IsFollowedBy(ctx, articleAuthorID.Hex(), "").Return(false).Once()
 
 		// Act
-		err := handler.ListComments(c)
+		err = handler.ListComments(c)
 
 		// Assert
 		require.NoError(t, err)
@@ -56,33 +70,61 @@ func TestListComments(t *testing.T) {
 		listCommentsResponse := new(articlePublisherResponses.CommentsResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), listCommentsResponse)
 		require.NoError(t, err)
-		checkListCommentsResponse(t, listCommentsResponse, 2, comment1, comment2)
+		checkListCommentsResponse(t, listCommentsResponse, 2, authorMap, comment1, comment2)
 	})
 
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		// Arrange
-		slug := "inexistent-article"
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s/comments", slug), nil)
+		articleSlug := uuid.NewString()
+		listCommentsRequest := generateListCommentsRequest(articleSlug)
+		requestBody, err := json.Marshal(listCommentsRequest)
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s/comments", listCommentsRequest.Slug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(slug)
+		c.SetParamValues(articleSlug)
 		ctx := c.Request().Context()
-		articleGetterMock.EXPECT().GetArticleBySlug(ctx, slug).Return(nil, app.ArticleNotFoundError(slug, nil)).Once()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, articleSlug).Return(nil, app.ArticleNotFoundError(articleSlug, nil)).Once()
 
 		// Act
-		err := handler.ListComments(c)
+		err = handler.ListComments(c)
 
 		// Assert
-		require.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
+		require.ErrorContains(t, err, api.ArticleNotFound(articleSlug).Error())
 	})
 }
 
-func checkListCommentsResponse(t *testing.T, response *articlePublisherResponses.CommentsResponse, length int, comments ...*models.Comment) {
+func generateListCommentsRequest(articleSlug string) *requests.ArticleSlugRequest {
+	return &requests.ArticleSlugRequest{
+		Slug: articleSlug,
+	}
+}
+
+func checkListCommentsResponse(t *testing.T, response *articlePublisherResponses.CommentsResponse, length int, authorMap map[string]*models.User, comments ...*articlePublisherModels.Comment) {
 	require.Len(t, response.Comment, length)
 	for index, comment := range comments {
 		require.Equal(t, comment.ID.Hex(), response.Comment[index].ID)
 		require.Equal(t, *comment.Body, response.Comment[index].Body)
+		require.Equal(t, comment.CreatedAt, response.Comment[index].CreatedAt)
+		require.Equal(t, comment.UpdatedAt, response.Comment[index].UpdatedAt)
+		author, ok := authorMap[*comment.Author]
+		require.True(t, ok)
+		require.Equal(t, *author.Username, response.Comment[index].Author.Username)
+	}
+}
+
+func assembleCommentModel(commentAuthorID string, articleID string) *articlePublisherModels.Comment {
+	commentID := primitive.NewObjectID()
+	commentBody := "comment body"
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	return &articlePublisherModels.Comment{
+		ID:        &commentID,
+		Author:    &commentAuthorID,
+		Article:   &articleID,
+		Body:      &commentBody,
+		CreatedAt: &now,
+		UpdatedAt: &now,
 	}
 }

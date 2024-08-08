@@ -51,7 +51,7 @@ func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 }
 
 func GenerateToken(userEmail, username, userID string) (string, error) {
-	now := time.Now()
+	now := time.Now().UTC().Truncate(time.Millisecond)
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &Identity{
 		UserEmail: userEmail,
 		Username:  username,
