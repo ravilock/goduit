@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
+	"github.com/ravilock/goduit/internal/config"
 )
 
 var (
@@ -64,7 +64,7 @@ func GenerateToken(userEmail, username, userID string) (string, error) {
 			ID:        uuid.NewString(),
 		},
 	})
-	return token.SignedString(encryptionkeys.PrivateKey)
+	return token.SignedString(config.PrivateKey)
 }
 
 func FromToken(authorizationHeader string) (*Identity, error) {

@@ -12,7 +12,7 @@ import (
 	articleHandlers "github.com/ravilock/goduit/internal/articlePublisher/handlers"
 	articleRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
 	articleServices "github.com/ravilock/goduit/internal/articlePublisher/services"
-	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
+	"github.com/ravilock/goduit/internal/config"
 	"github.com/ravilock/goduit/internal/config/mongo"
 	followerHandlers "github.com/ravilock/goduit/internal/followerCentral/handlers"
 	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
@@ -29,7 +29,7 @@ func main() {
 		log.Fatal("Failed to open private key file", err)
 	}
 
-	if err := encryptionkeys.LoadPrivateKey(privateKeyFile); err != nil {
+	if err := config.LoadPrivateKey(privateKeyFile); err != nil {
 		log.Fatal("Failed to load private key file content", err)
 	}
 
@@ -42,7 +42,7 @@ func main() {
 		log.Fatal("Failed to open public key file", err)
 	}
 
-	if err := encryptionkeys.LoadPublicKey(publicKeyFile); err != nil {
+	if err := config.LoadPublicKey(publicKeyFile); err != nil {
 		log.Fatal("Failed to load public key file content", err)
 	}
 

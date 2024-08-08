@@ -11,7 +11,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api/validators"
-	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
+	"github.com/ravilock/goduit/internal/config"
 	"github.com/ravilock/goduit/internal/identity"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
@@ -31,7 +31,7 @@ func setup() {
 		log.Fatal(err)
 	}
 
-	if err := encryptionkeys.LoadPrivateKey(privateKeyFile); err != nil {
+	if err := config.LoadPrivateKey(privateKeyFile); err != nil {
 		log.Fatal("Failed to load private key file content", err)
 	}
 
@@ -44,7 +44,7 @@ func setup() {
 		log.Fatal(err)
 	}
 
-	if err := encryptionkeys.LoadPublicKey(publicKeyFile); err != nil {
+	if err := config.LoadPublicKey(publicKeyFile); err != nil {
 		log.Fatal("Failed to load public key file content", err)
 	}
 
