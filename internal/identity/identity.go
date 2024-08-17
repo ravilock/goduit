@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	invalidTokenErr        = errors.New("Invalid Token")
-	couldNotParseClaimsErr = errors.New("Could Not Parse Claims")
+	invalidTokenErr        = errors.New("invalid Token")
+	couldNotParseClaimsErr = errors.New("could Not Parse Claims")
 )
 
 type Identity struct {
@@ -33,7 +33,7 @@ type IdentityHeaders struct {
 func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			authorizationHeader := c.Request().Header.Get("Authorization")
+			authorizationHeader := c.Request().Header.Get(echo.HeaderAuthorization)
 			if !requiredAuthentication && authorizationHeader == "" {
 				return next(c)
 			}

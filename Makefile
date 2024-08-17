@@ -38,5 +38,11 @@ test:
 test-verbose:
 	@docker-compose exec $(SVC_API) go test -p 1 ./... -v -count=1
 
+test-integration:
+	@docker-compose exec $(SVC_API) go test ./integrationTests/... -count=1
+
+test-integration-verbose:
+	@docker-compose exec $(SVC_API) go test ./integrationTests/... -v -count=1
+
 bash:
 	@docker-compose exec $(SVC_API) sh

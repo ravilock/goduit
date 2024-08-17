@@ -1,25 +1,25 @@
-package handlers
+package profilemanager
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
+	integrationtests "github.com/ravilock/goduit/integrationTests"
 	"github.com/ravilock/goduit/internal/mongo"
 	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
+
+	"github.com/spf13/viper"
 )
 
 const (
@@ -29,42 +29,33 @@ const (
 )
 
 func TestLogin(t *testing.T) {
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
 	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
+	client, err := mongo.ConnectDatabase(viper.GetString("db.url"))
 	if err != nil {
 		log.Fatalln("Error connecting to database", err)
 	}
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
 	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewProfileHandler(profileManager, followerCentral)
-	clearDatabase(client)
-	e := echo.New()
-	if _, err := registerUser(loginTestUsername, loginTestEmail, loginTestPassword, profileManager); err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
+	serverUrl := viper.GetString("server.url")
+	loginEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/users/login")
+	httpClient := http.Client{}
 	t.Run("Should successfully login", func(t *testing.T) {
+		integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{Username: loginTestUsername, Email: loginTestEmail, Password: loginTestPassword})
 		loginRequest := generateLoginBody()
 		preLoginModel, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
 		require.NoError(t, err)
 		requestBody, err := json.Marshal(loginRequest)
 		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		err = handler.Login(c)
+		req, err := http.NewRequest(http.MethodPost, loginEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		res, err := httpClient.Do(req)
+		require.NoError(t, err)
+		defer res.Body.Close()
+		require.Equal(t, http.StatusOK, res.StatusCode)
 		loginResponse := new(profileManagerResponses.User)
-		err = json.Unmarshal(rec.Body.Bytes(), loginResponse)
+		resBytes, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+		err = json.Unmarshal(resBytes, loginResponse)
 		require.NoError(t, err)
 		checkLoginResponse(t, loginRequest, loginResponse)
 		model, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
@@ -76,24 +67,38 @@ func TestLogin(t *testing.T) {
 		loginRequest.User.Email = "wrong-email@test.test"
 		requestBody, err := json.Marshal(loginRequest)
 		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
+		req, err := http.NewRequest(http.MethodPost, loginEndpoint, bytes.NewBuffer(requestBody))
+		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		err = handler.Login(c)
-		require.ErrorIs(t, err, api.FailedLoginAttempt)
+		res, err := httpClient.Do(req)
+		require.NoError(t, err)
+		defer res.Body.Close()
+		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
+		resBytes, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+		httpError := new(echo.HTTPError)
+		err = json.Unmarshal(resBytes, httpError)
+		require.NoError(t, err)
+		require.Equal(t, httpError.Message, api.FailedLoginAttempt.Message)
 	})
-	t.Run("Should return 401 if wrong password", func(t *testing.T) {
+	t.Run("Should return 401 if password is wrong", func(t *testing.T) {
 		loginRequest := generateLoginBody()
 		loginRequest.User.Password = "wrong-user-password"
 		requestBody, err := json.Marshal(loginRequest)
 		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
+		req, err := http.NewRequest(http.MethodPost, loginEndpoint, bytes.NewBuffer(requestBody))
+		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		err = handler.Login(c)
-		require.ErrorIs(t, err, api.FailedLoginAttempt)
+		res, err := httpClient.Do(req)
+		require.NoError(t, err)
+		defer res.Body.Close()
+		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
+		resBytes, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+		httpError := new(echo.HTTPError)
+		err = json.Unmarshal(resBytes, httpError)
+		require.NoError(t, err)
+		require.Equal(t, httpError.Message, api.FailedLoginAttempt.Message)
 	})
 }
 

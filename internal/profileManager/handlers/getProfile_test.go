@@ -21,8 +21,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const getProfileTestUsername = "get-profile-test-username"
-const getProfileTestEmail = "get.profile.email@test.test"
+const (
+	getProfileTestUsername = "get-profile-test-username"
+	getProfileTestEmail    = "get.profile.email@test.test"
+)
 
 func TestGetProfile(t *testing.T) {
 	databaseURI := os.Getenv("DB_URL")
@@ -65,8 +67,7 @@ func TestGetProfile(t *testing.T) {
 	t.Run("Should return following as true if logged user follows profile", func(t *testing.T) {
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
-		followerIdentity, err := registerUser(followerUsername, followerEmail, "", profileManager)
-		require.NoError(t, err, "Could not register user", err)
+		followerIdentity, err := require.NoError(t, err, "Could not register user", err)
 		err = followerCentralRepository.Follow(context.Background(), identity.Subject, followerIdentity.Subject)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", getProfileTestUsername), nil)

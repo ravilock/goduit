@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"context"
@@ -7,11 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/api"
 	"github.com/ravilock/goduit/internal/config"
 	"github.com/ravilock/goduit/internal/identity"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
+	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -23,9 +24,10 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	privateKeyFile, err := os.Open(os.Getenv("PRIVATE_KEY_LOCATION"))
+	viper.SetDefault("server.url", "http://localhost:9090")
+	privateKeyFile, err := os.Open(viper.GetString("private.key.location"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to open private key file", err)
 	}
 
 	if err := config.LoadPrivateKey(privateKeyFile); err != nil {
@@ -36,9 +38,9 @@ func setup() {
 		log.Fatal("Failed to close private key file", err)
 	}
 
-	publicKeyFile, err := os.Open(os.Getenv("PUBLIC_KEY_LOCATION"))
+	publicKeyFile, err := os.Open(viper.GetString("public.key.location"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to open public key file", err)
 	}
 
 	if err := config.LoadPublicKey(publicKeyFile); err != nil {
@@ -49,10 +51,11 @@ func setup() {
 		log.Fatal("Failed to close publicKeyFile key file", err)
 	}
 
-	// Start Validator
-	if err := validators.InitValidator(); err != nil {
-		log.Fatalln("Failed to load validator", err)
+	server, err := api.NewServer()
+	if err != nil {
+		log.Fatalln("Failed to start server", err)
 	}
+	server.Start()
 }
 
 func clearDatabase(client *mongo.Client) {

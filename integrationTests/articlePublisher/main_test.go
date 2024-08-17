@@ -1,15 +1,23 @@
-package main
+package articlepublisher
 
 import (
 	"log"
 	"os"
+	"testing"
 
-	"github.com/ravilock/goduit/internal/api"
 	"github.com/ravilock/goduit/internal/config"
 	"github.com/spf13/viper"
 )
 
-func main() {
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	os.Exit(code)
+}
+
+func setup() {
+	viper.SetDefault("server.url", "http://localhost:9090")
+	// viper.SetDefault("db.url", "mongodb://goduit:goduit-password@mongo:27017/")
 	privateKeyFile, err := os.Open(viper.GetString("private.key.location"))
 	if err != nil {
 		log.Fatal("Failed to open private key file", err)
@@ -35,10 +43,4 @@ func main() {
 	if err := publicKeyFile.Close(); err != nil {
 		log.Fatal("Failed to close publicKeyFile key file", err)
 	}
-
-	server, err := api.NewServer()
-	if err != nil {
-		log.Fatalln("Failed to start server", err)
-	}
-	server.Start()
 }
