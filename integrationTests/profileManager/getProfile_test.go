@@ -47,7 +47,6 @@ func TestGetProfile(t *testing.T) {
 	})
 	t.Run("Should return following as true if logged user follows profile", func(t *testing.T) {
 		getProfilfeUserIdentity, _ := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-		fmt.Println(getProfilfeUserIdentity.Username)
 		followerIdentity, followerToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		err := followerCentralRepository.Follow(context.Background(), getProfilfeUserIdentity.Subject, followerIdentity.Subject)
 		require.NoError(t, err)

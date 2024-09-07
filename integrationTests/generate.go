@@ -19,6 +19,6 @@ func UniqueEmail(args ...string) string {
 }
 
 func UniqueTitle(args ...string) string {
-	base := UniqueEmail(args...)
+	base := UniqueUsername(args...)
 	return strings.Join(strings.Split(base, "-"), " ")
 }

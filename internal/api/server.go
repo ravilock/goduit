@@ -45,10 +45,11 @@ func NewServer() (Server, error) {
 		return nil, err
 	}
 
-	return createNewServer(databaseClient, serverLogger, false)
+	return createNewServer(databaseClient, serverLogger)
 }
 
-func createNewServer(databaseClient *mongoDriver.Client, logger *slog.Logger, testing bool) (Server, error) {
+func createNewServer(databaseClient *mongoDriver.Client, logger *slog.Logger) (Server, error) {
+	// TODO: Add logger to each controller
 	// Echo instance
 	e := echo.New()
 
@@ -105,14 +106,12 @@ func createNewServer(databaseClient *mongoDriver.Client, logger *slog.Logger, te
 	articlesGroup := apiGroup.Group("/articles")
 	articlesGroup.POST("", articleHandler.WriteArticle, requiredAuthMiddleware)
 	articlesGroup.GET("", articleHandler.ListArticles, optionalAuthMiddleware)
-	articleGroup := apiGroup.Group("/article")
-	articleGroup.GET("/:slug", articleHandler.GetArticle, optionalAuthMiddleware)
-	articleGroup.DELETE("/:slug", articleHandler.UnpublishArticle, requiredAuthMiddleware)
-	articleGroup.PUT("/:slug", articleHandler.UpdateArticle, requiredAuthMiddleware)
-	articleGroup.POST("/:slug/comments", commentHandler.WriteComment, requiredAuthMiddleware)
-	articleGroup.GET("/:slug/comments", commentHandler.ListComments, optionalAuthMiddleware)
-	articleGroup.DELETE("/:slug/comments/:id", commentHandler.DeleteComment, requiredAuthMiddleware)
-
+	articlesGroup.GET("/:slug", articleHandler.GetArticle, optionalAuthMiddleware)
+	articlesGroup.DELETE("/:slug", articleHandler.UnpublishArticle, requiredAuthMiddleware)
+	articlesGroup.PUT("/:slug", articleHandler.UpdateArticle, requiredAuthMiddleware)
+	articlesGroup.POST("/:slug/comments", commentHandler.WriteComment, requiredAuthMiddleware)
+	articlesGroup.GET("/:slug/comments", commentHandler.ListComments, optionalAuthMiddleware)
+	articlesGroup.DELETE("/:slug/comments/:id", commentHandler.DeleteComment, requiredAuthMiddleware)
 	return server, nil
 }
 

@@ -29,6 +29,5 @@ func MustFollowUser(t *testing.T, followed, followerToken string) {
 	require.Equal(t, http.StatusOK, res.StatusCode)
 	err = json.Unmarshal(resBytes, folllowUserResponse)
 	require.NoError(t, err)
-	fmt.Println(string(resBytes))
 	require.True(t, folllowUserResponse.Profile.Following)
 }

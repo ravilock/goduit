@@ -18,7 +18,6 @@ import (
 )
 
 func TestWriteArticle(t *testing.T) {
-	// Connect Mongo DB
 	serverUrl := viper.GetString("server.url")
 	writeArticleEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/articles")
 	httpClient := http.Client{}
@@ -41,7 +40,7 @@ func TestWriteArticle(t *testing.T) {
 		require.NoError(t, err)
 		checkWriteArticleResponse(t, createArticleRequest, authorIdentity.Username, createArticleResponse)
 	})
-	t.Run("Should not be able to write article with s ame title/slug", func(t *testing.T) {
+	t.Run("Should not allow to write article with slug that already exists", func(t *testing.T) {
 		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
