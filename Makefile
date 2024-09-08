@@ -1,4 +1,4 @@
-SVC_API := web
+SVC_API := goduit-api
 SVC_DB := mongo mongo-express
 LOGS_CMD := docker-compose logs --follow --tail=5
 

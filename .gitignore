@@ -7,7 +7,7 @@ error.json
 *.dll
 *.so
 *.dylib
-/groups
+/goduit
 
 # Test binary, built with `go test -c`
 *.test
@@ -21,6 +21,3 @@ error.json
 # profilings
 prof.cpu
 prof.mem
-
-# other tools
-.tool-versions

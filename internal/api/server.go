@@ -35,7 +35,8 @@ type server struct {
 }
 
 func (s *server) Start() {
-	s.Logger.Fatal(s.Echo.Start(viper.GetString(("server.address"))))
+	addr := fmt.Sprintf(":%d", viper.GetInt("port"))
+	s.Logger.Fatal(s.Echo.Start(addr))
 }
 
 func NewServer() (Server, error) {

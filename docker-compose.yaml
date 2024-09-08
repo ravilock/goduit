@@ -1,14 +1,10 @@
 services:
-  web:
-    image: acim/go-reflex
-    environment:
-      - RACE_DETECTOR=1
-      - BUILD_ARGS=./cmd/goduit-api/main.go
-    env_file:
-      - .env
-    container_name: goduit-app
+  goduit-api:
+    build:
+      context: .
+      dockerfile: goduit.Dockerfile
     ports:
-      - 9090:9090
+      - 3000:3000
     depends_on:
       - mongo
       - mongo-express
