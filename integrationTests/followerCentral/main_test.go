@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	viper.SetDefault("server.url", "http://localhost:9090")
+	viper.SetDefault("server.url", "http://localhost:3000")
 	// viper.SetDefault("db.url", "mongodb://goduit:goduit-password@mongo:27017/")
 	privateKeyFile, err := os.Open(viper.GetString("private.key.location"))
 	if err != nil {

@@ -15,9 +15,9 @@ const (
 )
 
 type AppError struct {
-	ErrorCode     ErrorCode
-	CustomMessage string
 	OriginalError error
+	CustomMessage string
+	ErrorCode     ErrorCode
 }
 
 func (err *AppError) Error() string {

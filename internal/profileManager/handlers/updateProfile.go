@@ -16,7 +16,7 @@ import (
 )
 
 type profileUpdater interface {
-	UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) error
+	UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (string, error)
 }
 
 type updateProfileHandler struct {
@@ -40,7 +40,8 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 
 	model := request.Model()
 
-	if err := h.service.UpdateProfile(c.Request().Context(), identityHeaders.ClientEmail, identityHeaders.ClientUsername, request.User.Password, model); err != nil {
+	token, err := h.service.UpdateProfile(c.Request().Context(), identityHeaders.ClientEmail, identityHeaders.ClientUsername, request.User.Password, model)
+	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
 			case app.ConflictErrorCode:
@@ -52,20 +53,6 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 		return err
 	}
 
-	var tokenString string
-	var err error
-	if shouldGenerateNewToken(identityHeaders, model) {
-		tokenString, err = identity.GenerateToken(*model.Email, *model.Username, model.ID.Hex())
-		if err != nil {
-			return err
-		}
-	}
-
-	response := assemblers.UserResponse(model, tokenString)
-
+	response := assemblers.UserResponse(model, token)
 	return c.JSON(http.StatusOK, response)
-}
-
-func shouldGenerateNewToken(identityHeaders *identity.IdentityHeaders, model *models.User) bool {
-	return identityHeaders.ClientEmail != *model.Email || identityHeaders.ClientUsername != *model.Username
 }

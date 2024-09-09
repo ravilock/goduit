@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -26,15 +25,12 @@ type UpdateProfilePayload struct {
 }
 
 func (r *UpdateProfileRequest) Model() *models.User {
-	updatedAt := time.Now().Truncate(time.Millisecond)
-	model := &models.User{
-		Username:  &r.User.Username,
-		Email:     &r.User.Email,
-		Bio:       &r.User.Bio,
-		Image:     &r.User.Image,
-		UpdatedAt: &updatedAt,
+	return &models.User{
+		Username: &r.User.Username,
+		Email:    &r.User.Email,
+		Bio:      &r.User.Bio,
+		Image:    &r.User.Image,
 	}
-	return model
 }
 
 func (r *UpdateProfileRequest) Validate() error {

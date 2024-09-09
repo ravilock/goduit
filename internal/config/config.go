@@ -19,7 +19,7 @@ func init() {
 	viper.AutomaticEnv()
 	envReplacer := strings.NewReplacer(".", "_")
 	viper.SetEnvKeyReplacer(envReplacer)
-	viper.SetDefault("server.address", ":9090")
+	viper.SetDefault("server.address", ":3000")
 	viper.SetDefault("db.host", "mongodb")
 	viper.SetDefault("db.port", "27017")
 	viper.SetDefault("db.user", "goduit")

@@ -2,133 +2,84 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	"github.com/ravilock/goduit/internal/identity"
-	"github.com/ravilock/goduit/internal/mongo"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/bcrypt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestUpdateProfile(t *testing.T) {
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewProfileHandler(profileManager, followerCentral)
-	clearDatabase(client)
+	validators.InitValidator()
+	profileUpdaterMock := newMockProfileUpdater(t)
+	handler := updateProfileHandler{service: profileUpdaterMock}
 	e := echo.New()
 	imageServer := mockValidImageURL(t)
 	defer imageServer.Close()
+
 	t.Run("Should fully update an authenticated user's profile", func(t *testing.T) {
-		oldUpdateProfileTestUsername := uuid.NewString()
-		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
-		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", profileManager)
-		require.NoError(t, err, "Could Not Create User", err)
+		// Arrange
+		expectedSubject := primitive.NewObjectID().Hex()
+		clientUsername := "test-username"
+		clientEmail := "test.email@test.test"
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
 		requestBody, err := json.Marshal(updateProfileRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, "/user", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", identity.Subject)
-		req.Header.Set("Goduit-Client-Username", identity.Username)
-		req.Header.Set("Goduit-Client-Email", identity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedSubject)
+		req.Header.Set("Goduit-Client-Username", clientUsername)
+		req.Header.Set("Goduit-Client-Email", clientEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		expectedToken := "token"
+		profileUpdaterMock.EXPECT().UpdateProfile(c.Request().Context(), clientEmail, clientUsername, updateProfileRequest.User.Password, updateProfileRequest.Model()).Return(expectedToken, nil).Once()
+
+		// Act
 		err = handler.UpdateProfile(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
+		require.Equal(t, http.StatusOK, rec.Code)
 		updateProfileResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), updateProfileResponse)
 		require.NoError(t, err)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
-		checkUpdatedToken(t, updateProfileRequest, updateProfileResponse.User.Token)
-		checkProfilePassword(t, updateProfileRequest.User.Username, updateProfileRequest.User.Password, profileManagerRepository)
-		clearDatabase(client)
+		require.Equal(t, expectedToken, updateProfileResponse.User.Token)
 	})
-	t.Run("Should not update password if not necessary", func(t *testing.T) {
-		oldUpdateProfileTestUsername := uuid.NewString()
-		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
-		oldUpdateProfileTestPassword := uuid.NewString()
-		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, oldUpdateProfileTestPassword, profileManager)
-		require.NoError(t, err, "Could Not Create User", err)
+
+	t.Run("Should return HTTP 409 if new username or email is already being used", func(t *testing.T) {
+		// Arrange
+		expectedSubject := primitive.NewObjectID().Hex()
+		clientUsername := "test-username"
+		clientEmail := "test.email@test.test"
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
-		updateProfileRequest.User.Password = ""
 		requestBody, err := json.Marshal(updateProfileRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, "/user", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", identity.Subject)
-		req.Header.Set("Goduit-Client-Email", identity.UserEmail)
-		req.Header.Set("Goduit-Client-Username", identity.Username)
+		req.Header.Set("Goduit-Subject", expectedSubject)
+		req.Header.Set("Goduit-Client-Username", clientUsername)
+		req.Header.Set("Goduit-Client-Email", clientEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		profileUpdaterMock.EXPECT().UpdateProfile(c.Request().Context(), clientEmail, clientUsername, updateProfileRequest.User.Password, updateProfileRequest.Model()).Return("", app.ConflictError("users")).Once()
+
+		// Act
 		err = handler.UpdateProfile(c)
-		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
-		updateProfileResponse := new(profileManagerResponses.User)
-		err = json.Unmarshal(rec.Body.Bytes(), updateProfileResponse)
-		require.NoError(t, err)
-		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
-		checkUpdatedToken(t, updateProfileRequest, updateProfileResponse.User.Token)
-		checkProfilePassword(t, updateProfileRequest.User.Username, oldUpdateProfileTestPassword, profileManagerRepository)
-	})
-	t.Run("Should not generate new token if not necessary", func(t *testing.T) {
-		oldUpdateProfileTestUsername := uuid.NewString()
-		oldUpdateProfileTestEmail := fmt.Sprintf("%s@test.test", oldUpdateProfileTestUsername)
-		identity, err := registerUser(oldUpdateProfileTestUsername, oldUpdateProfileTestEmail, "", profileManager)
-		require.NoError(t, err, "Could Not Create User", err)
-		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
-		updateProfileRequest.User.Password = ""
-		updateProfileRequest.User.Username = oldUpdateProfileTestUsername
-		updateProfileRequest.User.Email = oldUpdateProfileTestEmail
-		requestBody, err := json.Marshal(updateProfileRequest)
-		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodPut, "/user", bytes.NewBuffer(requestBody))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", identity.Subject)
-		req.Header.Set("Goduit-Client-Username", identity.Username)
-		req.Header.Set("Goduit-Client-Email", identity.UserEmail)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		err = handler.UpdateProfile(c)
-		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
-		updateProfileResponse := new(profileManagerResponses.User)
-		err = json.Unmarshal(rec.Body.Bytes(), updateProfileResponse)
-		require.NoError(t, err)
-		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
-		require.Empty(t, "", "Should have not generated new token")
+
+		// Assert
+		require.ErrorIs(t, err, api.ConfictError)
 	})
 }
 
@@ -148,22 +99,6 @@ func checkUpdateProfileResponse(t *testing.T, request *profileManagerRequests.Up
 	require.Equal(t, request.User.Email, response.User.Email, "Updated user's email should be %q, got %q", request.User.Email, response.User.Email)
 	require.Equal(t, request.User.Bio, response.User.Bio, "Update user's bio should be %q, got %q", request.User.Bio, response.User.Bio)
 	require.Equal(t, request.User.Image, response.User.Image, "Update user's image should be %q, got %q", request.User.Image, response.User.Image)
-}
-
-func checkUpdatedToken(t *testing.T, request *profileManagerRequests.UpdateProfileRequest, token string) {
-	t.Helper()
-	identityClaims, err := identity.FromToken(token)
-	require.NoError(t, err)
-	require.Equal(t, request.User.Username, identityClaims.Username, "Token's username should be %q, got %q", request.User.Username, identityClaims.Username)
-	require.Equal(t, request.User.Email, identityClaims.UserEmail, "Token's email should be %q, got %q", request.User.Email, identityClaims.Subject)
-}
-
-func checkProfilePassword(t *testing.T, username, password string, repository *profileManagerRepositories.UserRepository) {
-	t.Helper()
-	user, err := repository.GetUserByUsername(context.Background(), username)
-	require.NoError(t, err)
-	err = bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(password))
-	require.NoError(t, err)
 }
 
 func mockValidImageURL(t *testing.T) *httptest.Server {

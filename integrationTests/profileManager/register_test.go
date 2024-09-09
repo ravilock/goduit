@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/ravilock/goduit/api"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
@@ -41,6 +42,7 @@ func TestRegister(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, registerEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		requestTime := time.Now()
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		defer res.Body.Close()
@@ -53,7 +55,7 @@ func TestRegister(t *testing.T) {
 		checkRegisterResponse(t, registerRequest, registerResponse)
 		userModel, err := profileManagerRepository.GetUserByEmail(context.Background(), registerRequest.User.Email)
 		require.NoError(t, err)
-		checkUserModel(t, registerRequest, userModel)
+		checkUserModel(t, registerRequest, requestTime, userModel)
 	})
 	t.Run("Should not create user with duplicated email", func(t *testing.T) {
 		registerRequest := generateRegisterBody()
@@ -110,10 +112,14 @@ func checkRegisterResponse(t *testing.T, request *profileManagerRequests.Registe
 	require.Zero(t, response.User.Bio)
 }
 
-func checkUserModel(t *testing.T, request *profileManagerRequests.RegisterRequest, user *profileManagerModels.User) {
+func checkUserModel(t *testing.T, request *profileManagerRequests.RegisterRequest, requestTime time.Time, user *profileManagerModels.User) {
 	t.Helper()
 	require.Equal(t, request.User.Email, *user.Email, "User email should be the same")
 	require.Equal(t, request.User.Username, *user.Username, "User Username should be the same")
+	require.NotNil(t, user.CreatedAt)
+	require.GreaterOrEqual(t, *user.CreatedAt, requestTime)
+	require.NotNil(t, user.LastSession)
+	require.GreaterOrEqual(t, *user.LastSession, requestTime)
 	require.NotZero(t, *user.PasswordHash)
 	require.Zero(t, *user.Image)
 	require.Zero(t, *user.Bio)

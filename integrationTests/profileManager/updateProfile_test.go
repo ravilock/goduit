@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -45,6 +46,7 @@ func TestUpdateProfile(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, token)
+		requestTime := time.Now()
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -56,6 +58,7 @@ func TestUpdateProfile(t *testing.T) {
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
 		checkUpdatedToken(t, updateProfileRequest, updateProfileResponse.User.Token)
 		checkProfilePassword(t, updateProfileRequest.User.Username, updateProfileRequest.User.Password, profileManagerRepository)
+		checkProfileUpdatedAt(t, updateProfileRequest.User.Username, requestTime, profileManagerRepository)
 	})
 	t.Run("Should not update password if not necessary", func(t *testing.T) {
 		oldUpdateProfileTestPassword := uuid.NewString()
@@ -68,6 +71,7 @@ func TestUpdateProfile(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, token)
+		requestTime := time.Now()
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -79,6 +83,7 @@ func TestUpdateProfile(t *testing.T) {
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
 		checkUpdatedToken(t, updateProfileRequest, updateProfileResponse.User.Token)
 		checkProfilePassword(t, updateProfileRequest.User.Username, oldUpdateProfileTestPassword, profileManagerRepository)
+		checkProfileUpdatedAt(t, updateProfileRequest.User.Username, requestTime, profileManagerRepository)
 	})
 	t.Run("Should not generate new token if not necessary", func(t *testing.T) {
 		oldUserIdentity, token := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
@@ -92,6 +97,7 @@ func TestUpdateProfile(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, token)
+		requestTime := time.Now()
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -102,6 +108,7 @@ func TestUpdateProfile(t *testing.T) {
 		require.NoError(t, err)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
 		require.Empty(t, updateProfileResponse.User.Token, "Should have not generated new token")
+		checkProfileUpdatedAt(t, updateProfileRequest.User.Username, requestTime, profileManagerRepository)
 	})
 }
 
@@ -137,6 +144,14 @@ func checkProfilePassword(t *testing.T, username, password string, repository *p
 	require.NoError(t, err)
 	err = bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(password))
 	require.NoError(t, err)
+}
+
+func checkProfileUpdatedAt(t *testing.T, username string, requestTime time.Time, repository *profileManagerRepositories.UserRepository) {
+	t.Helper()
+	user, err := repository.GetUserByUsername(context.Background(), username)
+	require.NoError(t, err)
+	require.NotNil(t, user.UpdatedAt)
+	require.GreaterOrEqual(t, *user.UpdatedAt, requestTime)
 }
 
 func mockValidImageURL(t *testing.T) *httptest.Server {

@@ -2,24 +2,22 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	"github.com/ravilock/goduit/internal/mongo"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -29,70 +27,83 @@ const (
 )
 
 func TestLogin(t *testing.T) {
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewProfileHandler(profileManager, followerCentral)
-	clearDatabase(client)
+	validators.InitValidator()
+	authenticatorMock := newMockAuthenticator(t)
+	handler := loginHandler{service: authenticatorMock}
 	e := echo.New()
-	if _, err := registerUser(loginTestUsername, loginTestEmail, loginTestPassword, profileManager); err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
+
 	t.Run("Should successfully login", func(t *testing.T) {
+		// Arrange
 		loginRequest := generateLoginBody()
-		preLoginModel, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
-		require.NoError(t, err)
+		expectedUserID := primitive.NewObjectID()
+		expectedUsername := "testing-username"
+		now := time.Now()
+		expectedUserModel := &models.User{
+			ID:           &expectedUserID,
+			Username:     &expectedUsername,
+			Email:        &loginRequest.User.Email,
+			PasswordHash: &loginRequest.User.Password,
+			Bio:          nil,
+			Image:        nil,
+			CreatedAt:    &now,
+			UpdatedAt:    &now,
+			LastSession:  &now,
+		}
 		requestBody, err := json.Marshal(loginRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		expectedToken := "token"
+		authenticatorMock.EXPECT().Login(c.Request().Context(), loginRequest.User.Email, loginRequest.User.Password).Return(expectedUserModel, expectedToken, nil).Once()
+		authenticatorMock.EXPECT().UpdateProfile(mock.AnythingOfType("context.backgroundCtx"), loginRequest.User.Email, *expectedUserModel.Username, "", mock.AnythingOfType("*models.User")).Return("", nil).Once()
+
+		// Act
 		err = handler.Login(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
+		require.Equal(t, http.StatusOK, rec.Code)
 		loginResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), loginResponse)
 		require.NoError(t, err)
 		checkLoginResponse(t, loginRequest, loginResponse)
-		model, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
-		require.NoError(t, err)
-		require.True(t, model.LastSession.After(*preLoginModel.LastSession), "User Last Session Was not Updated")
 	})
+
 	t.Run("Should return 401 if email is not found", func(t *testing.T) {
+		// Arrange
 		loginRequest := generateLoginBody()
-		loginRequest.User.Email = "wrong-email@test.test"
 		requestBody, err := json.Marshal(loginRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		authenticatorMock.EXPECT().Login(c.Request().Context(), loginRequest.User.Email, loginRequest.User.Password).Return(nil, "", app.UserNotFoundError(loginRequest.User.Email, nil)).Once()
+
+		// Act
 		err = handler.Login(c)
+
+		// Assert
 		require.ErrorIs(t, err, api.FailedLoginAttempt)
 	})
+
 	t.Run("Should return 401 if wrong password", func(t *testing.T) {
+		// Arrange
 		loginRequest := generateLoginBody()
-		loginRequest.User.Password = "wrong-user-password"
 		requestBody, err := json.Marshal(loginRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/users/login", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		authenticatorMock.EXPECT().Login(c.Request().Context(), loginRequest.User.Email, loginRequest.User.Password).Return(nil, "", app.WrongPasswordError).Once()
+
+		// Act
 		err = handler.Login(c)
+
+		// Assert
 		require.ErrorIs(t, err, api.FailedLoginAttempt)
 	})
 }

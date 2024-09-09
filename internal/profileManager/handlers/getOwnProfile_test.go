@@ -2,68 +2,67 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	"github.com/ravilock/goduit/internal/mongo"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const getOwnProfileTestUsername = "get-own-profile-test-username"
-const getOwnProfileTestEmail = "get.own.profile.email@test.test"
-
 func TestGetOwnProfile(t *testing.T) {
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewProfileHandler(profileManager, followerCentral)
-	clearDatabase(client)
+	profileGetterMock := newMockProfileGetter(t)
+	handler := getOwnProfileHandler{service: profileGetterMock}
 	e := echo.New()
+
 	t.Run("Should get user's authenticated profile", func(t *testing.T) {
-		identity, err := registerUser(getOwnProfileTestUsername, getOwnProfileTestEmail, "", profileManager)
-		require.NoError(t, err, "Could Not Create User", err)
+		// Arrange
+		expectedSubject := primitive.NewObjectID()
+		clientUsername := "test-username"
+		clientEmail := "test.email@test.test"
+		expectedUserPassword := "test-password"
+		now := time.Now()
+		expectedUserModel := &models.User{
+			ID:           &expectedSubject,
+			Username:     &clientUsername,
+			Email:        &clientEmail,
+			PasswordHash: &expectedUserPassword,
+			Bio:          nil,
+			Image:        nil,
+			CreatedAt:    &now,
+			UpdatedAt:    &now,
+			LastSession:  &now,
+		}
 		req := httptest.NewRequest(http.MethodGet, "/user", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", identity.Subject)
-		req.Header.Set("Goduit-Client-Username", identity.Username)
-		req.Header.Set("Goduit-Client-Email", identity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedSubject.Hex())
+		req.Header.Set("Goduit-Client-Username", clientUsername)
+		req.Header.Set("Goduit-Client-Email", clientEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		err = handler.GetOwnProfile(c)
+		profileGetterMock.EXPECT().GetProfileByID(c.Request().Context(), expectedSubject.Hex()).Return(expectedUserModel, nil).Once()
+
+		// Act
+		err := handler.GetOwnProfile(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
+		require.Equal(t, http.StatusOK, rec.Code)
 		getOwnProfileResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), getOwnProfileResponse)
 		require.NoError(t, err)
-		checkGetOwnProfileResponse(t, getOwnProfileTestUsername, getOwnProfileTestEmail, getOwnProfileResponse)
+		checkGetOwnProfileResponse(t, expectedUserModel, getOwnProfileResponse)
 	})
 }
 
-func checkGetOwnProfileResponse(t *testing.T, username, email string, response *profileManagerResponses.User) {
+func checkGetOwnProfileResponse(t *testing.T, expectedUserData *models.User, response *profileManagerResponses.User) {
 	t.Helper()
-	require.Equal(t, email, response.User.Email, "User email should be the same")
-	require.Equal(t, username, response.User.Username, "User username should be the same")
+	require.Equal(t, *expectedUserData.Email, response.User.Email, "User email should be the same")
+	require.Equal(t, *expectedUserData.Username, response.User.Username, "User username should be the same")
 	require.Zero(t, response.User.Image)
 	require.Zero(t, response.User.Bio)
 }

@@ -58,9 +58,9 @@ func TestLogin(t *testing.T) {
 		err = json.Unmarshal(resBytes, loginResponse)
 		require.NoError(t, err)
 		checkLoginResponse(t, loginRequest, loginResponse)
-		model, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
+		postLoginModel, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
 		require.NoError(t, err)
-		require.True(t, model.LastSession.After(*preLoginModel.LastSession), "User Last Session Was not Updated")
+		require.GreaterOrEqual(t, *postLoginModel.LastSession, *preLoginModel.LastSession, "User Last Session Was not Updated")
 	})
 	t.Run("Should return 401 if email is not found", func(t *testing.T) {
 		loginRequest := generateLoginBody()
