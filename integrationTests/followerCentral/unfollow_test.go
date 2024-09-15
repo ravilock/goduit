@@ -30,7 +30,9 @@ func TestUnfollow(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	followUserEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/profiles/")
 	httpClient := http.Client{}
+
 	t.Run("Should follow a user", func(t *testing.T) {
+		// Arrange
 		followedIdentity, _ := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		followerIdentity, followerToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		integrationtests.MustFollowUser(t, followedIdentity.Username, followerToken)
@@ -38,7 +40,11 @@ func TestUnfollow(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", followerToken))
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
 		followResponse := new(profileManagerResponses.ProfileResponse)
@@ -50,14 +56,20 @@ func TestUnfollow(t *testing.T) {
 		_, err = followerCentralRepository.IsFollowedBy(context.Background(), followedIdentity.Subject, followerIdentity.Subject)
 		require.ErrorIs(t, err, mongo.ErrNoDocuments)
 	})
-	t.Run("Should return http 404 if no user is found", func(t *testing.T) {
+
+	t.Run("Should return HTTP 404 if no user is found", func(t *testing.T) {
+		// Arrange
 		inexistentUsername := "inexistent-username"
 		_, followerToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s%s", followUserEndpoint, inexistentUsername, "/followers"), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", followerToken))
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})

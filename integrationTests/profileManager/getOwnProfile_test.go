@@ -20,12 +20,18 @@ func TestGetOwnProfile(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	getOwnProfileEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/user")
 	httpClient := http.Client{}
+
 	t.Run("Should get authenticaed user's profile", func(t *testing.T) {
+		// Arrange
 		id, token := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodGet, getOwnProfileEndpoint, bytes.NewBuffer([]byte{}))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderAuthorization, token)
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
 		getOwnProfileResponse := new(profileManagerResponses.User)
@@ -34,8 +40,6 @@ func TestGetOwnProfile(t *testing.T) {
 		err = json.Unmarshal(resBytes, getOwnProfileResponse)
 		require.NoError(t, err)
 		checkGetOwnProfileResponse(t, id.Username, id.UserEmail, getOwnProfileResponse)
-	})
-	t.Run("Should return http 404 if no user is found", func(t *testing.T) {
 	})
 }
 

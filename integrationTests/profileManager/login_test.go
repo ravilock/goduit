@@ -38,7 +38,9 @@ func TestLogin(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	loginEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/users/login")
 	httpClient := http.Client{}
+
 	t.Run("Should successfully login", func(t *testing.T) {
+		// Arrange
 		integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{Username: loginTestUsername, Email: loginTestEmail, Password: loginTestPassword})
 		loginRequest := generateLoginBody()
 		preLoginModel, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
@@ -48,7 +50,11 @@ func TestLogin(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, loginEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		defer res.Body.Close()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -62,7 +68,9 @@ func TestLogin(t *testing.T) {
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, *postLoginModel.LastSession, *preLoginModel.LastSession, "User Last Session Was not Updated")
 	})
+
 	t.Run("Should return 401 if email is not found", func(t *testing.T) {
+		// Arrange
 		loginRequest := generateLoginBody()
 		loginRequest.User.Email = "wrong-email@test.test"
 		requestBody, err := json.Marshal(loginRequest)
@@ -70,7 +78,11 @@ func TestLogin(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, loginEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		defer res.Body.Close()
 		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
@@ -81,7 +93,9 @@ func TestLogin(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, httpError.Message, api.FailedLoginAttempt.Message)
 	})
+
 	t.Run("Should return 401 if password is wrong", func(t *testing.T) {
+		// Arrange
 		loginRequest := generateLoginBody()
 		loginRequest.User.Password = "wrong-user-password"
 		requestBody, err := json.Marshal(loginRequest)
@@ -89,7 +103,11 @@ func TestLogin(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, loginEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		defer res.Body.Close()
 		require.Equal(t, http.StatusUnauthorized, res.StatusCode)

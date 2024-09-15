@@ -31,11 +31,17 @@ func TestGetProfile(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	getProfileEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/profiles")
 	httpClient := http.Client{}
+
 	t.Run("Should get a user profile", func(t *testing.T) {
+		// Arrange
 		id, _ := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", getProfileEndpoint, id.Username), bytes.NewBuffer([]byte{}))
 		require.NoError(t, err)
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
 		getProfileResponse := new(profileManagerResponses.ProfileResponse)
@@ -45,7 +51,9 @@ func TestGetProfile(t *testing.T) {
 		require.NoError(t, err)
 		checkGetProfileResponse(t, id.Username, false, getProfileResponse)
 	})
+
 	t.Run("Should return following as true if logged user follows profile", func(t *testing.T) {
+		// Arrange
 		getProfilfeUserIdentity, _ := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		followerIdentity, followerToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		err := followerCentralRepository.Follow(context.Background(), getProfilfeUserIdentity.Subject, followerIdentity.Subject)
@@ -53,7 +61,11 @@ func TestGetProfile(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", getProfileEndpoint, getProfilfeUserIdentity.Username), bytes.NewBuffer([]byte{}))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", followerToken))
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
 		getProfileResponse := new(profileManagerResponses.ProfileResponse)
@@ -63,11 +75,17 @@ func TestGetProfile(t *testing.T) {
 		require.NoError(t, err)
 		checkGetProfileResponse(t, getProfilfeUserIdentity.Username, true, getProfileResponse)
 	})
-	t.Run("Should return http 404 if no user is found", func(t *testing.T) {
+
+	t.Run("Should return HTTP 404 if no user is found", func(t *testing.T) {
+		// Arrange
 		inexistentUsername := "inexistent-username"
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", getProfileEndpoint, inexistentUsername), bytes.NewBuffer([]byte{}))
 		require.NoError(t, err)
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})

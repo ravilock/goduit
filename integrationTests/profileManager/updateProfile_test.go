@@ -37,7 +37,9 @@ func TestUpdateProfile(t *testing.T) {
 	httpClient := http.Client{}
 	imageServer := mockValidImageURL(t)
 	defer imageServer.Close()
+
 	t.Run("Should fully update an authenticated user's profile", func(t *testing.T) {
+		// Arrange
 		_, token := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
 		requestBody, err := json.Marshal(updateProfileRequest)
@@ -47,7 +49,11 @@ func TestUpdateProfile(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, token)
 		requestTime := time.Now()
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
 		updateProfileResponse := new(profileManagerResponses.User)
@@ -60,7 +66,9 @@ func TestUpdateProfile(t *testing.T) {
 		checkProfilePassword(t, updateProfileRequest.User.Username, updateProfileRequest.User.Password, profileManagerRepository)
 		checkProfileUpdatedAt(t, updateProfileRequest.User.Username, requestTime, profileManagerRepository)
 	})
+
 	t.Run("Should not update password if not necessary", func(t *testing.T) {
+		// Arrange
 		oldUpdateProfileTestPassword := uuid.NewString()
 		_, token := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{Password: oldUpdateProfileTestPassword})
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
@@ -72,7 +80,11 @@ func TestUpdateProfile(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, token)
 		requestTime := time.Now()
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
 		updateProfileResponse := new(profileManagerResponses.User)
@@ -85,7 +97,9 @@ func TestUpdateProfile(t *testing.T) {
 		checkProfilePassword(t, updateProfileRequest.User.Username, oldUpdateProfileTestPassword, profileManagerRepository)
 		checkProfileUpdatedAt(t, updateProfileRequest.User.Username, requestTime, profileManagerRepository)
 	})
+
 	t.Run("Should not generate new token if not necessary", func(t *testing.T) {
+		// Arrange
 		oldUserIdentity, token := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
 		updateProfileRequest.User.Password = ""
@@ -98,7 +112,11 @@ func TestUpdateProfile(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, token)
 		requestTime := time.Now()
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
 		updateProfileResponse := new(profileManagerResponses.User)

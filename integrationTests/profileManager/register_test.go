@@ -35,7 +35,9 @@ func TestRegister(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	registerEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/users")
 	httpClient := http.Client{}
+
 	t.Run("Should create new user", func(t *testing.T) {
+		// Arrange
 		registerRequest := generateRegisterBody()
 		requestBody, err := json.Marshal(registerRequest)
 		require.NoError(t, err)
@@ -43,7 +45,11 @@ func TestRegister(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		requestTime := time.Now()
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		defer res.Body.Close()
 		require.Equal(t, http.StatusCreated, res.StatusCode)
@@ -57,7 +63,9 @@ func TestRegister(t *testing.T) {
 		require.NoError(t, err)
 		checkUserModel(t, registerRequest, requestTime, userModel)
 	})
+
 	t.Run("Should not create user with duplicated email", func(t *testing.T) {
+		// Arrange
 		registerRequest := generateRegisterBody()
 		registerRequest.User.Username = "different-username"
 		requestBody, err := json.Marshal(registerRequest)
@@ -65,7 +73,11 @@ func TestRegister(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, registerEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusConflict, res.StatusCode)
 		resBytes, err := io.ReadAll(res.Body)
@@ -75,7 +87,9 @@ func TestRegister(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, httpError.Message, api.ConfictError.Message)
 	})
+
 	t.Run("Should not create user with duplicated username", func(t *testing.T) {
+		// Arrange
 		registerRequest := generateRegisterBody()
 		registerRequest.User.Email = "different-email@test.test"
 		requestBody, err := json.Marshal(registerRequest)
@@ -83,7 +97,11 @@ func TestRegister(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, registerEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		// Act
 		res, err := httpClient.Do(req)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusConflict, res.StatusCode)
 		resBytes, err := io.ReadAll(res.Body)
