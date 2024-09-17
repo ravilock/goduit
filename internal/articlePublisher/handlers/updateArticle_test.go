@@ -77,7 +77,7 @@ func TestUpdateArticle(t *testing.T) {
 		require.NoError(t, err)
 		checkUpdateArticleResponse(t, updateArticleRequest, authorIdentity.Username, updateArticleResponse, articleTagList)
 	})
-	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
+	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		updateArticleRequest := generateUpdateArticleBody()
 		requestBody, err := json.Marshal(updateArticleRequest)
 		require.NoError(t, err)

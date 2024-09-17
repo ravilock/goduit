@@ -21,7 +21,9 @@ func TestListComments(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	listCommentsEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/articles")
 	httpClient := http.Client{}
+
 	t.Run("Should list comments from an article", func(t *testing.T) {
+		// Arrange
 		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
 		comment1 := integrationtests.MustWriteComment(t, articlePublisherRequests.WriteCommentPayload{}, article.Article.Slug, authorToken)
@@ -36,6 +38,8 @@ func TestListComments(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -46,10 +50,14 @@ func TestListComments(t *testing.T) {
 		require.NoError(t, err)
 		checkListCommentsResponse(t, listCommentsResponse, len(comments), comments)
 	})
-	t.Run("Should return http 404 if targeted article was not found", func(t *testing.T) {
+
+	t.Run("Should return HTTP 404 if targeted article was not found", func(t *testing.T) {
+		// Arrange
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s/%s", listCommentsEndpoint, uuid.NewString(), commentsPath), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, res.StatusCode)

@@ -67,7 +67,7 @@ func TestUnpublishArticle(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNoContent, rec.Code)
 	})
-	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
+	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		slug := "inexistent-article"
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

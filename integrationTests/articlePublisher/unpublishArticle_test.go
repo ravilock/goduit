@@ -18,28 +18,38 @@ func TestUnpublishArticle(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	unpublishArticleEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/articles")
 	httpClient := http.Client{}
+
 	t.Run("Should unpublish an article", func(t *testing.T) {
+		// Arrange
 		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s", unpublishArticleEndpoint, article.Article.Slug), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNoContent, res.StatusCode)
 	})
+
 	t.Run("Should return HTTP 404 if targeted article does not exists", func(t *testing.T) {
+		// Arrange
 		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s", unpublishArticleEndpoint, uuid.NewString()), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})
+
 	t.Run("Should not allow user to delete other author's articles", func(t *testing.T) {
+		// Arrange
 		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
 		_, nonAuthorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
@@ -47,6 +57,8 @@ func TestUnpublishArticle(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", nonAuthorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusForbidden, res.StatusCode)

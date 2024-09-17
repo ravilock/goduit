@@ -86,7 +86,7 @@ func TestListComments(t *testing.T) {
 		require.NoError(t, err)
 		checkListCommentsResponse(t, listCommentsResponse, 2, comment2, comment1)
 	})
-	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
+	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		authorIdentity, err := registerUser("", "", "", profileManager)
 		if err != nil {
 			log.Fatalf("Could not create user: %s", err)

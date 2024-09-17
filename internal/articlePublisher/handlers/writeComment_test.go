@@ -77,7 +77,7 @@ func TestWriteComment(t *testing.T) {
 		require.NoError(t, err)
 		checkWriteCommentResponse(t, createCommentRequest, authorIdentity.Username, createCommentResponse)
 	})
-	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
+	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		articleSlug := "test-slug"
 		createCommentRequest := generateWriteCommentBody()
 		requestBody, err := json.Marshal(createCommentRequest)

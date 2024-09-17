@@ -105,7 +105,7 @@ func TestGetProfile(t *testing.T) {
 		checkGetProfileResponse(t, expectedProfileUsername, true, getProfileResponse)
 	})
 
-	t.Run("Should return http 404 if no user is found", func(t *testing.T) {
+	t.Run("Should return HTTP 404 if no user is found", func(t *testing.T) {
 		// Arrange
 		inexistentUsername := "inexistent-username"
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", inexistentUsername), nil)

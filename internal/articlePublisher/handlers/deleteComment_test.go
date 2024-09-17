@@ -87,7 +87,7 @@ func TestDeleteComment(t *testing.T) {
 		err = handler.DeleteComment(c)
 		require.ErrorContains(t, err, api.Forbidden.Error())
 	})
-	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
+	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		authorIdentity, err := registerUser("", "", "", profileManager)
 		require.NoError(t, err)
 		articleSlug := uuid.NewString()
@@ -104,7 +104,7 @@ func TestDeleteComment(t *testing.T) {
 		err = handler.DeleteComment(c)
 		require.ErrorContains(t, err, api.ArticleNotFound(articleSlug).Error())
 	})
-	t.Run("Should return http 404 if no comment is found", func(t *testing.T) {
+	t.Run("Should return HTTP 404 if no comment is found", func(t *testing.T) {
 		authorIdentity, err := registerUser("", "", "", profileManager)
 		require.NoError(t, err)
 		articleSlug := uuid.NewString()

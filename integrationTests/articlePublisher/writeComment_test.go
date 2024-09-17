@@ -26,7 +26,9 @@ func TestWriteComment(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	writeCommentEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/articles")
 	httpClient := http.Client{}
+
 	t.Run("Should create a comment", func(t *testing.T) {
+		// Arrange
 		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
 		writeCommentRequest := generateWriteCommentBody()
@@ -36,6 +38,8 @@ func TestWriteComment(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusCreated, res.StatusCode)
@@ -46,7 +50,9 @@ func TestWriteComment(t *testing.T) {
 		require.NoError(t, err)
 		checkWriteCommentResponse(t, writeCommentRequest, authorIdentity.Username, writeCommentResponse)
 	})
+
 	t.Run("Should return HTTP 404 if targeted article does not exists", func(t *testing.T) {
+		// Arrange
 		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		writeCommentRequest := generateWriteCommentBody()
 		requestBody, err := json.Marshal(writeCommentRequest)
@@ -55,6 +61,8 @@ func TestWriteComment(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, res.StatusCode)

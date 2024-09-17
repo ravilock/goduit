@@ -73,7 +73,7 @@ func TestGetArticle(t *testing.T) {
 		require.NoError(t, err)
 		checkGetArticleResponse(t, articleTitle, articleSlug, authorIdentity.Username, articleTagList, getArticleResponse)
 	})
-	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
+	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		inexistentSlug := "inexistent-slug"
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s", inexistentSlug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

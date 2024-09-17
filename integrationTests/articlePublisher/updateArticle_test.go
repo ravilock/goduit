@@ -22,7 +22,9 @@ func TestUpdateArticle(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	updateArticleEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/articles")
 	httpClient := http.Client{}
+
 	t.Run("Should update an article", func(t *testing.T) {
+		// Arrange
 		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
 		updateArticleRequest := generateUpdateArticleBody()
@@ -32,6 +34,8 @@ func TestUpdateArticle(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -42,7 +46,9 @@ func TestUpdateArticle(t *testing.T) {
 		require.NoError(t, err)
 		checkUpdateArticleResponse(t, updateArticleRequest, authorIdentity.Username, updateArticleResponse, article.Article.TagList)
 	})
+
 	t.Run("Should be able to update article keeping it's title", func(t *testing.T) {
+		// Arrange
 		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
 		updateArticleRequest := generateUpdateArticleBody()
@@ -53,6 +59,8 @@ func TestUpdateArticle(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -63,7 +71,9 @@ func TestUpdateArticle(t *testing.T) {
 		require.NoError(t, err)
 		checkUpdateArticleResponse(t, updateArticleRequest, authorIdentity.Username, updateArticleResponse, article.Article.TagList)
 	})
+
 	t.Run("Should not allow to update article's slug to another that already exists", func(t *testing.T) {
+		// Arrange
 		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
 		conflictedArticle := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
@@ -75,11 +85,15 @@ func TestUpdateArticle(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusConflict, res.StatusCode)
 	})
+
 	t.Run("Should return HTTP 404 if targeted article does not exists", func(t *testing.T) {
+		// Arrange
 		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		updateArticleRequest := generateUpdateArticleBody()
 		requestBody, err := json.Marshal(updateArticleRequest)
@@ -88,11 +102,15 @@ func TestUpdateArticle(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})
+
 	t.Run("Should not allow user to update other author's articles", func(t *testing.T) {
+		// Arrange
 		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
 		_, nonAuthorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})

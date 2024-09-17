@@ -21,13 +21,17 @@ func TestGetArticle(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	publicArticleEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/articles")
 	httpClient := http.Client{}
+
 	t.Run("Should get an article", func(t *testing.T) {
+		// Arrange
 		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", publicArticleEndpoint, article.Article.Slug), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -38,12 +42,16 @@ func TestGetArticle(t *testing.T) {
 		require.NoError(t, err)
 		checkGetArticleResponse(t, article.Article.Title, article.Article.Slug, authorIdentity.Username, article.Article.TagList, getArticleResponse)
 	})
+
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
+		// Arrange
 		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", publicArticleEndpoint, uuid.NewString()), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, res.StatusCode)

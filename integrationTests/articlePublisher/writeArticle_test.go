@@ -21,7 +21,9 @@ func TestWriteArticle(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	writeArticleEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/articles")
 	httpClient := http.Client{}
+
 	t.Run("Should create an article", func(t *testing.T) {
+		// Arrange
 		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
@@ -30,6 +32,8 @@ func TestWriteArticle(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+
+		// Act
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusCreated, res.StatusCode)
@@ -40,7 +44,9 @@ func TestWriteArticle(t *testing.T) {
 		require.NoError(t, err)
 		checkWriteArticleResponse(t, createArticleRequest, authorIdentity.Username, createArticleResponse)
 	})
+
 	t.Run("Should not allow to write article with slug that already exists", func(t *testing.T) {
+		// Arrange
 		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
@@ -58,7 +64,11 @@ func TestWriteArticle(t *testing.T) {
 		err = json.Unmarshal(resBytes, createArticleResponse)
 		require.NoError(t, err)
 		checkWriteArticleResponse(t, createArticleRequest, authorIdentity.Username, createArticleResponse)
+
+		// Act
 		res, err = httpClient.Do(req)
+
+		// Arrange
 		require.NoError(t, err)
 		require.Equal(t, http.StatusConflict, res.StatusCode)
 	})

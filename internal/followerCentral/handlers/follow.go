@@ -63,7 +63,6 @@ func (h *followUserHandler) Follow(c echo.Context) error {
 				return api.ConfictError
 			}
 		}
-
 		return err
 	}
 
