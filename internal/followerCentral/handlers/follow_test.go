@@ -10,6 +10,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
@@ -18,6 +19,7 @@ import (
 )
 
 func TestFollow(t *testing.T) {
+	validators.InitValidator()
 	userFollowerMock := newMockUserFollower(t)
 	profileGetterMock := newMockProfileGetter(t)
 	handler := followUserHandler{userFollowerMock, profileGetterMock}
@@ -51,7 +53,7 @@ func TestFollow(t *testing.T) {
 		req.Header.Set("Goduit-Client-Email", followerEmail)
 		ctx := c.Request().Context()
 		profileGetterMock.EXPECT().GetProfileByUsername(ctx, followedUsername).Return(followedUser, nil).Once()
-		userFollowerMock.EXPECT().Follow(ctx, followerID.Hex(), followedID.Hex()).Return(nil).Once()
+		userFollowerMock.EXPECT().Follow(ctx, followedID.Hex(), followerID.Hex()).Return(nil).Once()
 
 		// Act
 		err := handler.Follow(c)
@@ -118,18 +120,13 @@ func TestFollow(t *testing.T) {
 		req.Header.Set("Goduit-Client-Email", followerEmail)
 		ctx := c.Request().Context()
 		profileGetterMock.EXPECT().GetProfileByUsername(ctx, followedUsername).Return(followedUser, nil).Once()
-		userFollowerMock.EXPECT().Follow(ctx, followerID.Hex(), followedID.Hex()).Return(app.ConflictError("followers")).Once()
+		userFollowerMock.EXPECT().Follow(ctx, followedID.Hex(), followerID.Hex()).Return(app.ConflictError("followers")).Once()
 
 		// Act
 		err := handler.Follow(c)
 
 		// Assert
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, rec.Code)
-		followResponse := new(profileManagerResponses.ProfileResponse)
-		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
-		require.NoError(t, err)
-		checkFollowResponse(t, followedUsername, true, followResponse)
+		require.ErrorContains(t, err, api.ConfictError.Error())
 	})
 }
 
