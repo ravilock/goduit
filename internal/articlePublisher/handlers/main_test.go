@@ -9,61 +9,18 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
-	"testing"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/ravilock/goduit/api/validators"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
-	"github.com/ravilock/goduit/internal/config"
 	"github.com/ravilock/goduit/internal/identity"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	os.Exit(code)
-}
-
-func setup() {
-	privateKeyFile, err := os.Open(os.Getenv("PRIVATE_KEY_LOCATION"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := config.LoadPrivateKey(privateKeyFile); err != nil {
-		log.Fatal("Failed to load private key file content", err)
-	}
-
-	if err := privateKeyFile.Close(); err != nil {
-		log.Fatal("Failed to close private key file", err)
-	}
-
-	publicKeyFile, err := os.Open(os.Getenv("PUBLIC_KEY_LOCATION"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := config.LoadPublicKey(publicKeyFile); err != nil {
-		log.Fatal("Failed to load public key file content", err)
-	}
-
-	if err := publicKeyFile.Close(); err != nil {
-		log.Fatal("Failed to close publicKeyFile key file", err)
-	}
-
-	// Start Validator
-	if err := validators.InitValidator(); err != nil {
-		log.Fatalln("Failed to load validator", err)
-	}
-}
 
 func clearDatabase(client *mongo.Client) {
 	conduitDb := client.Database("conduit")
