@@ -56,7 +56,13 @@ func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
 
 	authorProfile, err := h.profileManager.GetProfileByID(ctx, identity.Subject)
 	if err != nil {
-		return api.UserNotFound(identity.ClientUsername)
+		if appError := new(app.AppError); errors.As(err, &appError) {
+			switch appError.ErrorCode {
+			case app.UserNotFoundErrorCode:
+				return api.UserNotFound(identity.ClientUsername)
+			}
+		}
+		return err
 	}
 
 	profileResponse, err := profileManagerAssembler.ProfileResponse(authorProfile, false)
