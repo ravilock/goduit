@@ -25,13 +25,13 @@ func TestGetArticle(t *testing.T) {
 	articleGetterMock := newMockArticleGetter(t)
 	profileGetterMock := newMockProfileGetter(t)
 	isFollowedCheckerMock := newMockIsFollowedChecker(t)
-	handler := getArticleHandler{service: articleGetterMock, profileManager: profileGetterMock, followerCentral: isFollowedCheckerMock}
+	handler := &getArticleHandler{service: articleGetterMock, profileManager: profileGetterMock, followerCentral: isFollowedCheckerMock}
 
 	e := echo.New()
 
 	t.Run("Should get an article", func(t *testing.T) {
 		// Arrange
-		expectedArticle := assembleArticleModel()
+		expectedArticle := assembleArticleModel(primitive.NewObjectID())
 		expectedAuthor := assembleArticleAuthor(*expectedArticle.Author)
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -57,7 +57,7 @@ func TestGetArticle(t *testing.T) {
 	})
 
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
-    // Arrange
+		// Arrange
 		inexistentSlug := "inexistent-slug"
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s", inexistentSlug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -66,19 +66,19 @@ func TestGetArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(inexistentSlug)
 		ctx := c.Request().Context()
-    articleGetterMock.EXPECT().GetArticleBySlug(ctx, inexistentSlug).Return(nil, app.ArticleNotFoundError(inexistentSlug, nil))
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, inexistentSlug).Return(nil, app.ArticleNotFoundError(inexistentSlug, nil))
 
-    // Act
+		// Act
 		err := handler.GetArticle(c)
 
-    // Assert
+		// Assert
 		require.ErrorContains(t, err, api.ArticleNotFound(inexistentSlug).Error())
 	})
 }
 
-func assembleArticleModel() *models.Article {
+func assembleArticleModel(authorID primitive.ObjectID) *models.Article {
 	articleID := primitive.NewObjectID()
-	authorID := primitive.NewObjectID().Hex()
+	authorIDHex := authorID.Hex()
 	articleTitle := "Article Title"
 	articleSlug := "article-title"
 	articleDescription := "Article Description"
@@ -87,7 +87,7 @@ func assembleArticleModel() *models.Article {
 	now := time.Now()
 	return &models.Article{
 		ID:             &articleID,
-		Author:         &authorID,
+		Author:         &authorIDHex,
 		Slug:           &articleSlug,
 		Title:          &articleTitle,
 		Description:    &articleDescription,
