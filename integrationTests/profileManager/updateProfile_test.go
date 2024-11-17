@@ -48,7 +48,7 @@ func TestUpdateProfile(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, token)
-		requestTime := time.Now()
+		requestTime := time.Now().UTC().Truncate(time.Millisecond)
 
 		// Act
 		res, err := httpClient.Do(req)
@@ -79,7 +79,7 @@ func TestUpdateProfile(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, token)
-		requestTime := time.Now()
+		requestTime := time.Now().UTC().Truncate(time.Millisecond)
 
 		// Act
 		res, err := httpClient.Do(req)
@@ -111,7 +111,7 @@ func TestUpdateProfile(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set(echo.HeaderAuthorization, token)
-		requestTime := time.Now()
+		requestTime := time.Now().UTC().Truncate(time.Millisecond)
 
 		// Act
 		res, err := httpClient.Do(req)
