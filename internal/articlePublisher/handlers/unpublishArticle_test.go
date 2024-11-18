@@ -2,98 +2,92 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
-	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	"github.com/ravilock/goduit/internal/mongo"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestUnpublishArticle(t *testing.T) {
-	const articleTitle = "Unpublish Article Title"
-	const articleSlug = "unpublish-article-title"
-	const articleDescription = "Unpublish Article Description"
-	const articleBody = "Unpublish Article Body"
-	articleTagList := []string{"unpublish", "article"}
-
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	articlePublisherRepository := articlePublisherRepositories.NewArticleRepository(client)
-	articlePublisher := articlePublisher.NewArticlePublisher(articlePublisherRepository)
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewArticleHandler(articlePublisher, profileManager, followerCentral)
-
-	clearDatabase(client)
-	authorIdentity, err := registerUser("", "", "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
-
+	validators.InitValidator()
+	articleUnpublisherMock := newMockArticleUnpublisher(t)
+	handler := unpublishArticleHandler{articleUnpublisherMock}
 	e := echo.New()
+
 	t.Run("Should delete an article", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(articleSlug)
-		_, err := createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler)
-		require.NoError(t, err)
-		err = handler.UnpublishArticle(c)
+		c.SetParamValues(*expectedArticle.Slug)
+		ctx := c.Request().Context()
+		articleUnpublisherMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		articleUnpublisherMock.EXPECT().UnpublishArticle(ctx, *expectedArticle.Slug).Return(nil).Once()
+
+		// Act
+		err := handler.UnpublishArticle(c)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNoContent, rec.Code)
 	})
+
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
+		// Arrange
+		expectedAuthor := assembleRandomUser()
 		slug := "inexistent-article"
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(slug)
-		require.NoError(t, err)
-		err = handler.UnpublishArticle(c)
+		ctx := c.Request().Context()
+		articleUnpublisherMock.EXPECT().GetArticleBySlug(ctx, slug).Return(nil, app.ArticleNotFoundError(slug, nil)).Once()
+
+		// Act
+		err := handler.UnpublishArticle(c)
+
+		// Assert
 		require.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
 	})
+
 	t.Run("Should only delete aritcles authored by the currently authenticated user", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", articleSlug), nil)
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set("Goduit-Subject", primitive.NewObjectID().Hex())
 		req.Header.Set("Goduit-Client-Username", "not-the-author")
 		req.Header.Set("Goduit-Subject", "not.the.author.email@test.test")
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(articleSlug)
-		_, err := createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler)
-		require.NoError(t, err)
-		err = handler.UnpublishArticle(c)
+		c.SetParamValues(*expectedArticle.Slug)
+		ctx := c.Request().Context()
+		articleUnpublisherMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+
+		// Act
+		err := handler.UnpublishArticle(c)
+
+		// Assert
 		require.ErrorContains(t, err, api.Forbidden.Error())
 	})
 }
