@@ -1,111 +1,81 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	// "github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api"
-	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"github.com/ravilock/goduit/internal/articlePublisher/requests"
 
-	// articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
-	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	"github.com/ravilock/goduit/internal/mongo"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListComments(t *testing.T) {
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	commentRepository := articlePublisherRepositories.NewCommentRepository(client)
-	articlePublisherRepository := articlePublisherRepositories.NewArticleRepository(client)
-	commentPublisher := articlePublisher.NewCommentPublisher(commentRepository)
-	articlePublisher := articlePublisher.NewArticlePublisher(articlePublisherRepository)
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	articleHandler := NewArticleHandler(articlePublisher, profileManager, followerCentral)
-	handler := NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
-	clearDatabase(client)
+	validators.InitValidator()
+	commentListerMock := newMockCommentLister(t)
+	articleGetterMock := newMockArticleGetter(t)
+	profileGetterMock := newMockProfileGetter(t)
+	isFollowedCheckerMock := newMockIsFollowedChecker(t)
+	handler := &listCommentsHandler{commentListerMock, articleGetterMock, profileGetterMock, isFollowedCheckerMock}
+
 	e := echo.New()
+
 	t.Run("Should list comments", func(t *testing.T) {
-		authorIdentity, err := registerUser("", "", "", profileManager)
-		if err != nil {
-			log.Fatalf("Could not create user: %s", err)
-		}
-		article, err := createArticle("", "", "", authorIdentity, []string{}, articleHandler.writeArticleHandler)
-		if err != nil {
-			log.Fatalf("Could not create article: %s", err)
-		}
-		comment1, err := createComment("", article.Article.Slug, authorIdentity, handler.writeCommentHandler)
-		require.NoError(t, err)
-		comment2, err := createComment("", article.Article.Slug, authorIdentity, handler.writeCommentHandler)
-		require.NoError(t, err)
-		listCommentsRequest := generateListCommentsRequest(article.Article.Slug)
-		requestBody, err := json.Marshal(listCommentsRequest)
-		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s/comments", listCommentsRequest.Slug), bytes.NewBuffer(requestBody))
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		comment1 := assembleCommentModel(*expectedAuthor.ID, *expectedArticle.ID, "test comment body")
+		comment2 := assembleCommentModel(*expectedAuthor.ID, *expectedArticle.ID, "test comment body 2")
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s/comments", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(article.Article.Slug)
-		err = handler.ListComments(c)
+		c.SetParamValues(*expectedArticle.Slug)
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		commentListerMock.EXPECT().ListComments(ctx, expectedArticle.ID.Hex()).Return([]*models.Comment{comment1, comment2}, nil).Once()
+		profileGetterMock.EXPECT().GetProfileByID(ctx, *comment1.Author).Return(expectedAuthor, nil).Once()
+		isFollowedCheckerMock.EXPECT().IsFollowedBy(ctx, *comment1.Author, "").Return(false).Once()
+
+		// Act
+		err := handler.ListComments(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
-		}
+		require.Equal(t, http.StatusOK, rec.Code)
 		listCommentsResponse := new(articlePublisherResponses.CommentsResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), listCommentsResponse)
 		require.NoError(t, err)
-		checkListCommentsResponse(t, listCommentsResponse, 2, comment2, comment1)
+		checkListCommentsResponse(t, listCommentsResponse, 2, comment1, comment2)
 	})
+
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
-		authorIdentity, err := registerUser("", "", "", profileManager)
-		if err != nil {
-			log.Fatalf("Could not create user: %s", err)
-		}
-		articleSlug := uuid.NewString()
-		listCommentsRequest := generateListCommentsRequest(articleSlug)
-		requestBody, err := json.Marshal(listCommentsRequest)
-		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s/comments", listCommentsRequest.Slug), bytes.NewBuffer(requestBody))
+		// Arrange
+		slug := "inexistent-article"
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s/comments", slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(articleSlug)
-		err = handler.ListComments(c)
-		require.ErrorContains(t, err, api.ArticleNotFound(articleSlug).Error())
+		c.SetParamValues(slug)
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, slug).Return(nil, app.ArticleNotFoundError(slug, nil)).Once()
+
+		// Act
+		err := handler.ListComments(c)
+
+		// Assert
+		require.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
 	})
 }
 
@@ -115,9 +85,10 @@ func generateListCommentsRequest(articleSlug string) *requests.ArticleSlugReques
 	}
 }
 
-func checkListCommentsResponse(t *testing.T, response *articlePublisherResponses.CommentsResponse, length int, comments ...*articlePublisherResponses.CommentResponse) {
+func checkListCommentsResponse(t *testing.T, response *articlePublisherResponses.CommentsResponse, length int, comments ...*models.Comment) {
 	require.Len(t, response.Comment, length)
 	for index, comment := range comments {
-		require.EqualValues(t, comment.Comment, response.Comment[index])
+		require.Equal(t, comment.ID.Hex(), response.Comment[index].ID)
+		require.Equal(t, *comment.Body, response.Comment[index].Body)
 	}
 }
