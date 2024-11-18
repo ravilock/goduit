@@ -1,15 +1,10 @@
-version: "3.8"
 services:
-  web:
-    image: acim/go-reflex
-    environment:
-      - RACE_DETECTOR=1
-      - BUILD_ARGS=./cmd/goduit-api/main.go
-    env_file:
-      - .env
-    container_name: goduit-app
+  goduit-api:
+    build:
+      context: .
+      dockerfile: goduit.Dockerfile
     ports:
-      - 6969:6969
+      - 3000:3000
     depends_on:
       - mongo
       - mongo-express
@@ -18,7 +13,7 @@ services:
 
   mongo:
     image: mongo
-    restart: always
+    restart: on-failure
     ports:
       - 27017:27017
     environment:
@@ -27,7 +22,7 @@ services:
 
   mongo-express:
     image: mongo-express
-    restart: always
+    restart: on-failure
     ports:
       - 8081:8081
     environment:

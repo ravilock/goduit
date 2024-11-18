@@ -1,4 +1,4 @@
-package encryptionkeys
+package config
 
 import (
 	"crypto/rsa"

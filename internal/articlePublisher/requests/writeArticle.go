@@ -3,7 +3,6 @@ package requests
 import (
 	"errors"
 	"strings"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/ravilock/goduit/api/validators"
@@ -24,7 +23,6 @@ type WriteArticlePayload struct {
 func (r *WriteArticleRequest) Model(authorID string) *models.Article {
 	tags := deduplicateTags(r.Article.TagList)
 	slug := makeSlug(r.Article.Title)
-	createdAt := time.Now().Truncate(time.Millisecond)
 	return &models.Article{
 		Author:         &authorID,
 		Slug:           &slug,
@@ -32,8 +30,6 @@ func (r *WriteArticleRequest) Model(authorID string) *models.Article {
 		Description:    &r.Article.Description,
 		Body:           &r.Article.Body,
 		TagList:        tags,
-		CreatedAt:      &createdAt,
-		UpdatedAt:      nil,
 		FavoritesCount: new(int64),
 	}
 }

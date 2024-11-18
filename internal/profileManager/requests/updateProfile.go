@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/profileManager/models"
@@ -25,15 +25,12 @@ type UpdateProfilePayload struct {
 }
 
 func (r *UpdateProfileRequest) Model() *models.User {
-	updatedAt := time.Now().Truncate(time.Millisecond)
-	model := &models.User{
-		Username:  &r.User.Username,
-		Email:     &r.User.Email,
-		Bio:       &r.User.Bio,
-		Image:     &r.User.Image,
-		UpdatedAt: &updatedAt,
+	return &models.User{
+		Username: &r.User.Username,
+		Email:    &r.User.Email,
+		Bio:      &r.User.Bio,
+		Image:    &r.User.Image,
 	}
-	return model
 }
 
 func (r *UpdateProfileRequest) Validate() error {
@@ -57,7 +54,7 @@ func checkImageURL(imageURL string) error {
 	if err != nil {
 		return err
 	}
-	contentType := response.Header.Get("Content-Type")
+	contentType := response.Header.Get(echo.HeaderContentType)
 	if !strings.Contains(contentType, "image") {
 		return api.InvalidImageURLError(imageURL, contentType)
 	}

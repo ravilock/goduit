@@ -2,96 +2,97 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
-	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
-	"github.com/ravilock/goduit/internal/config/mongo"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestWriteComment(t *testing.T) {
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	commentRepository := articlePublisherRepositories.NewCommentRepository(client)
-	articlePublisherRepository := articlePublisherRepositories.NewArticleRepository(client)
-	commentPublisher := articlePublisher.NewCommentPublisher(commentRepository)
-	articlePublisher := articlePublisher.NewArticlePublisher(articlePublisherRepository)
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
+	validators.InitValidator()
+	commentWriterMock := newMockCommentWriter(t)
+	articleGetterMock := newMockArticleGetter(t)
+	profileGetterMock := newMockProfileGetter(t)
+	handler := &writeCommentHandler{commentWriterMock, articleGetterMock, profileGetterMock}
 
-	clearDatabase(client)
-	authorIdentity, err := registerUser("", "", "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
-	article, err := createArticle("", "", "", authorIdentity, []string{}, writeArticleHandler{articlePublisher, profileManager})
-	if err != nil {
-		log.Fatalf("Could not create article: %s", err)
-	}
 	e := echo.New()
+
 	t.Run("Should create a commentary", func(t *testing.T) {
+		// Arrange
+		expectedCommentAuthor := assembleRandomUser()
+		expectedArticleAuthor := primitive.NewObjectID()
+		expectedArticle := assembleArticleModel(expectedArticleAuthor)
 		createCommentRequest := generateWriteCommentBody()
+		expectedComment := createCommentRequest.Model(expectedCommentAuthor.ID.Hex())
+		articleID := expectedArticle.ID.Hex()
+		expectedComment.Article = &articleID
 		requestBody, err := json.Marshal(createCommentRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/articles/%s/comments", createCommentRequest.Slug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedCommentAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedCommentAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedCommentAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(article.Article.Slug)
+		c.SetParamValues(*expectedArticle.Slug)
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		commentWriterMock.EXPECT().WriteComment(ctx, expectedComment).RunAndReturn(func(ctx context.Context, comment *models.Comment) error {
+			commentID := primitive.NewObjectID()
+			comment.ID = &commentID
+			return nil
+		}).Once()
+		profileGetterMock.EXPECT().GetProfileByID(ctx, expectedCommentAuthor.ID.Hex()).Return(expectedCommentAuthor, nil).Once()
+
+		// Act
 		err = handler.WriteComment(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusCreated {
-			t.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
-		}
+		require.Equal(t, http.StatusCreated, rec.Code)
 		createCommentResponse := new(articlePublisherResponses.CommentResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), createCommentResponse)
 		require.NoError(t, err)
-		checkWriteCommentResponse(t, createCommentRequest, authorIdentity.Username, createCommentResponse)
+		checkWriteCommentResponse(t, createCommentRequest, *expectedCommentAuthor.Username, createCommentResponse)
 	})
-	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
+
+	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
+		// Arrange
+		expectedCommentAuthor := assembleRandomUser()
 		articleSlug := "test-slug"
 		createCommentRequest := generateWriteCommentBody()
 		requestBody, err := json.Marshal(createCommentRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/articles/%s/comments", createCommentRequest.Slug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedCommentAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedCommentAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedCommentAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(articleSlug)
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, articleSlug).Return(nil, app.ArticleNotFoundError(articleSlug, nil)).Once()
+
+		// Act
 		err = handler.WriteComment(c)
+
+		// Assert
 		require.ErrorContains(t, err, api.ArticleNotFound(articleSlug).Error())
 	})
 }

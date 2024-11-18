@@ -1,4 +1,4 @@
-SVC_API := web
+SVC_API := goduit-api
 SVC_DB := mongo mongo-express
 LOGS_CMD := docker-compose logs --follow --tail=5
 
@@ -32,11 +32,24 @@ logs-db:
 logs-all:
 	@$(LOGS_CMD)
 
+.PHONY: test
 test:
-	@docker-compose exec $(SVC_API) go test -p 1 ./... -count=1
+	@docker-compose exec $(SVC_API) go test -count=1 `go list ./... | grep -v integrationTests`
 
+.PHONY: test-verbose
 test-verbose:
-	@docker-compose exec $(SVC_API) go test -p 1 ./... -v -count=1
+	@docker-compose exec $(SVC_API) go test -v -count=1 `go list ./... | grep -v integrationTests`
+
+.PHONY: test-integration
+test-integration:
+	@docker-compose exec $(SVC_API) go test ./integrationTests/... -count=1 -p 1
+
+.PHONY: test-integration-verbose
+test-integration-verbose:
+	@docker-compose exec $(SVC_API) go test ./integrationTests/... -v -count=1 -p 1
 
 bash:
-	@docker-compose exec $(SVC_API) sh
+	@docker-compose exec $(SVC_API) bash
+
+generate-mocks:
+	@docker run -v "$PWD":/src -w /src vektra/mockery --all

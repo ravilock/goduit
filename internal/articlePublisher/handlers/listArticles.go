@@ -58,10 +58,9 @@ func (h *listArticlesHandler) ListArticles(c echo.Context) error {
 		return err
 	}
 
-	response := responses.ArticlesResponse{
-		Articles: []responses.Article{},
-	}
+	response := responses.ArticlesResponse{Articles: make([]responses.Article, 0, len(articles))}
 	for _, article := range articles {
+		// TODO: refactor so that if multiple articles from the same author and are in the same page, this loop wont repeat for each article
 		author, err := h.profileManager.GetProfileByID(ctx, *article.Author)
 		if err != nil {
 			continue

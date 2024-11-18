@@ -3,71 +3,78 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/labstack/echo/v4"
-	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
+	"github.com/ravilock/goduit/api"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
-	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
-	"github.com/ravilock/goduit/internal/config/mongo"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
 )
 
 func TestWriteArticle(t *testing.T) {
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	articlePublisherRepository := articlePublisherRepositories.NewArticleRepository(client)
-	articlePublisher := articlePublisher.NewArticlePublisher(articlePublisherRepository)
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewArticleHandler(articlePublisher, profileManager, followerCentral)
+	validators.InitValidator()
+	articleWriterMock := newMockArticleWriter(t)
+	profileGetterMock := newMockProfileGetter(t)
+	handler := &writeArticleHandler{articleWriterMock, profileGetterMock}
 
-	clearDatabase(client)
-	authorIdentity, err := registerUser("", "", "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
 	e := echo.New()
+
 	t.Run("Should create an article", func(t *testing.T) {
+		// Arrange
+		expectedAuthor := assembleRandomUser()
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPost, "/api/articles", bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		ctx := c.Request().Context()
+		articleWriterMock.EXPECT().WriteArticle(ctx, createArticleRequest.Model(expectedAuthor.ID.Hex())).Return(nil).Once()
+		profileGetterMock.EXPECT().GetProfileByID(ctx, expectedAuthor.ID.Hex()).Return(expectedAuthor, nil).Once()
+
+		// Act
 		err = handler.WriteArticle(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusCreated {
-			t.Errorf("Got status different than %v, got %v", http.StatusCreated, rec.Code)
-		}
+		require.Equal(t, http.StatusCreated, rec.Code)
 		createArticleResponse := new(articlePublisherResponses.ArticleResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), createArticleResponse)
 		require.NoError(t, err)
-		checkWriteArticleResponse(t, createArticleRequest, authorIdentity.Username, createArticleResponse)
+		checkWriteArticleResponse(t, createArticleRequest, *expectedAuthor.Username, createArticleResponse)
 	})
-	// TODO: Add test for articles with the same Title/Slug
+
+	t.Run("Should return conflict error if title/slug is already used", func(t *testing.T) {
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		createArticleRequest := generateWriteArticleBody()
+		requestBody, err := json.Marshal(createArticleRequest)
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, "/api/articles", bytes.NewBuffer(requestBody))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedAuthor.Email)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		ctx := c.Request().Context()
+		articleWriterMock.EXPECT().WriteArticle(ctx, createArticleRequest.Model(expectedAuthor.ID.Hex())).Return(app.ConflictError("articles")).Once()
+
+		// Act
+		err = handler.WriteArticle(c)
+
+		// Assert
+		require.ErrorIs(t, err, api.ConfictError)
+	})
 }
 
 func generateWriteArticleBody() *articlePublisherRequests.WriteArticleRequest {

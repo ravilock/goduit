@@ -1,112 +1,119 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	mongoConfig "github.com/ravilock/goduit/internal/config/mongo"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestUnfollow(t *testing.T) {
-	const followedTestUsername = "followed-test-username"
-	const followedTestEmail = "followed.email@test.test"
-
-	const followerUsername = "follower-username"
-	const followerEmail = "follower.email@test.test"
-
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongoConfig.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewFollowerHandler(followerCentral, profileManager)
-
-	clearDatabase(client)
-	followedIdentity, err := registerUser(followedTestUsername, followedTestEmail, "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
-
-	followerIdentity, err := registerUser(followerUsername, followerEmail, "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
-
-	if err := followUser(followedTestUsername, followerUsername, handler.followUserHandler); err != nil {
-		t.Error("Failed to setup user following relationship", err)
-	}
-
+	validators.InitValidator()
+	userUnfollowerMock := newMockUserUnfollower(t)
+	profileGetterMock := newMockProfileGetter(t)
+	handler := unfollowUserHandler{userUnfollowerMock, profileGetterMock}
 	e := echo.New()
+
 	t.Run("Should unfollow a user", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", followedTestUsername), nil)
+		// Act
+		followerID := primitive.NewObjectID()
+		followerUsername := "follower-username"
+		followerEmail := "follower.email@test.test"
+		followedID := primitive.NewObjectID()
+		followedUsername := "followed-test-username"
+		followedEmail := "followed.email@test.test"
+		now := time.Now()
+		followedUser := &models.User{
+			ID:          &followedID,
+			Username:    &followedUsername,
+			Email:       &followedEmail,
+			CreatedAt:   &now,
+			UpdatedAt:   &now,
+			LastSession: &now,
+		}
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", followedUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
-		c.SetParamValues(followedTestUsername)
-		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
+		c.SetParamValues(followedUsername)
+		req.Header.Set("Goduit-Subject", followerID.Hex())
+		req.Header.Set("Goduit-Client-Username", followerUsername)
+		req.Header.Set("Goduit-Client-Email", followerEmail)
+		ctx := c.Request().Context()
+		profileGetterMock.EXPECT().GetProfileByUsername(ctx, followedUsername).Return(followedUser, nil).Once()
+		userUnfollowerMock.EXPECT().Unfollow(ctx, followedID.Hex(), followerID.Hex()).Return(nil).Once()
+
+		// Act
 		err := handler.Unfollow(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
-		followResponse := new(profileManagerResponses.ProfileResponse)
-		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
+		require.Equal(t, http.StatusOK, rec.Code)
+		unfollowResponse := new(profileManagerResponses.ProfileResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), unfollowResponse)
 		require.NoError(t, err)
-		checkFollowResponse(t, followedTestUsername, false, followResponse)
-		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), followedIdentity.Subject, followedIdentity.Subject)
-		require.ErrorIs(t, err, mongo.ErrNoDocuments)
-		require.Nil(t, followerModel)
+		checkFollowResponse(t, followedUsername, false, unfollowResponse)
 	})
+
 	t.Run("If the user is already not following the other user, return HTTP 200", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", followedTestUsername), nil)
+		// Act
+		followerID := primitive.NewObjectID()
+		followerUsername := "follower-username"
+		followerEmail := "follower.email@test.test"
+		followedID := primitive.NewObjectID()
+		followedUsername := "followed-test-username"
+		followedEmail := "followed.email@test.test"
+		now := time.Now()
+		followedUser := &models.User{
+			ID:          &followedID,
+			Username:    &followedUsername,
+			Email:       &followedEmail,
+			CreatedAt:   &now,
+			UpdatedAt:   &now,
+			LastSession: &now,
+		}
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", followedUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
-		c.SetParamValues(followedTestUsername)
-		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
+		c.SetParamValues(followedUsername)
+		req.Header.Set("Goduit-Subject", followerID.Hex())
+		req.Header.Set("Goduit-Client-Username", followerUsername)
+		req.Header.Set("Goduit-Client-Email", followerEmail)
+		ctx := c.Request().Context()
+		profileGetterMock.EXPECT().GetProfileByUsername(ctx, followedUsername).Return(followedUser, nil).Once()
+		userUnfollowerMock.EXPECT().Unfollow(ctx, followedID.Hex(), followerID.Hex()).Return(nil).Once()
+
+		// Act
 		err := handler.Unfollow(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
-		followResponse := new(profileManagerResponses.ProfileResponse)
-		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
+		require.Equal(t, http.StatusOK, rec.Code)
+		unfollowResponse := new(profileManagerResponses.ProfileResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), unfollowResponse)
 		require.NoError(t, err)
-		checkFollowResponse(t, followedTestUsername, false, followResponse)
-		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), followedIdentity.Subject, followedIdentity.Subject)
-		require.ErrorIs(t, err, mongo.ErrNoDocuments)
-		require.Nil(t, followerModel)
+		checkFollowResponse(t, followedUsername, false, unfollowResponse)
 	})
+
 	t.Run("Should return 404 if no user is found", func(t *testing.T) {
+		// Arrange
+		followerID := primitive.NewObjectID()
+		followerUsername := "follower-username"
+		followerEmail := "follower.email@test.test"
 		inexistentUsername := "inexistent-username"
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/unfollow", inexistentUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -114,10 +121,16 @@ func TestUnfollow(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
 		c.SetParamValues(inexistentUsername)
-		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", followerID.Hex())
+		req.Header.Set("Goduit-Client-Username", followerUsername)
+		req.Header.Set("Goduit-Client-Email", followerEmail)
+		ctx := c.Request().Context()
+		profileGetterMock.EXPECT().GetProfileByUsername(ctx, inexistentUsername).Return(nil, app.UserNotFoundError(inexistentUsername, nil)).Once()
+
+		// Act
 		err := handler.Unfollow(c)
+
+		// Assert
 		require.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
 	})
 }

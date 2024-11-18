@@ -1,10 +1,9 @@
-package main
+package api
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
-	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -12,59 +11,59 @@ import (
 	articleHandlers "github.com/ravilock/goduit/internal/articlePublisher/handlers"
 	articleRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
 	articleServices "github.com/ravilock/goduit/internal/articlePublisher/services"
-	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
-	"github.com/ravilock/goduit/internal/config/mongo"
 	followerHandlers "github.com/ravilock/goduit/internal/followerCentral/handlers"
 	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerServices "github.com/ravilock/goduit/internal/followerCentral/services"
 	"github.com/ravilock/goduit/internal/identity"
+	"github.com/ravilock/goduit/internal/log"
+	"github.com/ravilock/goduit/internal/mongo"
 	profileHandlers "github.com/ravilock/goduit/internal/profileManager/handlers"
 	profileRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileServices "github.com/ravilock/goduit/internal/profileManager/services"
+	"github.com/spf13/viper"
+	mongoDriver "go.mongodb.org/mongo-driver/mongo"
 )
 
-func main() {
-	privateKeyFile, err := os.Open(os.Getenv("PRIVATE_KEY_LOCATION"))
+type Server interface {
+	http.Handler
+	Start()
+}
+
+type server struct {
+	*echo.Echo
+	db *mongoDriver.Client
+}
+
+func (s *server) Start() {
+	addr := fmt.Sprintf(":%d", viper.GetInt("port"))
+	s.Logger.Fatal(s.Echo.Start(addr))
+}
+
+func NewServer() (Server, error) {
+	serverLogger := log.NewLogger(map[string]string{"emitter": "Backstage-Groups-API"})
+	databaseClient, err := mongo.ConnectDatabase(viper.GetString("db.url"))
 	if err != nil {
-		log.Fatal("Failed to open private key file", err)
+		return nil, err
 	}
 
-	if err := encryptionkeys.LoadPrivateKey(privateKeyFile); err != nil {
-		log.Fatal("Failed to load private key file content", err)
-	}
+	return createNewServer(databaseClient, serverLogger)
+}
 
-	if err := privateKeyFile.Close(); err != nil {
-		log.Fatal("Failed to close private key file", err)
-	}
+func createNewServer(databaseClient *mongoDriver.Client, logger *slog.Logger) (Server, error) {
+	// TODO: Add logger to each controller
+	// Echo instance
+	e := echo.New()
 
-	publicKeyFile, err := os.Open(os.Getenv("PUBLIC_KEY_LOCATION"))
-	if err != nil {
-		log.Fatal("Failed to open public key file", err)
+	server := &server{
+		Echo: e,
+		db:   databaseClient,
+		// measuresReporter: measuresReporter,
 	}
-
-	if err := encryptionkeys.LoadPublicKey(publicKeyFile); err != nil {
-		log.Fatal("Failed to load public key file content", err)
-	}
-
-	if err := publicKeyFile.Close(); err != nil {
-		log.Fatal("Failed to close publicKeyFile key file", err)
-	}
-
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatal("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatal("Error connecting to database", err)
-	}
-	defer mongo.DisconnectDatabase(client)
 	// repositories
-	userRepository := profileRepositories.NewUserRepository(client)
-	followerRepository := followerRepositories.NewFollowerRepository(client)
-	commentRepository := articleRepositories.NewCommentRepository(client)
-	articlePublisherRepository := articleRepositories.NewArticleRepository(client)
+	userRepository := profileRepositories.NewUserRepository(databaseClient)
+	followerRepository := followerRepositories.NewFollowerRepository(databaseClient)
+	commentRepository := articleRepositories.NewCommentRepository(databaseClient)
+	articlePublisherRepository := articleRepositories.NewArticleRepository(databaseClient)
 	// services
 	profileManager := profileServices.NewProfileManager(userRepository)
 	followerCentral := followerServices.NewFollowerCentral(followerRepository)
@@ -75,8 +74,6 @@ func main() {
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
 	articleHandler := articleHandlers.NewArticleHandler(articlePublisher, profileManager, followerCentral)
 	commentHandler := articleHandlers.NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
-	// Echo instance
-	e := echo.New()
 
 	// Middleware
 	e.Use(middleware.Logger())
@@ -85,7 +82,7 @@ func main() {
 
 	// Start Validator
 	if err := validators.InitValidator(); err != nil {
-		log.Fatal("Could not init validator", err)
+		return nil, err
 	}
 
 	optionalAuthMiddleware := identity.CreateAuthMiddleware(false)
@@ -102,23 +99,21 @@ func main() {
 	userGroup.GET("", profileHandler.GetOwnProfile, requiredAuthMiddleware)
 	userGroup.PUT("", profileHandler.UpdateProfile, requiredAuthMiddleware)
 	// Profile Routes
-	profileGroup := apiGroup.Group("/profile")
+	profileGroup := apiGroup.Group("/profiles")
 	profileGroup.GET("/:username", profileHandler.GetProfile, optionalAuthMiddleware)
-	profileGroup.POST("/:username/follow", followerHandler.Follow, requiredAuthMiddleware)
-	profileGroup.DELETE("/:username/follow", followerHandler.Unfollow, requiredAuthMiddleware)
+	profileGroup.POST("/:username/followers", followerHandler.Follow, requiredAuthMiddleware)
+	profileGroup.DELETE("/:username/followers", followerHandler.Unfollow, requiredAuthMiddleware)
 	// Article Routes
 	articlesGroup := apiGroup.Group("/articles")
 	articlesGroup.POST("", articleHandler.WriteArticle, requiredAuthMiddleware)
 	articlesGroup.GET("", articleHandler.ListArticles, optionalAuthMiddleware)
-	articleGroup := apiGroup.Group("/article")
-	articleGroup.GET("/:slug", articleHandler.GetArticle, optionalAuthMiddleware)
-	articleGroup.DELETE("/:slug", articleHandler.UnpublishArticle, requiredAuthMiddleware)
-	articleGroup.PUT("/:slug", articleHandler.UpdateArticle, requiredAuthMiddleware)
-	articleGroup.POST("/:slug/comments", commentHandler.WriteComment, requiredAuthMiddleware)
-	articleGroup.GET("/:slug/comments", commentHandler.ListComments, optionalAuthMiddleware)
-	articleGroup.DELETE("/:slug/comments/:id", commentHandler.DeleteComment, requiredAuthMiddleware)
-	// Start server
-	e.Logger.Fatal(e.Start(":6969"))
+	articlesGroup.GET("/:slug", articleHandler.GetArticle, optionalAuthMiddleware)
+	articlesGroup.DELETE("/:slug", articleHandler.UnpublishArticle, requiredAuthMiddleware)
+	articlesGroup.PUT("/:slug", articleHandler.UpdateArticle, requiredAuthMiddleware)
+	articlesGroup.POST("/:slug/comments", commentHandler.WriteComment, requiredAuthMiddleware)
+	articlesGroup.GET("/:slug/comments", commentHandler.ListComments, optionalAuthMiddleware)
+	articlesGroup.DELETE("/:slug/comments/:id", commentHandler.DeleteComment, requiredAuthMiddleware)
+	return server, nil
 }
 
 func healthcheck(c echo.Context) error {

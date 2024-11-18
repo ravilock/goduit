@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -39,6 +40,7 @@ func (h *unfollowUserHandler) Unfollow(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
+	fmt.Println(ctx, request.Username)
 	followedUser, err := h.profileManager.GetProfileByUsername(ctx, request.Username)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {

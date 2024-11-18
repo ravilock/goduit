@@ -48,20 +48,12 @@ func (h *loginHandler) Login(c echo.Context) error {
 		return err
 	}
 
-	lastSession := time.Now().Truncate(time.Millisecond)
+	lastSession := time.Now().UTC().Truncate(time.Millisecond)
 	user.LastSession = &lastSession
-	if err := h.service.UpdateProfile(context.Background(), *user.Email, *user.Username, "", user); err != nil {
+	if _, err := h.service.UpdateProfile(context.Background(), *user.Email, *user.Username, "", user); err != nil {
 		log.Println("Error Updating Last Session", err)
 	}
 
 	response := assemblers.UserResponse(user, token)
-
-	go func() {
-		lastSession := time.Now().Truncate(time.Millisecond)
-		user.LastSession = &lastSession
-		if err := h.service.UpdateProfile(context.Background(), *user.Email, *user.Username, "", user); err != nil {
-			log.Println("Error Updating Last Session", err)
-		}
-	}()
 	return c.JSON(http.StatusOK, response)
 }

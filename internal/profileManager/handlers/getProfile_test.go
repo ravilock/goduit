@@ -1,94 +1,112 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/internal/config/mongo"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const getProfileTestUsername = "get-profile-test-username"
-const getProfileTestEmail = "get.profile.email@test.test"
-
 func TestGetProfile(t *testing.T) {
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewProfileHandler(profileManager, followerCentral)
-	clearDatabase(client)
+	validators.InitValidator()
+	profileGetterMock := newMockProfileGetter(t)
+	isFollowedCheckerMock := newMockIsFollowedChecker(t)
+	handler := getProfileHandler{service: profileGetterMock, followerCentral: isFollowedCheckerMock}
 	e := echo.New()
-	identity, err := registerUser(getProfileTestUsername, getProfileTestEmail, "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
+
 	t.Run("Should get user profile", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", getProfileTestUsername), nil)
+		// Arrange
+		expectedUserID := primitive.NewObjectID()
+		expectedProfileUsername := "test-username"
+		expectedProfileEmail := "test.email@test.test"
+		expectedUserPassword := "test-password"
+		now := time.Now()
+		expectedUserModel := &models.User{
+			ID:           &expectedUserID,
+			Username:     &expectedProfileUsername,
+			Email:        &expectedProfileEmail,
+			PasswordHash: &expectedUserPassword,
+			CreatedAt:    &now,
+			UpdatedAt:    &now,
+			LastSession:  &now,
+		}
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", expectedProfileUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
-		c.SetParamValues(getProfileTestUsername)
+		c.SetParamValues(expectedProfileUsername)
+		profileGetterMock.EXPECT().GetProfileByUsername(c.Request().Context(), expectedProfileUsername).Return(expectedUserModel, nil).Once()
+		isFollowedCheckerMock.EXPECT().IsFollowedBy(c.Request().Context(), expectedUserID.Hex(), "").Return(false).Once()
+
+		// Act
 		err := handler.GetProfile(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
+		require.Equal(t, http.StatusOK, rec.Code)
 		getProfileResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), getProfileResponse)
 		require.NoError(t, err)
-		checkGetProfileResponse(t, getProfileTestUsername, false, getProfileResponse)
+		checkGetProfileResponse(t, expectedProfileUsername, false, getProfileResponse)
 	})
+
 	t.Run("Should return following as true if logged user follows profile", func(t *testing.T) {
+		// Arrange
+		followerUserID := primitive.NewObjectID()
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
-		followerIdentity, err := registerUser(followerUsername, followerEmail, "", profileManager)
-		require.NoError(t, err, "Could not register user", err)
-		err = followerCentralRepository.Follow(context.Background(), identity.Subject, followerIdentity.Subject)
-		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", getProfileTestUsername), nil)
+		expectedUserID := primitive.NewObjectID()
+		expectedProfileUsername := "test-username"
+		expectedProfileEmail := "test.email@test.test"
+		expectedUserPassword := "test-password"
+		now := time.Now()
+		expectedUserModel := &models.User{
+			ID:           &expectedUserID,
+			Username:     &expectedProfileUsername,
+			Email:        &expectedProfileEmail,
+			PasswordHash: &expectedUserPassword,
+			CreatedAt:    &now,
+			UpdatedAt:    &now,
+			LastSession:  &now,
+		}
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", expectedProfileUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", followerUserID.Hex())
+		req.Header.Set("Goduit-Client-Username", followerUsername)
+		req.Header.Set("Goduit-Client-Email", followerEmail)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
-		c.SetParamValues(getProfileTestUsername)
-		err = handler.GetProfile(c)
+		c.SetParamValues(expectedProfileUsername)
+		profileGetterMock.EXPECT().GetProfileByUsername(c.Request().Context(), expectedProfileUsername).Return(expectedUserModel, nil).Once()
+		isFollowedCheckerMock.EXPECT().IsFollowedBy(c.Request().Context(), expectedUserID.Hex(), followerUserID.Hex()).Return(true).Once()
+
+		// Act
+		err := handler.GetProfile(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
+		require.Equal(t, http.StatusOK, rec.Code)
 		getProfileResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), getProfileResponse)
 		require.NoError(t, err)
-		checkGetProfileResponse(t, getProfileTestUsername, true, getProfileResponse)
+		checkGetProfileResponse(t, expectedProfileUsername, true, getProfileResponse)
 	})
-	t.Run("Should return http 404 if no user is found", func(t *testing.T) {
+
+	t.Run("Should return HTTP 404 if no user is found", func(t *testing.T) {
+		// Arrange
 		inexistentUsername := "inexistent-username"
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/profiles/%s", inexistentUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -96,7 +114,12 @@ func TestGetProfile(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
 		c.SetParamValues(inexistentUsername)
+		profileGetterMock.EXPECT().GetProfileByUsername(c.Request().Context(), inexistentUsername).Return(nil, app.UserNotFoundError(inexistentUsername, nil)).Once()
+
+		// Act
 		err := handler.GetProfile(c)
+
+		// Assert
 		require.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
 	})
 }

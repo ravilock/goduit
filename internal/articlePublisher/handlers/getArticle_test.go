@@ -3,77 +3,58 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
-	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
-	"github.com/ravilock/goduit/internal/config/mongo"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
+	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetArticle(t *testing.T) {
-	const articleTitle = "Article Title"
-	const articleSlug = "article-title"
-	const articleDescription = "Article Description"
-	const articleBody = "Article Body"
-	articleTagList := []string{"test"}
+	validators.InitValidator()
+	articleGetterMock := newMockArticleGetter(t)
+	profileGetterMock := newMockProfileGetter(t)
+	isFollowedCheckerMock := newMockIsFollowedChecker(t)
+	handler := &getArticleHandler{service: articleGetterMock, profileManager: profileGetterMock, followerCentral: isFollowedCheckerMock}
 
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	articlePublisherRepository := articlePublisherRepositories.NewArticleRepository(client)
-	articlePublisher := articlePublisher.NewArticlePublisher(articlePublisherRepository)
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewArticleHandler(articlePublisher, profileManager, followerCentral)
-
-	clearDatabase(client)
-	authorIdentity, err := registerUser("", "", "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
-
-	if _, err := createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler); err != nil {
-		log.Fatalf("Could not create article: %s", err)
-	}
 	e := echo.New()
+
 	t.Run("Should get an article", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s", articleSlug), nil)
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(articleSlug)
+		c.SetParamValues(*expectedArticle.Slug)
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		profileGetterMock.EXPECT().GetProfileByID(ctx, *expectedArticle.Author).Return(expectedAuthor, nil).Once()
+		isFollowedCheckerMock.EXPECT().IsFollowedBy(ctx, *expectedArticle.Author, "").Return(false).Once()
+
+		// Act
 		err := handler.GetArticle(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
+		require.Equal(t, http.StatusOK, rec.Code)
 		getArticleResponse := new(articlePublisherResponses.ArticleResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), getArticleResponse)
 		require.NoError(t, err)
-		checkGetArticleResponse(t, articleTitle, articleSlug, authorIdentity.Username, articleTagList, getArticleResponse)
+		checkGetArticleResponse(t, expectedArticle, expectedAuthor, getArticleResponse)
 	})
-	t.Run("Should return http 404 if no article is found", func(t *testing.T) {
+
+	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
+		// Arrange
 		inexistentSlug := "inexistent-slug"
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s", inexistentSlug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -81,16 +62,21 @@ func TestGetArticle(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(inexistentSlug)
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, inexistentSlug).Return(nil, app.ArticleNotFoundError(inexistentSlug, nil))
+
+		// Act
 		err := handler.GetArticle(c)
+
+		// Assert
 		require.ErrorContains(t, err, api.ArticleNotFound(inexistentSlug).Error())
 	})
-	// TODO: Add test for when the user favorited the article
 }
 
-func checkGetArticleResponse(t *testing.T, title, slug, authorUsername string, tagList []string, response *articlePublisherResponses.ArticleResponse) {
+func checkGetArticleResponse(t *testing.T, expectedArticle *models.Article, expectedAuthor *profileManagerModels.User, response *articlePublisherResponses.ArticleResponse) {
 	t.Helper()
-	require.Equal(t, authorUsername, response.Article.Author.Username, "Article's author username is wrong")
-	require.Equal(t, title, response.Article.Title, "Wrong article title")
-	require.Equal(t, slug, response.Article.Slug, "Wrong article slug")
-	require.Equal(t, tagList, response.Article.TagList, "Wrong article tag list")
+	require.Equal(t, *expectedAuthor.Username, response.Article.Author.Username, "Article's author username is wrong")
+	require.Equal(t, *expectedArticle.Title, response.Article.Title, "Wrong article title")
+	require.Equal(t, *expectedArticle.Slug, response.Article.Slug, "Wrong article slug")
+	require.Equal(t, expectedArticle.TagList, response.Article.TagList, "Wrong article tag list")
 }

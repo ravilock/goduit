@@ -45,6 +45,5 @@ func (h *registerProfileHandler) Register(c echo.Context) error {
 	}
 
 	response := assemblers.UserResponse(user, token)
-
 	return c.JSON(http.StatusCreated, response)
 }

@@ -10,12 +10,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	encryptionkeys "github.com/ravilock/goduit/internal/config/encryptionKeys"
+	"github.com/ravilock/goduit/internal/config"
 )
 
 var (
-	invalidTokenErr        = errors.New("Invalid Token")
-	couldNotParseClaimsErr = errors.New("Could Not Parse Claims")
+	invalidTokenErr        = errors.New("invalid Token")
+	couldNotParseClaimsErr = errors.New("could Not Parse Claims")
 )
 
 type Identity struct {
@@ -33,7 +33,7 @@ type IdentityHeaders struct {
 func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			authorizationHeader := c.Request().Header.Get("Authorization")
+			authorizationHeader := c.Request().Header.Get(echo.HeaderAuthorization)
 			if !requiredAuthentication && authorizationHeader == "" {
 				return next(c)
 			}
@@ -64,7 +64,7 @@ func GenerateToken(userEmail, username, userID string) (string, error) {
 			ID:        uuid.NewString(),
 		},
 	})
-	return token.SignedString(encryptionkeys.PrivateKey)
+	return token.SignedString(config.PrivateKey)
 }
 
 func FromToken(authorizationHeader string) (*Identity, error) {

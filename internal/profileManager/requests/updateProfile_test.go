@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	"github.com/stretchr/testify/require"
 )
@@ -158,7 +159,7 @@ func TestUpdateProfile(t *testing.T) {
 		defer server.Close()
 		request := generateUpdateProfileRequest(server.URL)
 		err := request.Validate()
-		require.ErrorContains(t, err, api.InvalidImageURLError(server.URL, "application/json").Error())
+		require.ErrorContains(t, err, api.InvalidImageURLError(server.URL, echo.MIMEApplicationJSON).Error())
 	})
 }
 
@@ -174,7 +175,7 @@ func generateUpdateProfileRequest(imageURL string) *UpdateProfileRequest {
 
 func mockValidImageURL(t *testing.T) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "image/png")
+		w.Header().Add(echo.HeaderContentType, "image/png")
 		w.WriteHeader(200)
 		_, err := w.Write(nil)
 		require.NoError(t, err)
@@ -183,7 +184,7 @@ func mockValidImageURL(t *testing.T) *httptest.Server {
 
 func mockInvalidImageURL(t *testing.T) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Add(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		w.WriteHeader(200)
 		_, err := w.Write(nil)
 		require.NoError(t, err)

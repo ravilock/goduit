@@ -1,97 +1,132 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	"github.com/ravilock/goduit/internal/config/mongo"
-	followerCentralModels "github.com/ravilock/goduit/internal/followerCentral/models"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestFollow(t *testing.T) {
-	const followedTestUsername = "followed-test-username"
-	const followedTestEmail = "followed.email@test.test"
-
-	const followerUsername = "follower-username"
-	const followerEmail = "follower.email@test.test"
-
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewFollowerHandler(followerCentral, profileManager)
-
-	clearDatabase(client)
-	followedIdentity, err := registerUser(followedTestUsername, followedTestEmail, "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
-
-	followerIdentity, err := registerUser(followerUsername, followerEmail, "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
-
+	validators.InitValidator()
+	userFollowerMock := newMockUserFollower(t)
+	profileGetterMock := newMockProfileGetter(t)
+	handler := followUserHandler{userFollowerMock, profileGetterMock}
 	e := echo.New()
+
 	t.Run("Should follow a user", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", followedTestUsername), nil)
+		// Arrange
+		followerID := primitive.NewObjectID()
+		followerUsername := "follower-username"
+		followerEmail := "follower.email@test.test"
+		followedID := primitive.NewObjectID()
+		followedUsername := "followed-test-username"
+		followedEmail := "followed.email@test.test"
+		now := time.Now()
+		followedUser := &models.User{
+			ID:          &followedID,
+			Username:    &followedUsername,
+			Email:       &followedEmail,
+			CreatedAt:   &now,
+			UpdatedAt:   &now,
+			LastSession: &now,
+		}
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", followedUsername), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
-		c.SetParamValues(followedTestUsername)
-		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
+		c.SetParamValues(followedUsername)
+		req.Header.Set("Goduit-Subject", followerID.Hex())
+		req.Header.Set("Goduit-Client-Username", followerUsername)
+		req.Header.Set("Goduit-Client-Email", followerEmail)
+		ctx := c.Request().Context()
+		profileGetterMock.EXPECT().GetProfileByUsername(ctx, followedUsername).Return(followedUser, nil).Once()
+		userFollowerMock.EXPECT().Follow(ctx, followedID.Hex(), followerID.Hex()).Return(nil).Once()
+
+		// Act
 		err := handler.Follow(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusOK {
-			t.Errorf("Got status different than %v, got %v", http.StatusOK, rec.Code)
-		}
+		require.Equal(t, http.StatusOK, rec.Code)
 		followResponse := new(profileManagerResponses.ProfileResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), followResponse)
 		require.NoError(t, err)
-		checkFollowResponse(t, followedTestUsername, true, followResponse)
-		followerModel, err := followerCentralRepository.IsFollowedBy(context.Background(), followedIdentity.Subject, followerIdentity.Subject)
-		require.NoError(t, err)
-		checkFollowerModel(t, followedIdentity.Subject, followerIdentity.Subject, followerModel)
+		checkFollowResponse(t, followedUsername, true, followResponse)
 	})
-	t.Run("Should return 404 if no user is found", func(t *testing.T) {
-		inexistentUsername := "inexistent-username"
-		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", inexistentUsername), nil)
+
+	t.Run("Should return HTTP 404 if no user is found", func(t *testing.T) {
+		// Arrange
+		followerID := primitive.NewObjectID()
+		followerUsername := "follower-username"
+		followerEmail := "follower.email@test.test"
+		inexistentUser := "inexistent-username"
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", inexistentUser), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("username")
-		c.SetParamValues(inexistentUsername)
-		req.Header.Set("Goduit-Subject", followerIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", followerIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", followerIdentity.UserEmail)
+		c.SetParamValues(inexistentUser)
+		req.Header.Set("Goduit-Subject", followerID.Hex())
+		req.Header.Set("Goduit-Client-Username", followerUsername)
+		req.Header.Set("Goduit-Client-Email", followerEmail)
+		ctx := c.Request().Context()
+		profileGetterMock.EXPECT().GetProfileByUsername(ctx, inexistentUser).Return(nil, app.UserNotFoundError(inexistentUser, nil)).Once()
+
+		// Act
 		err := handler.Follow(c)
-		require.ErrorContains(t, err, api.UserNotFound(inexistentUsername).Error())
+
+		// Assert
+		require.ErrorContains(t, err, api.UserNotFound(inexistentUser).Error())
+	})
+
+	t.Run("Should return HTTP 409 if follower already follows followed", func(t *testing.T) {
+		// Arrange
+		followerID := primitive.NewObjectID()
+		followerUsername := "follower-username"
+		followerEmail := "follower.email@test.test"
+		followedID := primitive.NewObjectID()
+		followedUsername := "followed-test-username"
+		followedEmail := "followed.email@test.test"
+		now := time.Now()
+		followedUser := &models.User{
+			ID:          &followedID,
+			Username:    &followedUsername,
+			Email:       &followedEmail,
+			CreatedAt:   &now,
+			UpdatedAt:   &now,
+			LastSession: &now,
+		}
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s/follow", followedUsername), nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("username")
+		c.SetParamValues(followedUsername)
+		req.Header.Set("Goduit-Subject", followerID.Hex())
+		req.Header.Set("Goduit-Client-Username", followerUsername)
+		req.Header.Set("Goduit-Client-Email", followerEmail)
+		ctx := c.Request().Context()
+		profileGetterMock.EXPECT().GetProfileByUsername(ctx, followedUsername).Return(followedUser, nil).Once()
+		userFollowerMock.EXPECT().Follow(ctx, followedID.Hex(), followerID.Hex()).Return(app.ConflictError("followers")).Once()
+
+		// Act
+		err := handler.Follow(c)
+
+		// Assert
+		require.ErrorContains(t, err, api.ConfictError.Error())
 	})
 }
 
@@ -101,11 +136,4 @@ func checkFollowResponse(t *testing.T, username string, following bool, response
 	require.Equal(t, following, response.Profile.Following)
 	require.Zero(t, response.Profile.Image)
 	require.Zero(t, response.Profile.Bio)
-}
-
-func checkFollowerModel(t *testing.T, followed, follower string, model *followerCentralModels.Follower) {
-	t.Helper()
-	require.NotNil(t, model)
-	require.Equal(t, followed, *model.Followed, "Wrong followed username")
-	require.Equal(t, follower, *model.Follower, "Wrong follower username")
 }
