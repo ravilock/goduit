@@ -3,11 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
@@ -17,7 +15,6 @@ import (
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestGetArticle(t *testing.T) {
@@ -31,8 +28,8 @@ func TestGetArticle(t *testing.T) {
 
 	t.Run("Should get an article", func(t *testing.T) {
 		// Arrange
-		expectedArticle := assembleArticleModel(primitive.NewObjectID())
-		expectedAuthor := assembleArticleAuthor(*expectedArticle.Author)
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
@@ -74,47 +71,6 @@ func TestGetArticle(t *testing.T) {
 		// Assert
 		require.ErrorContains(t, err, api.ArticleNotFound(inexistentSlug).Error())
 	})
-}
-
-func assembleArticleModel(authorID primitive.ObjectID) *models.Article {
-	articleID := primitive.NewObjectID()
-	authorIDHex := authorID.Hex()
-	articleTitle := "Article Title"
-	articleSlug := "article-title"
-	articleDescription := "Article Description"
-	articleBody := "Article Body"
-	articleTagList := []string{"test"}
-	now := time.Now()
-	return &models.Article{
-		ID:             &articleID,
-		Author:         &authorIDHex,
-		Slug:           &articleSlug,
-		Title:          &articleTitle,
-		Description:    &articleDescription,
-		Body:           &articleBody,
-		TagList:        articleTagList,
-		CreatedAt:      &now,
-		UpdatedAt:      &now,
-		FavoritesCount: new(int64),
-	}
-}
-
-func assembleArticleAuthor(authorID string) *profileManagerModels.User {
-	ID, err := primitive.ObjectIDFromHex(authorID)
-	if err != nil {
-		log.Fatalln("could not parse authorID to object ID format", err)
-	}
-	return &profileManagerModels.User{
-		ID:           &ID,
-		Username:     &authorID,
-		Email:        new(string),
-		PasswordHash: new(string),
-		Bio:          new(string),
-		Image:        new(string),
-		CreatedAt:    &time.Time{},
-		UpdatedAt:    &time.Time{},
-		LastSession:  &time.Time{},
-	}
 }
 
 func checkGetArticleResponse(t *testing.T, expectedArticle *models.Article, expectedAuthor *profileManagerModels.User, response *articlePublisherResponses.ArticleResponse) {

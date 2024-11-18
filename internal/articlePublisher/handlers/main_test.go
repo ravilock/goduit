@@ -10,17 +10,77 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/ravilock/goduit/internal/identity"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
+
+func assembleRandomUser() *profileManagerModels.User {
+	ID := primitive.NewObjectID()
+	username := uuid.NewString()
+	email := username + "@test.test"
+	image := "http://" + username + ".com"
+	now := time.Now()
+	return &profileManagerModels.User{
+		ID:           &ID,
+		Username:     &username,
+		Email:        &email,
+		PasswordHash: &username,
+		Bio:          &username,
+		Image:        &image,
+		CreatedAt:    &now,
+		UpdatedAt:    &now,
+		LastSession:  &now,
+	}
+}
+
+func assembleArticleModel(authorID primitive.ObjectID) *models.Article {
+	articleID := primitive.NewObjectID()
+	authorIDHex := authorID.Hex()
+	articleTitle := "Article Title"
+	articleSlug := "article-title"
+	articleDescription := "Article Description"
+	articleBody := "Article Body"
+	articleTagList := []string{"test"}
+	now := time.Now()
+	return &models.Article{
+		ID:             &articleID,
+		Author:         &authorIDHex,
+		Slug:           &articleSlug,
+		Title:          &articleTitle,
+		Description:    &articleDescription,
+		Body:           &articleBody,
+		TagList:        articleTagList,
+		CreatedAt:      &now,
+		UpdatedAt:      &now,
+		FavoritesCount: new(int64),
+	}
+}
+
+func assembleCommentModel(authorID, articleID primitive.ObjectID, commentBody string) *models.Comment {
+	commentID := primitive.NewObjectID()
+	authorIDHex := authorID.Hex()
+	articleIDHex := articleID.Hex()
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	return &models.Comment{
+		ID:        &commentID,
+		Author:    &authorIDHex,
+		Article:   &articleIDHex,
+		Body:      &commentBody,
+		CreatedAt: &now,
+		UpdatedAt: &now,
+	}
+}
 
 func clearDatabase(client *mongo.Client) {
 	conduitDb := client.Database("conduit")

@@ -14,7 +14,6 @@ import (
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestWriteArticle(t *testing.T) {
@@ -27,8 +26,7 @@ func TestWriteArticle(t *testing.T) {
 
 	t.Run("Should create an article", func(t *testing.T) {
 		// Arrange
-		authorID := primitive.NewObjectID()
-		expectedAuthor := assembleArticleAuthor(authorID.Hex())
+		expectedAuthor := assembleRandomUser()
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
 		require.NoError(t, err)
@@ -40,8 +38,8 @@ func TestWriteArticle(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		ctx := c.Request().Context()
-		articleWriterMock.EXPECT().WriteArticle(ctx, createArticleRequest.Model(authorID.Hex())).Return(nil).Once()
-		profileGetterMock.EXPECT().GetProfileByID(ctx, authorID.Hex()).Return(expectedAuthor, nil).Once()
+		articleWriterMock.EXPECT().WriteArticle(ctx, createArticleRequest.Model(expectedAuthor.ID.Hex())).Return(nil).Once()
+		profileGetterMock.EXPECT().GetProfileByID(ctx, expectedAuthor.ID.Hex()).Return(expectedAuthor, nil).Once()
 
 		// Act
 		err = handler.WriteArticle(c)
@@ -57,8 +55,7 @@ func TestWriteArticle(t *testing.T) {
 
 	t.Run("Should return conflict error if title/slug is already used", func(t *testing.T) {
 		// Arrange
-		authorID := primitive.NewObjectID()
-		expectedAuthor := assembleArticleAuthor(authorID.Hex())
+		expectedAuthor := assembleRandomUser()
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
 		require.NoError(t, err)
@@ -70,7 +67,7 @@ func TestWriteArticle(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		ctx := c.Request().Context()
-		articleWriterMock.EXPECT().WriteArticle(ctx, createArticleRequest.Model(authorID.Hex())).Return(app.ConflictError("articles")).Once()
+		articleWriterMock.EXPECT().WriteArticle(ctx, createArticleRequest.Model(expectedAuthor.ID.Hex())).Return(app.ConflictError("articles")).Once()
 
 		// Act
 		err = handler.WriteArticle(c)
