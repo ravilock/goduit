@@ -55,7 +55,7 @@ func TestWriteComment(t *testing.T) {
 			commentID := primitive.NewObjectID()
 			comment.ID = &commentID
 			return nil
-		})
+		}).Once()
 		profileGetterMock.EXPECT().GetProfileByID(ctx, expectedCommentAuthor.ID.Hex()).Return(expectedCommentAuthor, nil).Once()
 
 		// Act

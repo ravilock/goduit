@@ -2,112 +2,119 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
-	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
-	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	"github.com/ravilock/goduit/internal/mongo"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestUpdateArticle(t *testing.T) {
-	const articleTitle = "Update Article Title"
-	const articleSlug = "update-article-title"
-	const articleDescription = "Update Article Description"
-	const articleBody = "Update Article Body"
-	articleTagList := []string{"update", "article"}
+	validators.InitValidator()
+	articleUpdaterMock := newMockArticleUpdater(t)
+	profileGetterMock := newMockProfileGetter(t)
+	handler := &updateArticleHandler{articleUpdaterMock, profileGetterMock}
 
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	articlePublisherRepository := articlePublisherRepositories.NewArticleRepository(client)
-	articlePublisher := articlePublisher.NewArticlePublisher(articlePublisherRepository)
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	handler := NewArticleHandler(articlePublisher, profileManager, followerCentral)
-
-	clearDatabase(client)
-	authorIdentity, err := registerUser("", "", "", profileManager)
-	if err != nil {
-		log.Fatalf("Could not create user: %s", err)
-	}
 	e := echo.New()
+
 	t.Run("Should update an article", func(t *testing.T) {
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
 		updateArticleRequest := generateUpdateArticleBody()
 		requestBody, err := json.Marshal(updateArticleRequest)
 		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", articleSlug), bytes.NewBuffer(requestBody))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(articleSlug)
-		_, err = createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler)
-		require.NoError(t, err)
+		c.SetParamValues(*expectedArticle.Slug)
+		ctx := c.Request().Context()
+		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		articleUpdaterMock.EXPECT().UpdateArticle(ctx, *expectedArticle.Slug, updateArticleRequest.Model()).RunAndReturn(func(ctx context.Context, slug string, article *models.Article) error {
+			favoritesCount := int64(30)
+			article.FavoritesCount = &favoritesCount
+			article.TagList = expectedArticle.TagList
+			return nil
+		}).Once()
+		profileGetterMock.EXPECT().GetProfileByID(ctx, expectedAuthor.ID.Hex()).Return(expectedAuthor, nil).Once()
+
+		// Act
 		err = handler.UpdateArticle(c)
+
+		// Assert
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, rec.Code)
 		updateArticleResponse := new(articlePublisherResponses.ArticleResponse)
 		err = json.Unmarshal(rec.Body.Bytes(), updateArticleResponse)
 		require.NoError(t, err)
-		checkUpdateArticleResponse(t, updateArticleRequest, authorIdentity.Username, updateArticleResponse, articleTagList)
+		checkUpdateArticleResponse(t, updateArticleRequest, *expectedAuthor.Username, updateArticleResponse, expectedArticle.TagList)
 	})
+
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
+		// Arrange
+		expectedAuthor := assembleRandomUser()
 		updateArticleRequest := generateUpdateArticleBody()
+		articleSlug := "test-article"
 		requestBody, err := json.Marshal(updateArticleRequest)
 		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", articleSlug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(articleSlug)
-		require.NoError(t, err)
+		ctx := c.Request().Context()
+		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, articleSlug).Return(nil, app.ArticleNotFoundError(articleSlug, nil)).Once()
+
+		// Act
 		err = handler.UpdateArticle(c)
+
+		// Assert
 		require.ErrorContains(t, err, api.ArticleNotFound(articleSlug).Error())
 	})
+
 	t.Run("Should only update articles authored by the currently authenticaed user", func(t *testing.T) {
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
 		updateArticleRequest := generateUpdateArticleBody()
 		requestBody, err := json.Marshal(updateArticleRequest)
 		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", articleSlug), bytes.NewBuffer(requestBody))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), bytes.NewBuffer(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set("Goduit-Subject", primitive.NewObjectID().Hex())
 		req.Header.Set("Goduit-Client-Username", "not-the-author")
 		req.Header.Set("Goduit-Subject", "not.the.author.email@test.test")
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
-		c.SetParamValues(articleSlug)
-		_, err = createArticle(articleTitle, articleDescription, articleBody, authorIdentity, articleTagList, handler.writeArticleHandler)
+		c.SetParamValues(*expectedArticle.Slug)
+		ctx := c.Request().Context()
+		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+
+		// Act
 		require.NoError(t, err)
+
+		// Assert
 		err = handler.UpdateArticle(c)
 		require.ErrorContains(t, err, api.Forbidden.Error())
 	})

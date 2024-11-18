@@ -52,6 +52,7 @@ func assembleArticleModel(authorID primitive.ObjectID) *models.Article {
 	articleDescription := "Article Description"
 	articleBody := "Article Body"
 	articleTagList := []string{"test"}
+	favoriteCounts := int64(0)
 	now := time.Now()
 	return &models.Article{
 		ID:             &articleID,
@@ -63,7 +64,7 @@ func assembleArticleModel(authorID primitive.ObjectID) *models.Article {
 		TagList:        articleTagList,
 		CreatedAt:      &now,
 		UpdatedAt:      &now,
-		FavoritesCount: new(int64),
+		FavoritesCount: &favoriteCounts,
 	}
 }
 
