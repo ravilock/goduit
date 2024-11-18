@@ -32,7 +32,7 @@ func MustWriteArticle(t *testing.T, writeArticlePayload articlePublisherRequests
 	if writeArticlePayload.Title == "" {
 		writeArticlePayload.Title = UniqueTitle()
 	}
-	if writeArticlePayload.TagList == nil || len(writeArticlePayload.TagList) == 0 {
+	if len(writeArticlePayload.TagList) == 0 {
 		writeArticlePayload.TagList = []string{"categories", "housing", "technology"}
 	} else {
 		writeArticlePayload.TagList = append(writeArticlePayload.TagList, "categories", "housing", "technology")

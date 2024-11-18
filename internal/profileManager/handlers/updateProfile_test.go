@@ -20,7 +20,8 @@ import (
 )
 
 func TestUpdateProfile(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	profileUpdaterMock := newMockProfileUpdater(t)
 	handler := updateProfileHandler{service: profileUpdaterMock}
 	e := echo.New()

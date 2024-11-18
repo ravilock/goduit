@@ -21,7 +21,8 @@ import (
 )
 
 func TestWriteComment(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	commentWriterMock := newMockCommentWriter(t)
 	articleGetterMock := newMockArticleGetter(t)
 	profileGetterMock := newMockProfileGetter(t)

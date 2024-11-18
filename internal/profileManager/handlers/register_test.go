@@ -17,7 +17,8 @@ import (
 )
 
 func TestRegister(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	profileRegisterMock := newMockProfileRegister(t)
 	handler := registerProfileHandler{service: profileRegisterMock}
 	e := echo.New()
