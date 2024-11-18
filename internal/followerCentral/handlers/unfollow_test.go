@@ -19,7 +19,8 @@ import (
 )
 
 func TestUnfollow(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	userUnfollowerMock := newMockUserUnfollower(t)
 	profileGetterMock := newMockProfileGetter(t)
 	handler := unfollowUserHandler{userUnfollowerMock, profileGetterMock}

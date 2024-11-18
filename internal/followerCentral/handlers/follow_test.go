@@ -19,7 +19,8 @@ import (
 )
 
 func TestFollow(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	userFollowerMock := newMockUserFollower(t)
 	profileGetterMock := newMockProfileGetter(t)
 	handler := followUserHandler{userFollowerMock, profileGetterMock}

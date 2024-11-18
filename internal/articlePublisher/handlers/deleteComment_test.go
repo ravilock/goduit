@@ -17,7 +17,8 @@ import (
 )
 
 func TestDeleteComment(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	commentDeleterMock := newMockCommentDeleter(t)
 	articleGetterMock := newMockArticleGetter(t)
 	handler := &deleteCommentHandler{commentDeleterMock, articleGetterMock}

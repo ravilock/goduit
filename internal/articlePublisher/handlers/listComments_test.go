@@ -13,14 +13,14 @@ import (
 	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
-	"github.com/ravilock/goduit/internal/articlePublisher/requests"
 
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListComments(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	commentListerMock := newMockCommentLister(t)
 	articleGetterMock := newMockArticleGetter(t)
 	profileGetterMock := newMockProfileGetter(t)
@@ -77,12 +77,6 @@ func TestListComments(t *testing.T) {
 		// Assert
 		require.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
 	})
-}
-
-func generateListCommentsRequest(articleSlug string) *requests.ArticleSlugRequest {
-	return &requests.ArticleSlugRequest{
-		Slug: articleSlug,
-	}
 }
 
 func checkListCommentsResponse(t *testing.T, response *articlePublisherResponses.CommentsResponse, length int, comments ...*models.Comment) {

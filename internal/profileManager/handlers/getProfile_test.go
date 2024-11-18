@@ -19,7 +19,8 @@ import (
 )
 
 func TestGetProfile(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	profileGetterMock := newMockProfileGetter(t)
 	isFollowedCheckerMock := newMockIsFollowedChecker(t)
 	handler := getProfileHandler{service: profileGetterMock, followerCentral: isFollowedCheckerMock}

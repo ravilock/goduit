@@ -17,7 +17,8 @@ import (
 )
 
 func TestWriteArticle(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	articleWriterMock := newMockArticleWriter(t)
 	profileGetterMock := newMockProfileGetter(t)
 	handler := &writeArticleHandler{articleWriterMock, profileGetterMock}

@@ -15,7 +15,8 @@ import (
 )
 
 func TestUnpublishArticle(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	articleUnpublisherMock := newMockArticleUnpublisher(t)
 	handler := unpublishArticleHandler{articleUnpublisherMock}
 	e := echo.New()

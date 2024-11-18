@@ -21,7 +21,8 @@ import (
 )
 
 func TestUpdateArticle(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	articleUpdaterMock := newMockArticleUpdater(t)
 	profileGetterMock := newMockProfileGetter(t)
 	handler := &updateArticleHandler{articleUpdaterMock, profileGetterMock}

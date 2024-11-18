@@ -27,7 +27,8 @@ const (
 )
 
 func TestLogin(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	authenticatorMock := newMockAuthenticator(t)
 	handler := loginHandler{service: authenticatorMock}
 	e := echo.New()

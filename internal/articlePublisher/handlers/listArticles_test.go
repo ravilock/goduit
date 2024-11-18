@@ -17,7 +17,8 @@ import (
 )
 
 func TestListArticles(t *testing.T) {
-	validators.InitValidator()
+	err := validators.InitValidator()
+	require.NoError(t, err)
 	articleListerMock := newMockArticleLister(t)
 	profileGetterMock := newMockProfileGetter(t)
 	isFollowedCheckerMock := newMockIsFollowedChecker(t)
@@ -141,8 +142,4 @@ func checkListArticlesResponse(t *testing.T, tag, author string, limit int, resp
 			require.Equal(t, article.Author.Username, author)
 		}
 	}
-}
-
-func checkArticlesAreTheSame(articleA, articleB *articlePublisherResponses.Article) bool {
-	return articleA.Slug == articleB.Slug
 }
