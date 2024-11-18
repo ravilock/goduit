@@ -23,7 +23,7 @@ func NewUserRepository(client *mongo.Client) *UserRepository {
 }
 
 func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) (*models.User, error) {
-	now := time.Now()
+	now := time.Now().UTC().Truncate(time.Millisecond)
 	user.CreatedAt = &now
 	user.LastSession = &now
 	collection := r.DBClient.Database("conduit").Collection("users")
@@ -95,8 +95,8 @@ func (r *UserRepository) GetUserByID(ctx context.Context, ID string) (*models.Us
 }
 
 func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) error {
-	updatedAt := time.Now()
-	user.UpdatedAt = &updatedAt
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	user.UpdatedAt = &now
 	filter := bson.D{
 		{Key: "username", Value: clientUsername},
 		{Key: "email", Value: subjectEmail},

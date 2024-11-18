@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
@@ -19,6 +20,8 @@ func NewArticleRepository(client *mongo.Client) *ArticleRepository {
 }
 
 func (r *ArticleRepository) WriteArticle(ctx context.Context, article *models.Article) error {
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	article.CreatedAt = &now
 	collection := r.DBClient.Database("conduit").Collection("articles")
 	if _, err := collection.InsertOne(ctx, article); err != nil {
 		if mongo.IsDuplicateKeyError(err) {
@@ -88,6 +91,8 @@ func (r *ArticleRepository) DeleteArticle(ctx context.Context, slug string) erro
 }
 
 func (r *ArticleRepository) UpdateArticle(ctx context.Context, slug string, article *models.Article) error {
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	article.UpdatedAt = &now
 	filter := bson.D{{Key: "slug", Value: slug}}
 	update := bson.D{{Key: "$set", Value: article}}
 	collection := r.DBClient.Database("conduit").Collection("articles")

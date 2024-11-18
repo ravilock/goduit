@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
@@ -21,6 +22,8 @@ func NewCommentRepository(client *mongo.Client) *CommentRepository {
 }
 
 func (r *CommentRepository) WriteComment(ctx context.Context, comment *models.Comment) error {
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	comment.CreatedAt = &now
 	collection := r.DBClient.Database("conduit").Collection("comments")
 	result, err := collection.InsertOne(ctx, comment)
 	if err != nil {

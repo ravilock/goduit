@@ -48,7 +48,7 @@ func (h *loginHandler) Login(c echo.Context) error {
 		return err
 	}
 
-	lastSession := time.Now()
+	lastSession := time.Now().UTC().Truncate(time.Millisecond)
 	user.LastSession = &lastSession
 	if _, err := h.service.UpdateProfile(context.Background(), *user.Email, *user.Username, "", user); err != nil {
 		log.Println("Error Updating Last Session", err)

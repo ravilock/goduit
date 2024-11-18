@@ -2,7 +2,6 @@ package requests
 
 import (
 	"errors"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/ravilock/goduit/api/validators"
@@ -19,12 +18,9 @@ type WriteCommentPayload struct {
 }
 
 func (r *WriteCommentRequest) Model(authorID string) *models.Comment {
-	createdAt := time.Now().Truncate(time.Millisecond)
 	return &models.Comment{
-		Author:    &authorID,
-		Body:      &r.Comment.Body,
-		CreatedAt: &createdAt,
-		UpdatedAt: nil,
+		Author: &authorID,
+		Body:   &r.Comment.Body,
 	}
 }
 

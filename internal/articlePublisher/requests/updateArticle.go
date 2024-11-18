@@ -2,7 +2,6 @@ package requests
 
 import (
 	"errors"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/ravilock/goduit/api/validators"
@@ -22,7 +21,6 @@ type UpdateArticlePayload struct {
 
 func (r *UpdateArticleRequest) Model() *models.Article {
 	slug := makeSlug(r.Article.Title)
-	updatedAt := time.Now().Truncate(time.Millisecond)
 	return &models.Article{
 		Author:         nil,
 		Slug:           &slug,
@@ -30,8 +28,6 @@ func (r *UpdateArticleRequest) Model() *models.Article {
 		Description:    &r.Article.Description,
 		Body:           &r.Article.Body,
 		TagList:        nil,
-		CreatedAt:      nil,
-		UpdatedAt:      &updatedAt,
 		FavoritesCount: nil,
 	}
 }
