@@ -2,123 +2,125 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/ravilock/goduit/api"
-	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
+	"github.com/ravilock/goduit/api/validators"
+	"github.com/ravilock/goduit/internal/app"
 
-	articlePublisher "github.com/ravilock/goduit/internal/articlePublisher/services"
-	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
-	followerCentral "github.com/ravilock/goduit/internal/followerCentral/services"
-	"github.com/ravilock/goduit/internal/mongo"
-	profileManagerRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	profileManager "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteComment(t *testing.T) {
-	databaseURI := os.Getenv("DB_URL")
-	if databaseURI == "" {
-		log.Fatalln("You must sey your 'DATABASE_URI' environmental variable.")
-	}
-	// Connect Mongo DB
-	client, err := mongo.ConnectDatabase(databaseURI)
-	if err != nil {
-		log.Fatalln("Error connecting to database", err)
-	}
-	commentRepository := articlePublisherRepositories.NewCommentRepository(client)
-	articlePublisherRepository := articlePublisherRepositories.NewArticleRepository(client)
-	commentPublisher := articlePublisher.NewCommentPublisher(commentRepository)
-	articlePublisher := articlePublisher.NewArticlePublisher(articlePublisherRepository)
-	followerCentralRepository := followerCentralRepositories.NewFollowerRepository(client)
-	followerCentral := followerCentral.NewFollowerCentral(followerCentralRepository)
-	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	profileManager := profileManager.NewProfileManager(profileManagerRepository)
-	articleHandler := NewArticleHandler(articlePublisher, profileManager, followerCentral)
-	handler := NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
-	clearDatabase(client)
+	validators.InitValidator()
+	commentDeleterMock := newMockCommentDeleter(t)
+	articleGetterMock := newMockArticleGetter(t)
+	handler := &deleteCommentHandler{commentDeleterMock, articleGetterMock}
 	e := echo.New()
+
 	t.Run("Should delete a commentary", func(t *testing.T) {
-		authorIdentity, err := registerUser("", "", "", profileManager)
-		require.NoError(t, err)
-		article, err := createArticle("", "", "", authorIdentity, []string{}, articleHandler.writeArticleHandler)
-		require.NoError(t, err)
-		comment, err := createComment("", article.Article.Slug, authorIdentity, handler.writeCommentHandler)
-		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", article.Article.Slug, comment.Comment.ID), nil)
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		expectedComment := assembleCommentModel(*expectedAuthor.ID, *expectedArticle.ID, "test comment body")
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", *expectedArticle.Slug, expectedComment.ID.Hex()), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug", "id")
-		c.SetParamValues(article.Article.Slug, comment.Comment.ID)
-		err = handler.DeleteComment(c)
+		c.SetParamValues(*expectedArticle.Slug, expectedComment.ID.Hex())
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		commentDeleterMock.EXPECT().GetCommentByID(ctx, expectedComment.ID.Hex()).Return(expectedComment, nil).Once()
+		commentDeleterMock.EXPECT().DeleteComment(ctx, expectedComment.ID.Hex()).Return(nil).Once()
+
+		// Act
+		err := handler.DeleteComment(c)
+
+		// Assert
 		require.NoError(t, err)
-		if rec.Code != http.StatusNoContent {
-			t.Errorf("Got status different than %v, got %v", http.StatusNoContent, rec.Code)
-		}
-		require.NoError(t, err)
+		require.Equal(t, http.StatusNoContent, rec.Code)
 	})
+
 	t.Run("Only comment author can delete the comment", func(t *testing.T) {
-		authorIdentity, err := registerUser("", "", "", profileManager)
-		require.NoError(t, err)
-		article, err := createArticle("", "", "", authorIdentity, []string{}, articleHandler.writeArticleHandler)
-		require.NoError(t, err)
-		comment, err := createComment("", article.Article.Slug, authorIdentity, handler.writeCommentHandler)
-		require.NoError(t, err)
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", article.Article.Slug, comment.Comment.ID), nil)
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		expectedComment := assembleCommentModel(*expectedAuthor.ID, *expectedArticle.ID, "test comment body")
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", *expectedArticle.Slug, expectedComment.ID.Hex()), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", uuid.NewString())
+		req.Header.Set("Goduit-Subject", primitive.NewObjectID().Hex())
 		req.Header.Set("Goduit-Client-Username", "not-the-author")
-		req.Header.Set("Goduit-Client-Email", "not.the.author.email@test.test")
+		req.Header.Set("Goduit-Subject", "not.the.author.email@test.test")
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug", "id")
-		c.SetParamValues(article.Article.Slug, comment.Comment.ID)
-		err = handler.DeleteComment(c)
+		c.SetParamValues(*expectedArticle.Slug, expectedComment.ID.Hex())
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		commentDeleterMock.EXPECT().GetCommentByID(ctx, expectedComment.ID.Hex()).Return(expectedComment, nil).Once()
+
+		// Act
+		err := handler.DeleteComment(c)
+
+		// Assert
 		require.ErrorContains(t, err, api.Forbidden.Error())
 	})
+
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
-		authorIdentity, err := registerUser("", "", "", profileManager)
-		require.NoError(t, err)
-		articleSlug := uuid.NewString()
-		commentID := uuid.NewString()
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", articleSlug, commentID), nil)
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		slug := "inexistent-article"
+		commentID := primitive.NewObjectID().Hex()
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", slug, commentID), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug", "id")
-		c.SetParamValues(articleSlug, commentID)
-		err = handler.DeleteComment(c)
-		require.ErrorContains(t, err, api.ArticleNotFound(articleSlug).Error())
+		c.SetParamValues(slug, commentID)
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, slug).Return(nil, app.ArticleNotFoundError(slug, nil)).Once()
+
+		// Act
+		err := handler.DeleteComment(c)
+
+		// Assert
+		require.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
 	})
+
 	t.Run("Should return HTTP 404 if no comment is found", func(t *testing.T) {
-		authorIdentity, err := registerUser("", "", "", profileManager)
-		require.NoError(t, err)
-		articleSlug := uuid.NewString()
-		commentID := uuid.NewString()
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", articleSlug, commentID), nil)
+		// Arrange
+		expectedAuthor := assembleRandomUser()
+		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
+		commentID := primitive.NewObjectID().Hex()
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", *expectedArticle.Slug, commentID), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set("Goduit-Subject", authorIdentity.Subject)
-		req.Header.Set("Goduit-Client-Username", authorIdentity.Username)
-		req.Header.Set("Goduit-Client-Email", authorIdentity.UserEmail)
+		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
+		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
+		req.Header.Set("Goduit-Client-Email", *expectedAuthor.Email)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug", "id")
-		c.SetParamValues(articleSlug, commentID)
-		err = handler.DeleteComment(c)
-		require.ErrorContains(t, err, api.ArticleNotFound(articleSlug).Error())
+		c.SetParamValues(*expectedArticle.Slug, commentID)
+		ctx := c.Request().Context()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		commentDeleterMock.EXPECT().GetCommentByID(ctx, commentID).Return(nil, app.CommentNotFoundError(commentID, nil)).Once()
+
+		// Act
+		err := handler.DeleteComment(c)
+
+		// Assert
+		require.ErrorContains(t, err, api.CommentNotFound(commentID).Error())
 	})
 }
