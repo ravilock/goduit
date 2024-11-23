@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/spf13/viper v1.19.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/mongo-driver v1.17.1
 	golang.org/x/crypto v0.29.0
 	golang.org/x/net v0.31.0
