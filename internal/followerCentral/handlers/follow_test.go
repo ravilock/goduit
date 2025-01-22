@@ -34,7 +34,7 @@ func TestFollow(t *testing.T) {
 		followedID := primitive.NewObjectID()
 		followedUsername := "followed-test-username"
 		followedEmail := "followed.email@test.test"
-		now := time.Now()
+		now := time.Now().UTC().Truncate(time.Millisecond)
 		followedUser := &models.User{
 			ID:          &followedID,
 			Username:    &followedUsername,
@@ -101,7 +101,7 @@ func TestFollow(t *testing.T) {
 		followedID := primitive.NewObjectID()
 		followedUsername := "followed-test-username"
 		followedEmail := "followed.email@test.test"
-		now := time.Now()
+		now := time.Now().UTC().Truncate(time.Millisecond)
 		followedUser := &models.User{
 			ID:          &followedID,
 			Username:    &followedUsername,

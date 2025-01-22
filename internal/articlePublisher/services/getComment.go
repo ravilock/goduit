@@ -1,8 +1,9 @@
 package services
 
 import (
+	"context"
+
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
-	"golang.org/x/net/context"
 )
 
 type commentGetter interface {

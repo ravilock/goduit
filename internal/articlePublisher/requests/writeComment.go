@@ -19,8 +19,10 @@ type WriteCommentPayload struct {
 
 func (r *WriteCommentRequest) Model(authorID string) *models.Comment {
 	return &models.Comment{
-		Author: &authorID,
-		Body:   &r.Comment.Body,
+		Author:    &authorID,
+		Body:      &r.Comment.Body,
+		CreatedAt: nil,
+		UpdatedAt: nil,
 	}
 }
 

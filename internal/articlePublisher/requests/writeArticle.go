@@ -30,6 +30,8 @@ func (r *WriteArticleRequest) Model(authorID string) *models.Article {
 		Description:    &r.Article.Description,
 		Body:           &r.Article.Body,
 		TagList:        tags,
+		CreatedAt:      nil,
+		UpdatedAt:      nil,
 		FavoritesCount: new(int64),
 	}
 }

@@ -36,7 +36,7 @@ func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) (*
 	}
 	newId, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return nil, errors.New("Could not convert user ID")
+		return nil, errors.New("could not convert user ID")
 	}
 	user.ID = &newId
 	return user, nil
@@ -78,7 +78,7 @@ func (r *UserRepository) GetUserByID(ctx context.Context, ID string) (*models.Us
 	var user *models.User
 	userID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
-		return nil, fmt.Errorf("Could not parse ID: %s into ObjectID: %w", ID, err)
+		return nil, fmt.Errorf("could not parse ID: %s into ObjectID: %w", ID, err)
 	}
 	filter := bson.D{{
 		Key:   "_id",

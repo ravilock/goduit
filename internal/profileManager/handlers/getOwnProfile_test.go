@@ -25,7 +25,7 @@ func TestGetOwnProfile(t *testing.T) {
 		clientUsername := "test-username"
 		clientEmail := "test.email@test.test"
 		expectedUserPassword := "test-password"
-		now := time.Now()
+		now := time.Now().UTC().Truncate(time.Millisecond)
 		expectedUserModel := &models.User{
 			ID:           &expectedSubject,
 			Username:     &clientUsername,

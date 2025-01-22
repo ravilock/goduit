@@ -38,7 +38,7 @@ func TestLogin(t *testing.T) {
 		loginRequest := generateLoginBody()
 		expectedUserID := primitive.NewObjectID()
 		expectedUsername := "testing-username"
-		now := time.Now()
+		now := time.Now().UTC().Truncate(time.Millisecond)
 		expectedUserModel := &models.User{
 			ID:           &expectedUserID,
 			Username:     &expectedUsername,

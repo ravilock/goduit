@@ -28,6 +28,8 @@ func (r *UpdateArticleRequest) Model() *models.Article {
 		Description:    &r.Article.Description,
 		Body:           &r.Article.Body,
 		TagList:        nil,
+		CreatedAt:      nil,
+		UpdatedAt:      nil,
 		FavoritesCount: nil,
 	}
 }

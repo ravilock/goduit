@@ -32,7 +32,7 @@ func TestGetProfile(t *testing.T) {
 		expectedProfileUsername := "test-username"
 		expectedProfileEmail := "test.email@test.test"
 		expectedUserPassword := "test-password"
-		now := time.Now()
+		now := time.Now().UTC().Truncate(time.Millisecond)
 		expectedUserModel := &models.User{
 			ID:           &expectedUserID,
 			Username:     &expectedProfileUsername,
@@ -72,7 +72,7 @@ func TestGetProfile(t *testing.T) {
 		expectedProfileUsername := "test-username"
 		expectedProfileEmail := "test.email@test.test"
 		expectedUserPassword := "test-password"
-		now := time.Now()
+		now := time.Now().UTC().Truncate(time.Millisecond)
 		expectedUserModel := &models.User{
 			ID:           &expectedUserID,
 			Username:     &expectedProfileUsername,

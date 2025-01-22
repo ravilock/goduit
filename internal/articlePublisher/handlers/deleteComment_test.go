@@ -26,9 +26,10 @@ func TestDeleteComment(t *testing.T) {
 
 	t.Run("Should delete a commentary", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
-		expectedComment := assembleCommentModel(*expectedAuthor.ID, *expectedArticle.ID, "test comment body")
+		articleAuthorID := primitive.NewObjectID()
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
+		expectedArticle := assembleArticleModel(articleAuthorID)
+		expectedComment := assembleCommentModel(articleAuthorID.Hex(), expectedArticle.ID.Hex())
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", *expectedArticle.Slug, expectedComment.ID.Hex()), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
@@ -53,9 +54,9 @@ func TestDeleteComment(t *testing.T) {
 
 	t.Run("Only comment author can delete the comment", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
-		expectedComment := assembleCommentModel(*expectedAuthor.ID, *expectedArticle.ID, "test comment body")
+		articleAuthorID := primitive.NewObjectID()
+		expectedArticle := assembleArticleModel(articleAuthorID)
+		expectedComment := assembleCommentModel(articleAuthorID.Hex(), expectedArticle.ID.Hex())
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", *expectedArticle.Slug, expectedComment.ID.Hex()), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Subject", primitive.NewObjectID().Hex())
@@ -78,10 +79,11 @@ func TestDeleteComment(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		slug := "inexistent-article"
-		commentID := primitive.NewObjectID().Hex()
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", slug, commentID), nil)
+		articleAuthorID := primitive.NewObjectID()
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
+		expectedArticle := assembleArticleModel(articleAuthorID)
+		expectedComment := assembleCommentModel(articleAuthorID.Hex(), expectedArticle.ID.Hex())
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", *expectedArticle.Slug, expectedComment.ID.Hex()), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
 		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
@@ -89,23 +91,24 @@ func TestDeleteComment(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug", "id")
-		c.SetParamValues(slug, commentID)
 		ctx := c.Request().Context()
-		articleGetterMock.EXPECT().GetArticleBySlug(ctx, slug).Return(nil, app.ArticleNotFoundError(slug, nil)).Once()
+		c.SetParamValues(*expectedArticle.Slug, expectedComment.ID.Hex())
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(nil, app.ArticleNotFoundError(*expectedArticle.Slug, nil)).Once()
 
 		// Act
 		err := handler.DeleteComment(c)
 
 		// Assert
-		require.ErrorContains(t, err, api.ArticleNotFound(slug).Error())
+		require.ErrorContains(t, err, api.ArticleNotFound(*expectedArticle.Slug).Error())
 	})
 
 	t.Run("Should return HTTP 404 if no comment is found", func(t *testing.T) {
 		// Arrange
-		expectedAuthor := assembleRandomUser()
-		expectedArticle := assembleArticleModel(*expectedAuthor.ID)
-		commentID := primitive.NewObjectID().Hex()
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", *expectedArticle.Slug, commentID), nil)
+		articleAuthorID := primitive.NewObjectID()
+		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
+		expectedArticle := assembleArticleModel(articleAuthorID)
+		expectedComment := assembleCommentModel(articleAuthorID.Hex(), expectedArticle.ID.Hex())
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s/comments/%s", expectedArticle.ID.Hex(), expectedComment.ID.Hex()), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.Header.Set("Goduit-Subject", expectedAuthor.ID.Hex())
 		req.Header.Set("Goduit-Client-Username", *expectedAuthor.Username)
@@ -113,15 +116,15 @@ func TestDeleteComment(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug", "id")
-		c.SetParamValues(*expectedArticle.Slug, commentID)
 		ctx := c.Request().Context()
+		c.SetParamValues(*expectedArticle.Slug, expectedComment.ID.Hex())
 		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
-		commentDeleterMock.EXPECT().GetCommentByID(ctx, commentID).Return(nil, app.CommentNotFoundError(commentID, nil)).Once()
+		commentDeleterMock.EXPECT().GetCommentByID(ctx, expectedComment.ID.Hex()).Return(nil, app.CommentNotFoundError(expectedComment.ID.Hex(), nil)).Once()
 
 		// Act
 		err := handler.DeleteComment(c)
 
 		// Assert
-		require.ErrorContains(t, err, api.CommentNotFound(commentID).Error())
+		require.ErrorContains(t, err, api.CommentNotFound(expectedComment.ID.Hex()).Error())
 	})
 }
