@@ -44,7 +44,7 @@ func (s *server) Start() {
 }
 
 func NewServer() (Server, error) {
-	serverLogger := log.NewLogger(map[string]string{"emitter": "Backstage-Groups-API"})
+	serverLogger := log.NewLogger(map[string]string{"emitter": "Goduit-API"})
 	databaseClient, err := mongo.ConnectDatabase(viper.GetString("db.url"))
 	if err != nil {
 		return nil, err

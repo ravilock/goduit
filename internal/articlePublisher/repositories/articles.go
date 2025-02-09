@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ravilock/goduit/internal/app"
@@ -76,6 +77,26 @@ func (r *ArticleRepository) GetArticleBySlug(ctx context.Context, slug string) (
 	if err := collection.FindOne(ctx, filter).Decode(&article); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, app.ArticleNotFoundError(slug, err)
+		}
+		return nil, err
+	}
+	return article, nil
+}
+
+func (r *ArticleRepository) GetArticleByID(ctx context.Context, ID string) (*models.Article, error) {
+	var article *models.Article
+	articleID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse ID: %s into ObjectID: %w", ID, err)
+	}
+	filter := bson.D{{
+		Key:   "_id",
+		Value: articleID,
+	}}
+	collection := r.DBClient.Database("conduit").Collection("articles")
+	if err := collection.FindOne(ctx, filter).Decode(&article); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, app.ArticleNotFoundError(ID, err)
 		}
 		return nil, err
 	}

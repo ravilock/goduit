@@ -3,12 +3,17 @@ SVC_DB := mongo mongo-express
 SVC_QUEUE := goduit-queue
 LOGS_CMD := docker-compose logs --follow --tail=5
 
+DB_EXEC_CMD := docker-compose exec mongo bash -c
+
 run: run-all
 
 run-all: run-db run-queue run-api
 
 run-api:
 	@docker-compose up -d $(SVC_API)
+
+run-article-feed-worker:
+	@docker-compose exec $(SVC_API) go run ./cmd/article-feed-worker/article-feed-worker.go
 
 run-db:
 	@docker-compose up -d $(SVC_DB)
@@ -35,6 +40,9 @@ logs-db:
 
 logs-all:
 	@$(LOGS_CMD)
+
+connect-db:
+	@$(DB_EXEC_CMD) 'mongosh "mongodb://goduit:goduit-password@mongo:27017/"'
 
 .PHONY: test
 test:
