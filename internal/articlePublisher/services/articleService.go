@@ -1,6 +1,9 @@
 package services
 
-import "github.com/ravilock/goduit/internal/articlePublisher/repositories"
+import (
+	"github.com/ravilock/goduit/internal/articlePublisher/publishers"
+	"github.com/ravilock/goduit/internal/articlePublisher/repositories"
+)
 
 type ArticlePublisher struct {
 	writeArticleService
@@ -10,8 +13,8 @@ type ArticlePublisher struct {
 	listArticleService
 }
 
-func NewArticlePublisher(articleRepository *repositories.ArticleRepository) *ArticlePublisher {
-	write := writeArticleService{articleRepository}
+func NewArticlePublisher(articleRepository *repositories.ArticleRepository, articleQueuePublisher *publishers.ArticleQueuePublisher) *ArticlePublisher {
+	write := writeArticleService{articleRepository, articleQueuePublisher}
 	get := getArticleService{articleRepository}
 	unpublish := unpublishArticleService{articleRepository}
 	update := updateArticleService{articleRepository}

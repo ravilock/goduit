@@ -1,16 +1,20 @@
 SVC_API := goduit-api
 SVC_DB := mongo mongo-express
+SVC_QUEUE := goduit-queue
 LOGS_CMD := docker-compose logs --follow --tail=5
 
 run: run-all
 
-run-all: run-db run-api
+run-all: run-db run-queue run-api
 
 run-api:
 	@docker-compose up -d $(SVC_API)
 
 run-db:
 	@docker-compose up -d $(SVC_DB)
+
+run-queue:
+	@docker-compose up -d $(SVC_QUEUE)
 
 stop: stop-all
 

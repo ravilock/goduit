@@ -2,11 +2,13 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -23,12 +25,18 @@ func (r *ArticleRepository) WriteArticle(ctx context.Context, article *models.Ar
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	article.CreatedAt = &now
 	collection := r.DBClient.Database("conduit").Collection("articles")
-	if _, err := collection.InsertOne(ctx, article); err != nil {
+	result, err := collection.InsertOne(ctx, article)
+	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return app.ConflictError("articles")
 		}
 		return err
 	}
+	newId, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return errors.New("could not convert article ID")
+	}
+	article.ID = &newId
 	return nil
 }
 
