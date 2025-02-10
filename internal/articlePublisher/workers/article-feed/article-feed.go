@@ -123,6 +123,7 @@ func (w *ArticleFeedWorker) Consume() {
 			followerIDs = append(followerIDs, *follower.Follower)
 		}
 
+		// TODO: Only do appending of article for active users (last 30 days)
 		if err := w.feedAppender.AppendArticleToUserFeeds(ctx, article, author, followerIDs); err != nil {
 			w.logger.Error("Failed to write feed for users", "error", err)
 			continue
