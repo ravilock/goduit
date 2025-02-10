@@ -28,6 +28,7 @@ func init() {
 	viper.SetDefault("db.url", "mongodb://goduit:goduit-password@mongo:27017/")
 	viper.SetDefault("queue.url", "amqp://guest:guest@goduit-queue:5672/")
 	viper.SetDefault("article.queue.name", "new-articles-queue")
+	viper.SetDefault("feed.max.articles", 30)
 	viper.SetDefault("private.key.location", "/app/jwtRS256.key")
 	viper.SetDefault("public.key.location", "/app/jwtRS256.key.pub")
 }
