@@ -86,7 +86,7 @@ func TestUpdateArticle(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(*expectedArticle.Slug)
-    ctx := c.Request().Context()
+		ctx := c.Request().Context()
 		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(nil, app.ArticleNotFoundError(*expectedArticle.Slug, nil)).Once()
 
 		// Act
