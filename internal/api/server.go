@@ -78,11 +78,12 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 	followerRepository := followerRepositories.NewFollowerRepository(databaseClient)
 	commentRepository := articleRepositories.NewCommentRepository(databaseClient)
 	articlePublisherRepository := articleRepositories.NewArticleRepository(databaseClient)
+	feedRepository := articleRepositories.NewFeedRepository(databaseClient)
 	// services
 	profileManager := profileServices.NewProfileManager(userRepository)
 	followerCentral := followerServices.NewFollowerCentral(followerRepository)
 	commentPublisher := articleServices.NewCommentPublisher(commentRepository)
-	articlePublisher := articleServices.NewArticlePublisher(articlePublisherRepository, articleQueuePublisher)
+	articlePublisher := articleServices.NewArticlePublisher(articlePublisherRepository, feedRepository, articleQueuePublisher)
 	// handlers
 	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral)
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
@@ -121,6 +122,7 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 	articlesGroup := apiGroup.Group("/articles")
 	articlesGroup.POST("", articleHandler.WriteArticle, requiredAuthMiddleware)
 	articlesGroup.GET("", articleHandler.ListArticles, optionalAuthMiddleware)
+	articlesGroup.GET("/feed", articleHandler.FeedArticles, requiredAuthMiddleware)
 	articlesGroup.GET("/:slug", articleHandler.GetArticle, optionalAuthMiddleware)
 	articlesGroup.DELETE("/:slug", articleHandler.UnpublishArticle, requiredAuthMiddleware)
 	articlesGroup.PUT("/:slug", articleHandler.UpdateArticle, requiredAuthMiddleware)

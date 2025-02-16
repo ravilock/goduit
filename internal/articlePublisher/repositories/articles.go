@@ -103,6 +103,30 @@ func (r *ArticleRepository) GetArticleByID(ctx context.Context, ID string) (*mod
 	return article, nil
 }
 
+func (r *ArticleRepository) GetArticlesByIDs(ctx context.Context, IDs []string) ([]*models.Article, error) {
+	articleIDs := make([]primitive.ObjectID, 0, len(IDs))
+	for _, ID := range IDs {
+		articleID, err := primitive.ObjectIDFromHex(ID)
+		if err != nil {
+			return nil, err
+		}
+		articleIDs = append(articleIDs, articleID)
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": articleIDs}}
+	opt := options.Find().SetSort(bson.D{{Key: "_id", Value: 1}}).SetLimit(int64(len(articleIDs)))
+	collection := r.DBClient.Database("conduit").Collection("articles")
+	results := make([]*models.Article, 0, len(articleIDs))
+	cursor, err := collection.Find(ctx, filter, opt)
+	if err != nil {
+		return results, err
+	}
+	if err = cursor.All(ctx, &results); err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 func (r *ArticleRepository) DeleteArticle(ctx context.Context, slug string) error {
 	filter := bson.D{{
 		Key:   "slug",

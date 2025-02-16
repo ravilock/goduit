@@ -11,13 +11,15 @@ type ArticlePublisher struct {
 	unpublishArticleService
 	updateArticleService
 	listArticleService
+	feedArticlesService
 }
 
-func NewArticlePublisher(articleRepository *repositories.ArticleRepository, articleQueuePublisher *publishers.ArticleQueuePublisher) *ArticlePublisher {
+func NewArticlePublisher(articleRepository *repositories.ArticleRepository, feedRepository *repositories.FeedRepository, articleQueuePublisher *publishers.ArticleQueuePublisher) *ArticlePublisher {
 	write := writeArticleService{articleRepository, articleQueuePublisher}
 	get := getArticleService{articleRepository}
 	unpublish := unpublishArticleService{articleRepository}
 	update := updateArticleService{articleRepository}
 	list := listArticleService{articleRepository}
-	return &ArticlePublisher{write, get, unpublish, update, list}
+	feed := feedArticlesService{articleRepository, feedRepository}
+	return &ArticlePublisher{write, get, unpublish, update, list, feed}
 }

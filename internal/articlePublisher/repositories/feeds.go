@@ -2,8 +2,10 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	"github.com/spf13/viper"
@@ -19,6 +21,32 @@ type FeedRepository struct {
 
 func NewFeedRepository(client *mongo.Client) *FeedRepository {
 	return &FeedRepository{client}
+}
+
+func (r *FeedRepository) PaginateFeed(ctx context.Context, user string, limit, offset int64) ([]models.FeedFragment, error) {
+	var feed *models.Feed
+	feedID, err := primitive.ObjectIDFromHex(user)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"_id": feedID}
+
+	collection := r.DBClient.Database("conduit").Collection("feeds")
+	if err := collection.FindOne(ctx, filter, nil).Decode(&feed); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, app.FeedNotFoundError(user, err)
+		}
+		return nil, err
+	}
+
+	firstIdx, lastIdx := offset, offset+limit
+	if firstIdx > int64(len(feed.Articles)) {
+		return []models.FeedFragment{}, nil
+	}
+	if lastIdx > int64(len(feed.Articles)) {
+		lastIdx = int64(len(feed.Articles))
+	}
+	return feed.Articles[firstIdx:lastIdx], nil
 }
 
 func (r *FeedRepository) AppendArticleToUserFeeds(ctx context.Context, article *models.Article, author *profileManagerModels.User, userIDs []string) error {
