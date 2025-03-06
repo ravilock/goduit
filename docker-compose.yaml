@@ -7,7 +7,6 @@ services:
       - 3000:3000
     depends_on:
       - mongo
-      - mongo-express
       - goduit-queue
     volumes:
       - ./:/app
@@ -20,16 +19,6 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: goduit
       MONGO_INITDB_ROOT_PASSWORD: goduit-password
-
-  mongo-express:
-    image: mongo-express
-    restart: on-failure
-    ports:
-      - 8081:8081
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: goduit
-      ME_CONFIG_MONGODB_ADMINPASSWORD: goduit-password
-      ME_CONFIG_MONGODB_URL: mongodb://goduit:goduit-password@mongo:27017/
 
   goduit-queue:
     image: rabbitmq:4.0.3

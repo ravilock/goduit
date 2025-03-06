@@ -1,11 +1,15 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/ravilock/goduit/internal/log"
 	"github.com/ravilock/goduit/internal/mongo"
 
 	articleRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
-	articlefeed "github.com/ravilock/goduit/internal/articlePublisher/workers/article-feed"
+	articleFeedWorker "github.com/ravilock/goduit/internal/articlePublisher/workers/article-feed"
 	_ "github.com/ravilock/goduit/internal/config"
 	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	profileRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
@@ -15,8 +19,8 @@ import (
 
 func main() {
 	logger := log.NewLogger(map[string]string{"emitter": "Goduit-Article-Feed-Worker"})
-	forever := make(chan struct{})
-	errChan := make(chan error)
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	databaseClient, err := mongo.ConnectDatabase(viper.GetString("db.url"))
 	if err != nil {
@@ -33,7 +37,12 @@ func main() {
 		panic(err)
 	}
 
-	worker, err := articlefeed.NewArticleFeedWorker(queueConnection, articlePublisherRepository, userRepository, followerRepository, feedRepository, viper.GetString("article.queue.name"), errChan, logger)
+	articleFeedQueueConsumer, err := rabbitmq.NewQueueConsumer(queueConnection, viper.GetString("article.queue.name"))
+	if err != nil {
+		panic(err)
+	}
+
+	worker, err := articleFeedWorker.NewArticleFeedWorker(articleFeedQueueConsumer, articlePublisherRepository, userRepository, followerRepository, feedRepository, viper.GetString("article.queue.name"), logger)
 	if err != nil {
 		panic(err)
 	}
@@ -42,10 +51,8 @@ func main() {
 
 	logger.Info(" [*] Waiting for messages. To exit press CTRL+C\n")
 	select {
-	case <-forever:
-		return
-	case err := <-errChan:
-		logger.Error("Error during message consumption", "error", err.Error())
+	case <-sigChan:
+		articleFeedQueueConsumer.Stop()
 		return
 	}
 }
