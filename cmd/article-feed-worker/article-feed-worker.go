@@ -42,10 +42,7 @@ func main() {
 		panic(err)
 	}
 
-	worker, err := articleFeedWorker.NewArticleFeedWorker(articleFeedQueueConsumer, articlePublisherRepository, userRepository, followerRepository, feedRepository, viper.GetString("article.queue.name"), logger)
-	if err != nil {
-		panic(err)
-	}
+	worker := articleFeedWorker.NewArticleFeedWorker(articleFeedQueueConsumer, articlePublisherRepository, userRepository, followerRepository, feedRepository, logger)
 
 	go worker.Consume()
 

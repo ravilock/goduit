@@ -35,8 +35,8 @@ type ArticleFeedWorker struct {
 	feedAppender    feedAppender
 }
 
-func NewArticleFeedWorker(articleWriteQueueConsumer app.Consumer, articleGetter articleGetter, profileGetter profileGetter, followersGetter followersGetter, feedAppender feedAppender, queueName string, logger *slog.Logger) (*ArticleFeedWorker, error) {
-	articleQueuePublisher := &ArticleFeedWorker{
+func NewArticleFeedWorker(articleWriteQueueConsumer app.Consumer, articleGetter articleGetter, profileGetter profileGetter, followersGetter followersGetter, feedAppender feedAppender, logger *slog.Logger) *ArticleFeedWorker {
+	return &ArticleFeedWorker{
 		logger:          logger,
 		queueConsumer:   articleWriteQueueConsumer,
 		service:         articleGetter,
@@ -44,7 +44,6 @@ func NewArticleFeedWorker(articleWriteQueueConsumer app.Consumer, articleGetter 
 		followerCentral: followersGetter,
 		feedAppender:    feedAppender,
 	}
-	return articleQueuePublisher, nil
 }
 
 func (w *ArticleFeedWorker) Consume() {
