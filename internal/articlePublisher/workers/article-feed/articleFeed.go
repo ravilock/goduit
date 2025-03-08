@@ -27,19 +27,18 @@ type feedAppender interface {
 	AppendArticleToUserFeeds(ctx context.Context, article *models.Article, author *profileManagerModels.User, userIDs []string) error
 }
 
-type ArticleFeedWorker struct {
+type ArticleFeedHandler struct {
 	logger          *slog.Logger
-	queueConsumer   app.Consumer
 	service         articleGetter
 	profileManager  profileGetter
 	followerCentral followersGetter
 	feedAppender    feedAppender
 }
 
-func NewArticleFeedWorker(articleWriteQueueConsumer app.Consumer, articleGetter articleGetter, profileGetter profileGetter, followersGetter followersGetter, feedAppender feedAppender, logger *slog.Logger) *ArticleFeedWorker {
-	return &ArticleFeedWorker{
+func NewArticleFeedHandler(articleGetter articleGetter, profileGetter profileGetter, followersGetter followersGetter, feedAppender feedAppender, logger *slog.Logger) *ArticleFeedHandler {
+	logger = logger.With("emitter", "article-feed-worker")
+	return &ArticleFeedHandler{
 		logger:          logger,
-		queueConsumer:   articleWriteQueueConsumer,
 		service:         articleGetter,
 		profileManager:  profileGetter,
 		followerCentral: followersGetter,
@@ -47,15 +46,7 @@ func NewArticleFeedWorker(articleWriteQueueConsumer app.Consumer, articleGetter 
 	}
 }
 
-func (w *ArticleFeedWorker) Consume() {
-	go w.queueConsumer.StartConsumer()
-	messageQueue := w.queueConsumer.Consume()
-	for message := range messageQueue {
-		w.handle(message)
-	}
-}
-
-func (w *ArticleFeedWorker) handle(message app.Message) {
+func (w *ArticleFeedHandler) Handle(message app.Message) {
 	ctx := context.Background()
 	articleID := string(message.Data())
 	w.logger.Debug("Received a message", "message", articleID)
@@ -123,13 +114,13 @@ func (w *ArticleFeedWorker) handle(message app.Message) {
 	return
 }
 
-func (w *ArticleFeedWorker) success(message app.Message) {
+func (w *ArticleFeedHandler) success(message app.Message) {
 	if err := message.Success(); err != nil {
 		w.logger.Error("Failed to ACK message", "error", err)
 	}
 }
 
-func (w *ArticleFeedWorker) failure(message app.Message) {
+func (w *ArticleFeedHandler) failure(message app.Message) {
 	if err := message.Failure(); err != nil {
 		w.logger.Error("Failed to ACK message", "error", err)
 	}

@@ -1,24 +1,28 @@
 package rabbitmq
 
 import (
+	"log/slog"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/ravilock/goduit/internal/app"
 )
 
-var _ app.Consumer = &queueConsumer{}
-
 type queueConsumer struct {
+	handler      app.Handler
+	logger       *slog.Logger
 	connection   *amqp.Connection
 	channel      *amqp.Channel
 	queueName    string
 	queue        amqp.Queue
 	deliveryChan <-chan amqp.Delivery
-	messageChan  chan app.Message
 	exitChan     chan struct{}
 }
 
-func NewQueueConsumer(connection *amqp.Connection, queueName string) (*queueConsumer, error) {
+func NewQueueConsumer(handler app.Handler, connection *amqp.Connection, queueName string, logger *slog.Logger) (*queueConsumer, error) {
+	logger = logger.With("emitter", "queue-consumer", "queue-name", queueName)
 	queueConsumer := &queueConsumer{
+		handler:    handler,
+		logger:     logger,
 		connection: connection,
 		queueName:  queueName,
 	}
@@ -73,15 +77,15 @@ func (q *queueConsumer) setupAmqpConsumer() error {
 	return nil
 }
 
-func (q *queueConsumer) Consume() <-chan app.Message {
-	return q.messageChan
-}
-
-func (q *queueConsumer) StartConsumer() {
+func (q *queueConsumer) Consume() {
 	for {
+		q.logger.Debug("Waiting for new rabbitmq deliveries")
 		select {
-		case message := <-q.deliveryChan:
-			q.messageChan <- NewAmpqMessage(message)
+		case delivery := <-q.deliveryChan:
+			q.logger.Info("Delivery received", "body", string(delivery.Body))
+			message := NewAmpqMessage(&delivery)
+			q.handler.Handle(message)
+			q.logger.Info("Delivery sent")
 		case <-q.exitChan:
 			// TODO: close consumer and queue connection
 			return

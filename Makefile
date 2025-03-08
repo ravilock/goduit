@@ -1,19 +1,20 @@
 SVC_API := goduit-api
 SVC_DB := mongo
 SVC_QUEUE := goduit-queue
+SVC_FEED_WORKER := goduit-feed-worker
 LOGS_CMD := docker-compose logs --follow --tail=5
 
 DB_EXEC_CMD := docker-compose exec mongo bash -c
 
 run: run-all
 
-run-all: run-db run-queue run-api
+run-all: run-db run-queue run-api run-article-feed-worker
 
 run-api:
 	@docker-compose up -d $(SVC_API)
 
 run-article-feed-worker:
-	@docker-compose exec $(SVC_API) go run ./cmd/article-feed-worker/article-feed-worker.go
+	@docker-compose up -d $(SVC_FEED_WORKER)
 
 run-db:
 	@docker-compose up -d $(SVC_DB)

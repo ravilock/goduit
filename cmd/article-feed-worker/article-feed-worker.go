@@ -34,17 +34,18 @@ func main() {
 
 	queueConnection, err := rabbitmq.ConnectQueue(viper.GetString("queue.url"))
 	if err != nil {
+		logger.Error("Failed to connect to queue", "error", err)
 		panic(err)
 	}
 
-	articleFeedQueueConsumer, err := rabbitmq.NewQueueConsumer(queueConnection, viper.GetString("article.queue.name"))
+	handler := articleFeedWorker.NewArticleFeedHandler(articlePublisherRepository, userRepository, followerRepository, feedRepository, logger)
+
+	articleFeedQueueConsumer, err := rabbitmq.NewQueueConsumer(handler, queueConnection, viper.GetString("article.queue.name"), logger)
 	if err != nil {
 		panic(err)
 	}
 
-	worker := articleFeedWorker.NewArticleFeedWorker(articleFeedQueueConsumer, articlePublisherRepository, userRepository, followerRepository, feedRepository, logger)
-
-	go worker.Consume()
+	go articleFeedQueueConsumer.Consume()
 
 	logger.Info(" [*] Waiting for messages. To exit press CTRL+C\n")
 	select {

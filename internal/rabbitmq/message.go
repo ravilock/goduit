@@ -9,10 +9,10 @@ import (
 var _ app.Message = &ampqMessage{}
 
 type ampqMessage struct {
-	amqp.Delivery
+	*amqp.Delivery
 }
 
-func NewAmpqMessage(delivery amqp.Delivery) *ampqMessage {
+func NewAmpqMessage(delivery *amqp.Delivery) *ampqMessage {
 	return &ampqMessage{
 		Delivery: delivery,
 	}

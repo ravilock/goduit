@@ -39,8 +39,7 @@ func TestArticleFeedWorker(t *testing.T) {
 	profileGetterMock := newMockProfileGetter(t)
 	followersGetterMock := newMockFollowersGetter(t)
 	feedAppenderMock := newMockFeedAppender(t)
-	articleWriteQueueConsumerMock := app.NewMockConsumer(t)
-	worker := NewArticleFeedWorker(articleWriteQueueConsumerMock, articleGetterMock, profileGetterMock, followersGetterMock, feedAppenderMock, slog.New(logHandler))
+	worker := NewArticleFeedHandler(articleGetterMock, profileGetterMock, followersGetterMock, feedAppenderMock, slog.New(logHandler))
 
 	t.Run("Should receive new article message and append it to followers feed", func(t *testing.T) {
 		// Arrange
@@ -63,7 +62,7 @@ func TestArticleFeedWorker(t *testing.T) {
 		messageMock.EXPECT().Success().Return(nil).Once()
 
 		// Act
-		worker.handle(messageMock)
+		worker.Handle(messageMock)
 
 		// Assert
 		require.Contains(t, logSpy.LastMessage, "Successfully appended article to user feeds")
@@ -84,7 +83,7 @@ func TestArticleFeedWorker(t *testing.T) {
 		messageMock.EXPECT().Success().Return(nil).Once()
 
 		// Act
-		worker.handle(messageMock)
+		worker.Handle(messageMock)
 
 		// Assert
 		require.Contains(t, logSpy.LastMessage, "Article not found")
@@ -105,7 +104,7 @@ func TestArticleFeedWorker(t *testing.T) {
 		messageMock.EXPECT().Failure().Return(nil).Once()
 
 		// Act
-		worker.handle(messageMock)
+		worker.Handle(messageMock)
 
 		// Assert
 		require.Contains(t, logSpy.LastMessage, "Failed to find article")
@@ -127,7 +126,7 @@ func TestArticleFeedWorker(t *testing.T) {
 		messageMock.EXPECT().Success().Return(nil).Once()
 
 		// Act
-		worker.handle(messageMock)
+		worker.Handle(messageMock)
 
 		// Assert
 		require.Contains(t, logSpy.LastMessage, "Author not found")
@@ -149,7 +148,7 @@ func TestArticleFeedWorker(t *testing.T) {
 		messageMock.EXPECT().Failure().Return(nil).Once()
 
 		// Act
-		worker.handle(messageMock)
+		worker.Handle(messageMock)
 
 		// Assert
 		require.Contains(t, logSpy.LastMessage, "Failed to find article author")
@@ -173,7 +172,7 @@ func TestArticleFeedWorker(t *testing.T) {
 		messageMock.EXPECT().Success().Return(nil).Once()
 
 		// Act
-		worker.handle(messageMock)
+		worker.Handle(messageMock)
 
 		// Assert
 		require.Contains(t, logSpy.LastMessage, "No Followers Found")
@@ -197,7 +196,7 @@ func TestArticleFeedWorker(t *testing.T) {
 		messageMock.EXPECT().Failure().Return(nil).Once()
 
 		// Act
-		worker.handle(messageMock)
+		worker.Handle(messageMock)
 
 		// Assert
 		require.Contains(t, logSpy.LastMessage, "Failed to author's followers")
@@ -227,7 +226,7 @@ func TestArticleFeedWorker(t *testing.T) {
 		messageMock.EXPECT().Failure().Return(nil).Once()
 
 		// Act
-		worker.handle(messageMock)
+		worker.Handle(messageMock)
 
 		// Assert
 		require.Contains(t, logSpy.LastMessage, "Failed to write feed for users")
