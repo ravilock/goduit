@@ -50,7 +50,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 	}}
 	collection := r.DBClient.Database("conduit").Collection("users")
 	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, app.UserNotFoundError(email, err)
 		}
 		return nil, err
@@ -66,7 +66,7 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, username string)
 	}}
 	collection := r.DBClient.Database("conduit").Collection("users")
 	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, app.UserNotFoundError(username, err)
 		}
 		return nil, err
@@ -86,7 +86,7 @@ func (r *UserRepository) GetUserByID(ctx context.Context, ID string) (*models.Us
 	}}
 	collection := r.DBClient.Database("conduit").Collection("users")
 	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, app.UserNotFoundError(ID, err)
 		}
 		return nil, err
@@ -109,7 +109,7 @@ func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, client
 		if mongo.IsDuplicateKeyError(err) {
 			return app.ConflictError("users")
 		}
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return app.UserNotFoundError(fmt.Sprintf("%s+%s", subjectEmail, clientUsername), err)
 		}
 		return err

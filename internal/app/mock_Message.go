@@ -64,17 +64,17 @@ func (_c *MockMessage_Data_Call) RunAndReturn(run func() []byte) *MockMessage_Da
 	return _c
 }
 
-// Failure provides a mock function with given fields: _a0
-func (_m *MockMessage) Failure(_a0 error) error {
-	ret := _m.Called(_a0)
+// Failure provides a mock function with no fields
+func (_m *MockMessage) Failure() error {
+	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Failure")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(error) error); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -88,14 +88,13 @@ type MockMessage_Failure_Call struct {
 }
 
 // Failure is a helper method to define mock.On call
-//   - _a0 error
-func (_e *MockMessage_Expecter) Failure(_a0 interface{}) *MockMessage_Failure_Call {
-	return &MockMessage_Failure_Call{Call: _e.mock.On("Failure", _a0)}
+func (_e *MockMessage_Expecter) Failure() *MockMessage_Failure_Call {
+	return &MockMessage_Failure_Call{Call: _e.mock.On("Failure")}
 }
 
-func (_c *MockMessage_Failure_Call) Run(run func(_a0 error)) *MockMessage_Failure_Call {
+func (_c *MockMessage_Failure_Call) Run(run func()) *MockMessage_Failure_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(error))
+		run()
 	})
 	return _c
 }
@@ -105,7 +104,7 @@ func (_c *MockMessage_Failure_Call) Return(_a0 error) *MockMessage_Failure_Call 
 	return _c
 }
 
-func (_c *MockMessage_Failure_Call) RunAndReturn(run func(error) error) *MockMessage_Failure_Call {
+func (_c *MockMessage_Failure_Call) RunAndReturn(run func() error) *MockMessage_Failure_Call {
 	_c.Call.Return(run)
 	return _c
 }

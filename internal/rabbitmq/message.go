@@ -24,7 +24,7 @@ func (a *ampqMessage) Data() []byte {
 }
 
 // Failure implements app.Message.
-func (a *ampqMessage) Failure(error) error {
+func (a *ampqMessage) Failure() error {
 	return a.Reject(false)
 }
 
