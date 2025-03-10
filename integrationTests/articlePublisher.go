@@ -2,6 +2,7 @@ package integrationtests
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,12 +10,16 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
+	articlePublisherModels "github.com/ravilock/goduit/internal/articlePublisher/models"
+	articlePublisherRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func MakeSlug(title string) string {
@@ -58,6 +63,32 @@ func MustWriteArticle(t *testing.T, writeArticlePayload articlePublisherRequests
 	err = json.Unmarshal(resBytes, writeArticleResponse)
 	require.NoError(t, err)
 	return writeArticleResponse
+}
+
+func GenerateArticleModel(authorID string) *articlePublisherModels.Article {
+	title := UniqueTitle()
+	slug := MakeSlug(title)
+	description := "Article Description"
+	body := "Article Body"
+	tagList := []string{"categories", "housing", "technology"}
+	now := time.Now()
+	return &articlePublisherModels.Article{
+		Author:         &authorID,
+		Slug:           &slug,
+		Title:          &title,
+		Description:    &description,
+		Body:           &body,
+		TagList:        tagList,
+		CreatedAt:      &now,
+		UpdatedAt:      &now,
+		FavoritesCount: new(int64),
+	}
+}
+
+func MustWriteArticleRegister(t *testing.T, client *mongo.Client, articleModel *articlePublisherModels.Article) {
+	articleRepository := articlePublisherRepositories.NewArticleRepository(client)
+	err := articleRepository.WriteArticle(context.Background(), articleModel)
+	require.NoError(t, err)
 }
 
 func MustWriteArticles(t *testing.T, amount int, authorToken, authorUsername, authorID string) ([]*articlePublisherResponses.ArticleResponse, []string) {

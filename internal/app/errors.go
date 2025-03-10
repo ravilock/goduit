@@ -10,6 +10,7 @@ const (
 	UserNotFoundErrorCode ErrorCode = iota + 1
 	ArticleNotFoundErrorCode
 	CommentNotFoundErrorCode
+	FeedNotFoundErrorCode
 	WrongPasswordErrorCode
 	ConflictErrorCode
 )
@@ -50,6 +51,14 @@ func CommentNotFoundError(identifier string, originalError error) *AppError {
 		ErrorCode:     CommentNotFoundErrorCode,
 		CustomMessage: fmt.Sprintf("Comment with identifier %q was not found", identifier),
 		OriginalError: originalError,
+	}
+}
+
+func FeedNotFoundError(identifier string, originalError error) *AppError {
+	return &AppError{
+		OriginalError: originalError,
+		CustomMessage: fmt.Sprintf("Feed for user %q was not found", identifier),
+		ErrorCode:     FeedNotFoundErrorCode,
 	}
 }
 

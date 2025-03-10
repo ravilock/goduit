@@ -2,11 +2,14 @@ package repositories
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -23,12 +26,18 @@ func (r *ArticleRepository) WriteArticle(ctx context.Context, article *models.Ar
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	article.CreatedAt = &now
 	collection := r.DBClient.Database("conduit").Collection("articles")
-	if _, err := collection.InsertOne(ctx, article); err != nil {
+	result, err := collection.InsertOne(ctx, article)
+	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return app.ConflictError("articles")
 		}
 		return err
 	}
+	newId, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return errors.New("could not convert article ID")
+	}
+	article.ID = &newId
 	return nil
 }
 
@@ -72,6 +81,50 @@ func (r *ArticleRepository) GetArticleBySlug(ctx context.Context, slug string) (
 		return nil, err
 	}
 	return article, nil
+}
+
+func (r *ArticleRepository) GetArticleByID(ctx context.Context, ID string) (*models.Article, error) {
+	var article *models.Article
+	articleID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse ID: %s into ObjectID: %w", ID, err)
+	}
+	filter := bson.D{{
+		Key:   "_id",
+		Value: articleID,
+	}}
+	collection := r.DBClient.Database("conduit").Collection("articles")
+	if err := collection.FindOne(ctx, filter).Decode(&article); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, app.ArticleNotFoundError(ID, err)
+		}
+		return nil, err
+	}
+	return article, nil
+}
+
+func (r *ArticleRepository) GetArticlesByIDs(ctx context.Context, IDs []string) ([]*models.Article, error) {
+	articleIDs := make([]primitive.ObjectID, 0, len(IDs))
+	for _, ID := range IDs {
+		articleID, err := primitive.ObjectIDFromHex(ID)
+		if err != nil {
+			return nil, err
+		}
+		articleIDs = append(articleIDs, articleID)
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": articleIDs}}
+	opt := options.Find().SetSort(bson.D{{Key: "_id", Value: 1}}).SetLimit(int64(len(articleIDs)))
+	collection := r.DBClient.Database("conduit").Collection("articles")
+	results := make([]*models.Article, 0, len(articleIDs))
+	cursor, err := collection.Find(ctx, filter, opt)
+	if err != nil {
+		return results, err
+	}
+	if err = cursor.All(ctx, &results); err != nil {
+		return results, err
+	}
+	return results, nil
 }
 
 func (r *ArticleRepository) DeleteArticle(ctx context.Context, slug string) error {

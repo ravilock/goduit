@@ -58,7 +58,7 @@ func (h *listArticlesHandler) ListArticles(c echo.Context) error {
 		return err
 	}
 
-	response := responses.ArticlesResponse{Articles: make([]responses.Article, 0, len(articles))}
+	response := responses.ArticlesResponse{Articles: make([]responses.MultiArticle, 0, len(articles))}
 	for _, article := range articles {
 		// TODO: refactor so that if multiple articles from the same author and are in the same page, this loop wont repeat for each article
 		author, err := h.profileManager.GetProfileByID(ctx, *article.Author)
@@ -73,7 +73,7 @@ func (h *listArticlesHandler) ListArticles(c echo.Context) error {
 			continue
 		}
 
-		response.Articles = append(response.Articles, assemblers.ArticleResponse(article, authorProfile).Article)
+		response.Articles = append(response.Articles, *assemblers.MultiArticleResponse(article, authorProfile))
 	}
 
 	return c.JSON(http.StatusOK, response)

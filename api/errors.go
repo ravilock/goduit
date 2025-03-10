@@ -88,6 +88,13 @@ func ArticleNotFound(identifier string) *echo.HTTPError {
 	}
 }
 
+func FeedNotFound(identifier string) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:    http.StatusNotFound,
+		Message: fmt.Sprintf("Feed for user %q not found", identifier),
+	}
+}
+
 func CommentNotFound(identifier string) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:    http.StatusNotFound,

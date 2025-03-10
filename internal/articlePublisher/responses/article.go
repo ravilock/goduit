@@ -1,8 +1,9 @@
 package responses
 
 import (
-	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"time"
+
+	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 )
 
 type ArticleResponse struct {
@@ -10,18 +11,30 @@ type ArticleResponse struct {
 }
 
 type Article struct {
+	CreatedAt      *time.Time                      `json:"createdAt"`
+	UpdatedAt      *time.Time                      `json:"updatedAt,omitempty"`
 	Slug           string                          `json:"slug"`
 	Title          string                          `json:"title"`
 	Description    string                          `json:"description"`
 	Body           string                          `json:"body"`
-	TagList        []string                        `json:"tagList"`
-	CreatedAt      *time.Time                      `json:"createdAt"`
-	UpdatedAt      *time.Time                      `json:"updatedAt,omitempty"`
-	Favorited      bool                            `json:"favorited"`
-	FavoritesCount int64                           `json:"favoritesCount"`
 	Author         profileManagerResponses.Profile `json:"author"`
+	TagList        []string                        `json:"tagList"`
+	FavoritesCount int64                           `json:"favoritesCount"`
+	Favorited      bool                            `json:"favorited"`
 }
 
 type ArticlesResponse struct {
-	Articles []Article `json:"articles"`
+	Articles []MultiArticle `json:"articles"`
+}
+
+type MultiArticle struct {
+	CreatedAt      *time.Time                      `json:"createdAt"`
+	UpdatedAt      *time.Time                      `json:"updatedAt,omitempty"`
+	Slug           string                          `json:"slug"`
+	Title          string                          `json:"title"`
+	Description    string                          `json:"description"`
+	Author         profileManagerResponses.Profile `json:"author"`
+	TagList        []string                        `json:"tagList"`
+	FavoritesCount int64                           `json:"favoritesCount"`
+	Favorited      bool                            `json:"favorited"`
 }

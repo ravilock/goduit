@@ -7,8 +7,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/ravilock/goduit/api/validators"
 	articleHandlers "github.com/ravilock/goduit/internal/articlePublisher/handlers"
+	articlePublishers "github.com/ravilock/goduit/internal/articlePublisher/publishers"
 	articleRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
 	articleServices "github.com/ravilock/goduit/internal/articlePublisher/services"
 	followerHandlers "github.com/ravilock/goduit/internal/followerCentral/handlers"
@@ -20,6 +22,7 @@ import (
 	profileHandlers "github.com/ravilock/goduit/internal/profileManager/handlers"
 	profileRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileServices "github.com/ravilock/goduit/internal/profileManager/services"
+	"github.com/ravilock/goduit/internal/rabbitmq"
 	"github.com/spf13/viper"
 	mongoDriver "go.mongodb.org/mongo-driver/mongo"
 )
@@ -31,7 +34,8 @@ type Server interface {
 
 type server struct {
 	*echo.Echo
-	db *mongoDriver.Client
+	db    *mongoDriver.Client
+	queue *amqp.Connection
 }
 
 func (s *server) Start() {
@@ -40,35 +44,46 @@ func (s *server) Start() {
 }
 
 func NewServer() (Server, error) {
-	serverLogger := log.NewLogger(map[string]string{"emitter": "Backstage-Groups-API"})
+	serverLogger := log.NewLogger(map[string]string{"emitter": "Goduit-API"})
 	databaseClient, err := mongo.ConnectDatabase(viper.GetString("db.url"))
 	if err != nil {
 		return nil, err
 	}
 
-	return createNewServer(databaseClient, serverLogger)
+	queueConnection, err := rabbitmq.ConnectQueue(viper.GetString("queue.url"))
+	if err != nil {
+		return nil, err
+	}
+
+	return createNewServer(databaseClient, queueConnection, serverLogger)
 }
 
-func createNewServer(databaseClient *mongoDriver.Client, logger *slog.Logger) (Server, error) {
+func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.Connection, _ *slog.Logger) (Server, error) {
 	// TODO: Add logger to each controller
 	// Echo instance
 	e := echo.New()
 
 	server := &server{
-		Echo: e,
-		db:   databaseClient,
-		// measuresReporter: measuresReporter,
+		Echo:  e,
+		db:    databaseClient,
+		queue: queueConnection,
+	}
+	// queue publishers
+	articleQueuePublisher, err := articlePublishers.NewArticleQueuePublisher(queueConnection, viper.GetString("article.queue.name"))
+	if err != nil {
+		return nil, err
 	}
 	// repositories
 	userRepository := profileRepositories.NewUserRepository(databaseClient)
 	followerRepository := followerRepositories.NewFollowerRepository(databaseClient)
 	commentRepository := articleRepositories.NewCommentRepository(databaseClient)
 	articlePublisherRepository := articleRepositories.NewArticleRepository(databaseClient)
+	feedRepository := articleRepositories.NewFeedRepository(databaseClient)
 	// services
 	profileManager := profileServices.NewProfileManager(userRepository)
 	followerCentral := followerServices.NewFollowerCentral(followerRepository)
 	commentPublisher := articleServices.NewCommentPublisher(commentRepository)
-	articlePublisher := articleServices.NewArticlePublisher(articlePublisherRepository)
+	articlePublisher := articleServices.NewArticlePublisher(articlePublisherRepository, feedRepository, articleQueuePublisher)
 	// handlers
 	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral)
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
@@ -107,6 +122,7 @@ func createNewServer(databaseClient *mongoDriver.Client, logger *slog.Logger) (S
 	articlesGroup := apiGroup.Group("/articles")
 	articlesGroup.POST("", articleHandler.WriteArticle, requiredAuthMiddleware)
 	articlesGroup.GET("", articleHandler.ListArticles, optionalAuthMiddleware)
+	articlesGroup.GET("/feed", articleHandler.FeedArticles, requiredAuthMiddleware)
 	articlesGroup.GET("/:slug", articleHandler.GetArticle, optionalAuthMiddleware)
 	articlesGroup.DELETE("/:slug", articleHandler.UnpublishArticle, requiredAuthMiddleware)
 	articlesGroup.PUT("/:slug", articleHandler.UpdateArticle, requiredAuthMiddleware)

@@ -188,6 +188,6 @@ func checkListArticlesResponse(t *testing.T, tags []string, authorsUsername []st
 	}
 }
 
-func checkArticlesAreTheSame(articleA, articleB *articlePublisherResponses.Article) bool {
+func checkArticlesAreTheSame(articleA, articleB *articlePublisherResponses.MultiArticle) bool {
 	return articleA.Slug == articleB.Slug
 }

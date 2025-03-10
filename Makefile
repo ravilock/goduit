@@ -1,16 +1,26 @@
 SVC_API := goduit-api
-SVC_DB := mongo mongo-express
+SVC_DB := mongo
+SVC_QUEUE := goduit-queue
+SVC_FEED_WORKER := goduit-feed-worker
 LOGS_CMD := docker-compose logs --follow --tail=5
+
+DB_EXEC_CMD := docker-compose exec mongo bash -c
 
 run: run-all
 
-run-all: run-db run-api
+run-all: run-db run-queue run-api run-article-feed-worker
 
 run-api:
 	@docker-compose up -d $(SVC_API)
 
+run-article-feed-worker:
+	@docker-compose up -d $(SVC_FEED_WORKER)
+
 run-db:
 	@docker-compose up -d $(SVC_DB)
+
+run-queue:
+	@docker-compose up -d $(SVC_QUEUE)
 
 stop: stop-all
 
@@ -32,6 +42,9 @@ logs-db:
 logs-all:
 	@$(LOGS_CMD)
 
+connect-db:
+	@$(DB_EXEC_CMD) 'mongosh "mongodb://goduit:goduit-password@mongo:27017/"'
+
 .PHONY: test
 test:
 	@docker-compose exec $(SVC_API) go test -count=1 `go list ./... | grep -v integrationTests`
@@ -51,5 +64,6 @@ test-integration-verbose:
 bash:
 	@docker-compose exec $(SVC_API) bash
 
+.PHONY: generate-mocks
 generate-mocks:
-	@docker run -v "$PWD":/src -w /src vektra/mockery --all
+	docker run -v "$PWD":/src -w /src vektra/mockery --all
