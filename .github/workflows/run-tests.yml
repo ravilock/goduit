@@ -12,10 +12,10 @@ jobs:
       - name: Start Containers
         run: |
           echo ---Building and starting up docker---
-          docker compose up -d
+          make run
           echo ---Containers up--
       - name: Test Locally With Containers
-        run: docker compose exec -T goduit-api go test -count=1 `go list ./... | grep -v integrationTests`
+        run: make test
       - name: Test Integration With Containers
-        run: docker compose exec -T goduit-api go test ./integrationTests/... -count=1 -p 1
+        run: make test-integration
 
