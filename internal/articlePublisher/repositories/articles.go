@@ -54,7 +54,7 @@ func (r *ArticleRepository) ListArticles(ctx context.Context, author, tag string
 			}},
 		})
 	}
-	opt := options.Find().SetLimit(limit).SetSkip(offset).SetSort(bson.D{{Key: "_id", Value: 1}})
+	opt := options.Find().SetLimit(limit).SetSkip(offset).SetSort(bson.D{{Key: "_id", Value: -1}})
 	collection := r.DBClient.Database("conduit").Collection("articles")
 	results := []*models.Article{}
 	cursor, err := collection.Find(ctx, filter, opt)
