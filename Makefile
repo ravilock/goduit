@@ -66,4 +66,4 @@ bash:
 
 .PHONY: generate-mocks
 generate-mocks:
-	docker run -v "$PWD":/src -w /src vektra/mockery --all
+	mockery --all
