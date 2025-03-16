@@ -19,7 +19,7 @@ import (
 
 func main() {
 	logger := log.NewLogger(map[string]string{"emitter": "Goduit-Article-Feed-Worker"})
-	sigChan := make(chan os.Signal)
+	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	databaseClient, err := mongo.ConnectDatabase(viper.GetString("db.url"))
@@ -48,9 +48,6 @@ func main() {
 	go articleFeedQueueConsumer.Consume()
 
 	logger.Info(" [*] Waiting for messages. To exit press CTRL+C\n")
-	select {
-	case <-sigChan:
-		articleFeedQueueConsumer.Stop()
-		return
-	}
+	<-sigChan
+	articleFeedQueueConsumer.Stop()
 }
