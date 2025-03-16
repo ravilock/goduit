@@ -111,7 +111,6 @@ func (w *ArticleFeedHandler) Handle(message app.Message) {
 
 	w.success(message)
 	w.logger.Debug("Successfully appended article to user feeds")
-	return
 }
 
 func (w *ArticleFeedHandler) success(message app.Message) {

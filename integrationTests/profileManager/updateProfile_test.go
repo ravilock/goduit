@@ -64,7 +64,8 @@ func TestUpdateProfile(t *testing.T) {
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
 		checkProfilePassword(t, updateProfileRequest.User.Username, updateProfileRequest.User.Password, profileManagerRepository)
 		checkProfileUpdatedAt(t, updateProfileRequest.User.Username, requestTime, profileManagerRepository)
-		integrationtests.CheckCookie(t, res)
+		cookie = integrationtests.CheckCookie(t, res)
+		checkUpdatedToken(t, updateProfileRequest, cookie.Value)
 	})
 
 	t.Run("Should not update password if not necessary", func(t *testing.T) {
