@@ -2,6 +2,18 @@ name: Integration Tests
 on: [push]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Test Locally
+      run: go test -count=1 `go list ./... | grep -v integrationTests`
   integration-test:
     runs-on: ubuntu-latest
     steps:
@@ -14,8 +26,6 @@ jobs:
           echo ---Building and starting up docker---
           make run
           echo ---Containers up--
-      - name: Test Locally With Containers
-        run: make test
       - name: Test Integration With Containers
         run: make test-integration
 
