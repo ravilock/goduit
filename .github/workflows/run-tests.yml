@@ -1,13 +1,14 @@
-name: Integration Tests
+name: CI
 on: [push]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/setup-go@v5
+    - name: Setup Golang
+      uses: actions/setup-go@v5
       with:
-        go-version: '1.22'
+        go-version: '1.24.1'
     - name: Checkout
       uses: actions/checkout@v4
       with:
@@ -28,4 +29,26 @@ jobs:
           echo ---Containers up--
       - name: Test Integration With Containers
         run: make test-integration
-
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup Golang
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.1'
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Linting
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: v1.59.0
+        args: --timeout=10m
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup Golang
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.1'
+    - name: Vulnerability Check
+      uses: golang/govulncheck-action@v1
