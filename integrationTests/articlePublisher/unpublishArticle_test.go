@@ -21,12 +21,12 @@ func TestUnpublishArticle(t *testing.T) {
 
 	t.Run("Should unpublish an article", func(t *testing.T) {
 		// Arrange
-		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
+		_, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorCookie)
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s", unpublishArticleEndpoint, article.Article.Slug), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+		req.AddCookie(authorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)
@@ -36,11 +36,11 @@ func TestUnpublishArticle(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if targeted article does not exists", func(t *testing.T) {
 		// Arrange
-		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		_, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s", unpublishArticleEndpoint, uuid.NewString()), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+		req.AddCookie(authorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)
@@ -50,13 +50,13 @@ func TestUnpublishArticle(t *testing.T) {
 
 	t.Run("Should not allow user to delete other author's articles", func(t *testing.T) {
 		// Arrange
-		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
-		_, nonAuthorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		_, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorCookie)
+		_, nonAuthorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s", unpublishArticleEndpoint, article.Article.Slug), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", nonAuthorToken))
+		req.AddCookie(nonAuthorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)

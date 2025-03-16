@@ -34,12 +34,12 @@ func TestUnfollow(t *testing.T) {
 	t.Run("Should follow a user", func(t *testing.T) {
 		// Arrange
 		followedIdentity, _ := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-		followerIdentity, followerToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-		integrationtests.MustFollowUser(t, followedIdentity.Username, followerToken)
+		followerIdentity, followerCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		integrationtests.MustFollowUser(t, followedIdentity.Username, followerCookie)
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s%s%s", followUserEndpoint, followedIdentity.Username, "/followers"), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", followerToken))
+		req.AddCookie(followerCookie)
 
 		// Act
 		res, err := httpClient.Do(req)
@@ -60,11 +60,11 @@ func TestUnfollow(t *testing.T) {
 	t.Run("Should return HTTP 404 if no user is found", func(t *testing.T) {
 		// Arrange
 		inexistentUsername := "inexistent-username"
-		_, followerToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		_, followerCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s%s", followUserEndpoint, inexistentUsername, "/followers"), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", followerToken))
+		req.AddCookie(followerCookie)
 
 		// Act
 		res, err := httpClient.Do(req)

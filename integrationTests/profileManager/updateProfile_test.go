@@ -40,14 +40,14 @@ func TestUpdateProfile(t *testing.T) {
 
 	t.Run("Should fully update an authenticated user's profile", func(t *testing.T) {
 		// Arrange
-		_, token := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		_, cookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
 		requestBody, err := json.Marshal(updateProfileRequest)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodPut, updateProfileEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, token)
+		req.AddCookie(cookie)
 		requestTime := time.Now().UTC().Truncate(time.Millisecond)
 
 		// Act
@@ -62,15 +62,15 @@ func TestUpdateProfile(t *testing.T) {
 		err = json.Unmarshal(resBytes, updateProfileResponse)
 		require.NoError(t, err)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
-		checkUpdatedToken(t, updateProfileRequest, updateProfileResponse.User.Token)
 		checkProfilePassword(t, updateProfileRequest.User.Username, updateProfileRequest.User.Password, profileManagerRepository)
 		checkProfileUpdatedAt(t, updateProfileRequest.User.Username, requestTime, profileManagerRepository)
+		integrationtests.CheckCookie(t, res)
 	})
 
 	t.Run("Should not update password if not necessary", func(t *testing.T) {
 		// Arrange
 		oldUpdateProfileTestPassword := uuid.NewString()
-		_, token := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{Password: oldUpdateProfileTestPassword})
+		_, cookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{Password: oldUpdateProfileTestPassword})
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
 		updateProfileRequest.User.Password = ""
 		requestBody, err := json.Marshal(updateProfileRequest)
@@ -78,7 +78,7 @@ func TestUpdateProfile(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPut, updateProfileEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, token)
+		req.AddCookie(cookie)
 		requestTime := time.Now().UTC().Truncate(time.Millisecond)
 
 		// Act
@@ -93,14 +93,13 @@ func TestUpdateProfile(t *testing.T) {
 		err = json.Unmarshal(resBytes, updateProfileResponse)
 		require.NoError(t, err)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
-		checkUpdatedToken(t, updateProfileRequest, updateProfileResponse.User.Token)
 		checkProfilePassword(t, updateProfileRequest.User.Username, oldUpdateProfileTestPassword, profileManagerRepository)
 		checkProfileUpdatedAt(t, updateProfileRequest.User.Username, requestTime, profileManagerRepository)
 	})
 
 	t.Run("Should not generate new token if not necessary", func(t *testing.T) {
 		// Arrange
-		oldUserIdentity, token := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		oldUserIdentity, cookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
 		updateProfileRequest.User.Password = ""
 		updateProfileRequest.User.Username = oldUserIdentity.Username
@@ -110,7 +109,7 @@ func TestUpdateProfile(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPut, updateProfileEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, token)
+		req.AddCookie(cookie)
 		requestTime := time.Now().UTC().Truncate(time.Millisecond)
 
 		// Act
@@ -125,7 +124,6 @@ func TestUpdateProfile(t *testing.T) {
 		err = json.Unmarshal(resBytes, updateProfileResponse)
 		require.NoError(t, err)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
-		require.Empty(t, updateProfileResponse.User.Token, "Should have not generated new token")
 		checkProfileUpdatedAt(t, updateProfileRequest.User.Username, requestTime, profileManagerRepository)
 	})
 }

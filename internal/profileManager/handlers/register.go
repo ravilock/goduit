@@ -18,7 +18,8 @@ type profileRegister interface {
 }
 
 type registerProfileHandler struct {
-	service profileRegister
+	service       profileRegister
+	cookieService CookieCreator
 }
 
 func (h *registerProfileHandler) Register(c echo.Context) error {
@@ -44,6 +45,8 @@ func (h *registerProfileHandler) Register(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(user, token)
+	response := assemblers.UserResponse(user)
+	cookie := h.cookieService.Create(token)
+	c.SetCookie(cookie)
 	return c.JSON(http.StatusCreated, response)
 }

@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/labstack/echo/v4"
 	integrationtests "github.com/ravilock/goduit/integrationTests"
 	followerCentralRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	"github.com/ravilock/goduit/internal/mongo"
@@ -55,12 +54,12 @@ func TestGetProfile(t *testing.T) {
 	t.Run("Should return following as true if logged user follows profile", func(t *testing.T) {
 		// Arrange
 		getProfilfeUserIdentity, _ := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-		followerIdentity, followerToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		followerIdentity, followerCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		err := followerCentralRepository.Follow(context.Background(), getProfilfeUserIdentity.Subject, followerIdentity.Subject)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", getProfileEndpoint, getProfilfeUserIdentity.Username), bytes.NewBuffer([]byte{}))
 		require.NoError(t, err)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", followerToken))
+		req.AddCookie(followerCookie)
 
 		// Act
 		res, err := httpClient.Do(req)

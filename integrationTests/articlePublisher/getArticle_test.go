@@ -24,12 +24,12 @@ func TestGetArticle(t *testing.T) {
 
 	t.Run("Should get an article", func(t *testing.T) {
 		// Arrange
-		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
+		authorIdentity, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorCookie)
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", publicArticleEndpoint, article.Article.Slug), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+		req.AddCookie(authorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)
@@ -45,11 +45,11 @@ func TestGetArticle(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		// Arrange
-		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		_, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", publicArticleEndpoint, uuid.NewString()), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+		req.AddCookie(authorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)

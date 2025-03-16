@@ -67,6 +67,7 @@ func TestLogin(t *testing.T) {
 		postLoginModel, err := profileManagerRepository.GetUserByEmail(context.Background(), loginRequest.User.Email)
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, *postLoginModel.LastSession, *preLoginModel.LastSession, "User Last Session Was not Updated")
+		integrationtests.CheckCookie(t, res)
 	})
 
 	t.Run("Should return 401 if email is not found", func(t *testing.T) {
@@ -130,7 +131,6 @@ func generateLoginBody() *profileManagerRequests.LoginRequest {
 func checkLoginResponse(t *testing.T, request *profileManagerRequests.LoginRequest, response *profileManagerResponses.User) {
 	t.Helper()
 	require.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
-	require.NotZero(t, response.User.Token)
 	require.Zero(t, response.User.Image)
 	require.Zero(t, response.User.Bio)
 }

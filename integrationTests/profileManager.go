@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"testing"
 
+	"github.com/ravilock/goduit/internal/cookie"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 
@@ -17,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func MustRegisterUser(t *testing.T, registerPayload profileManagerRequests.RegisterPayload) (*identity.Identity, string) {
+func MustRegisterUser(t *testing.T, registerPayload profileManagerRequests.RegisterPayload) (*identity.Identity, *http.Cookie) {
 	httpClient := http.Client{}
 	serverUrl := viper.GetString("server.url")
 	registerEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/users")
@@ -46,7 +48,18 @@ func MustRegisterUser(t *testing.T, registerPayload profileManagerRequests.Regis
 	require.Equal(t, http.StatusCreated, res.StatusCode)
 	err = json.Unmarshal(resBytes, registerResponse)
 	require.NoError(t, err)
-	id, err := identity.FromToken(registerResponse.User.Token)
+	cookie := CheckCookie(t, res)
+	id, err := identity.FromToken(cookie.Value)
 	require.NoError(t, err)
-	return id, registerResponse.User.Token
+	return id, cookie
+}
+
+func CheckCookie(t *testing.T, res *http.Response) *http.Cookie {
+	cookies := res.Cookies()
+	cIndex := slices.IndexFunc(cookies, func(c *http.Cookie) bool {
+		return c.Name == cookie.CookieKey
+	})
+	require.NotEqual(t, -1, cIndex, "Cookie not found")
+	cookie := cookies[cIndex]
+	return cookie
 }

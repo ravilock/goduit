@@ -13,6 +13,7 @@ import (
 	articlePublishers "github.com/ravilock/goduit/internal/articlePublisher/publishers"
 	articleRepositories "github.com/ravilock/goduit/internal/articlePublisher/repositories"
 	articleServices "github.com/ravilock/goduit/internal/articlePublisher/services"
+	"github.com/ravilock/goduit/internal/cookie"
 	followerHandlers "github.com/ravilock/goduit/internal/followerCentral/handlers"
 	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	followerServices "github.com/ravilock/goduit/internal/followerCentral/services"
@@ -84,8 +85,9 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 	followerCentral := followerServices.NewFollowerCentral(followerRepository)
 	commentPublisher := articleServices.NewCommentPublisher(commentRepository)
 	articlePublisher := articleServices.NewArticlePublisher(articlePublisherRepository, feedRepository, articleQueuePublisher)
+	cookieManager := cookie.NewCookieManager()
 	// handlers
-	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral)
+	profileHandler := profileHandlers.NewProfileHandler(profileManager, followerCentral, cookieManager)
 	followerHandler := followerHandlers.NewFollowerHandler(followerCentral, profileManager)
 	articleHandler := articleHandlers.NewArticleHandler(articlePublisher, profileManager, followerCentral)
 	commentHandler := articleHandlers.NewCommentHandler(commentPublisher, articlePublisher, profileManager, followerCentral)
@@ -93,7 +95,12 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
+	// TODO: make origins be loaded as configurations
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowCredentials: true,
+	}))
 
 	// Start Validator
 	if err := validators.InitValidator(); err != nil {
@@ -110,6 +117,7 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 	usersGroup := apiGroup.Group("/users")
 	usersGroup.POST("", profileHandler.Register)
 	usersGroup.POST("/login", profileHandler.Login)
+	usersGroup.POST("/logout", profileHandler.Logout)
 	userGroup := apiGroup.Group("/user")
 	userGroup.GET("", profileHandler.GetOwnProfile, requiredAuthMiddleware)
 	userGroup.PUT("", profileHandler.UpdateProfile, requiredAuthMiddleware)

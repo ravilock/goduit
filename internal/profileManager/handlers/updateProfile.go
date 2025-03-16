@@ -20,7 +20,8 @@ type profileUpdater interface {
 }
 
 type updateProfileHandler struct {
-	service profileUpdater
+	service       profileUpdater
+	cookieService CookieCreator
 }
 
 func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
@@ -53,6 +54,10 @@ func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(model, token)
+	response := assemblers.UserResponse(model)
+	if token != "" {
+		cookie := h.cookieService.Create(token)
+		c.SetCookie(cookie)
+	}
 	return c.JSON(http.StatusOK, response)
 }

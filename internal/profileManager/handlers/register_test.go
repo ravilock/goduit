@@ -11,6 +11,7 @@ import (
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/cookie"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"github.com/stretchr/testify/require"
@@ -19,8 +20,10 @@ import (
 func TestRegister(t *testing.T) {
 	err := validators.InitValidator()
 	require.NoError(t, err)
+	cookieManager := cookie.NewCookieManager()
 	profileRegisterMock := newMockProfileRegister(t)
-	handler := registerProfileHandler{service: profileRegisterMock}
+	cookieCreatorMock := NewMockCookieCreator(t)
+	handler := registerProfileHandler{service: profileRegisterMock, cookieService: cookieCreatorMock}
 	e := echo.New()
 
 	t.Run("Should create new user", func(t *testing.T) {
@@ -33,7 +36,9 @@ func TestRegister(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		expectedToken := "token"
+		expectedCookie := cookieManager.Create(expectedToken)
 		profileRegisterMock.EXPECT().Register(c.Request().Context(), registerRequest.Model(), registerRequest.User.Password).Return(expectedToken, nil).Once()
+		cookieCreatorMock.EXPECT().Create(expectedToken).Return(expectedCookie)
 
 		// Act
 		err = handler.Register(c)
@@ -44,6 +49,7 @@ func TestRegister(t *testing.T) {
 		registerResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), registerResponse)
 		require.NoError(t, err)
+		checkCookie(t, rec, expectedToken)
 		checkRegisterResponse(t, registerRequest, expectedToken, registerResponse)
 	})
 
@@ -78,7 +84,6 @@ func checkRegisterResponse(t *testing.T, request *profileManagerRequests.Registe
 	t.Helper()
 	require.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	require.Equal(t, request.User.Username, response.User.Username, "User Username should be the same")
-	require.Equal(t, expectedToken, response.User.Token)
 	require.Zero(t, response.User.Image)
 	require.Zero(t, response.User.Bio)
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/cookie"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"github.com/stretchr/testify/require"
@@ -22,8 +23,10 @@ import (
 func TestUpdateProfile(t *testing.T) {
 	err := validators.InitValidator()
 	require.NoError(t, err)
+	cookieManager := cookie.NewCookieManager()
 	profileUpdaterMock := newMockProfileUpdater(t)
-	handler := updateProfileHandler{service: profileUpdaterMock}
+	cookieCreatorMock := NewMockCookieCreator(t)
+	handler := updateProfileHandler{service: profileUpdaterMock, cookieService: cookieCreatorMock}
 	e := echo.New()
 	imageServer := mockValidImageURL(t)
 	defer imageServer.Close()
@@ -44,7 +47,9 @@ func TestUpdateProfile(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		expectedToken := "token"
+		expectedCookie := cookieManager.Create(expectedToken)
 		profileUpdaterMock.EXPECT().UpdateProfile(c.Request().Context(), clientEmail, clientUsername, updateProfileRequest.User.Password, updateProfileRequest.Model()).Return(expectedToken, nil).Once()
+		cookieCreatorMock.EXPECT().Create(expectedToken).Return(expectedCookie)
 
 		// Act
 		err = handler.UpdateProfile(c)
@@ -55,8 +60,8 @@ func TestUpdateProfile(t *testing.T) {
 		updateProfileResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), updateProfileResponse)
 		require.NoError(t, err)
+		checkCookie(t, rec, expectedToken)
 		checkUpdateProfileResponse(t, updateProfileRequest, updateProfileResponse)
-		require.Equal(t, expectedToken, updateProfileResponse.User.Token)
 	})
 
 	t.Run("Should return HTTP 409 if new username or email is already being used", func(t *testing.T) {

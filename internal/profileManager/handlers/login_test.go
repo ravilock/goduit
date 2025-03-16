@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app"
+	"github.com/ravilock/goduit/internal/cookie"
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
@@ -29,8 +31,10 @@ const (
 func TestLogin(t *testing.T) {
 	err := validators.InitValidator()
 	require.NoError(t, err)
+	cookieManager := cookie.NewCookieManager()
 	authenticatorMock := newMockAuthenticator(t)
-	handler := loginHandler{service: authenticatorMock}
+	cookieCreatorMock := NewMockCookieCreator(t)
+	handler := loginHandler{service: authenticatorMock, cookieService: cookieCreatorMock}
 	e := echo.New()
 
 	t.Run("Should successfully login", func(t *testing.T) {
@@ -57,8 +61,10 @@ func TestLogin(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		expectedToken := "token"
+		expectedCookie := cookieManager.Create(expectedToken)
 		authenticatorMock.EXPECT().Login(c.Request().Context(), loginRequest.User.Email, loginRequest.User.Password).Return(expectedUserModel, expectedToken, nil).Once()
 		authenticatorMock.EXPECT().UpdateProfile(mock.AnythingOfType("context.backgroundCtx"), loginRequest.User.Email, *expectedUserModel.Username, "", mock.AnythingOfType("*models.User")).Return("", nil).Once()
+		cookieCreatorMock.EXPECT().Create(expectedToken).Return(expectedCookie)
 
 		// Act
 		err = handler.Login(c)
@@ -69,6 +75,7 @@ func TestLogin(t *testing.T) {
 		loginResponse := new(profileManagerResponses.User)
 		err = json.Unmarshal(rec.Body.Bytes(), loginResponse)
 		require.NoError(t, err)
+		checkCookie(t, rec, expectedToken)
 		checkLoginResponse(t, loginRequest, loginResponse)
 	})
 
@@ -119,7 +126,14 @@ func generateLoginBody() *profileManagerRequests.LoginRequest {
 func checkLoginResponse(t *testing.T, request *profileManagerRequests.LoginRequest, response *profileManagerResponses.User) {
 	t.Helper()
 	require.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
-	require.NotZero(t, response.User.Token)
 	require.Zero(t, response.User.Image)
 	require.Zero(t, response.User.Bio)
+}
+
+func checkCookie(t *testing.T, rec *httptest.ResponseRecorder, expectedToken string) {
+	res, ok := rec.Result().Header["Set-Cookie"]
+	require.True(t, ok)
+	cookiesString := strings.Join(res, ", ")
+	require.Contains(t, cookiesString, expectedToken)
+	require.Contains(t, cookiesString, cookie.CookieKey)
 }

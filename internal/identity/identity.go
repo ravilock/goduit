@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/internal/config"
+	"github.com/ravilock/goduit/internal/cookie"
 )
 
 var (
@@ -33,11 +34,18 @@ type IdentityHeaders struct {
 func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			authorizationHeader := c.Request().Header.Get(echo.HeaderAuthorization)
-			if !requiredAuthentication && authorizationHeader == "" {
+			cookie, err := c.Cookie(cookie.CookieKey)
+			if err != nil {
+				if requiredAuthentication {
+					return api.FailedAuthentication
+				}
 				return next(c)
 			}
-			identity, err := FromToken(authorizationHeader)
+			token := cookie.Value
+			if !requiredAuthentication && token == "" {
+				return next(c)
+			}
+			identity, err := FromToken(token)
 			if err != nil {
 				return api.FailedAuthentication
 			}
@@ -67,9 +75,9 @@ func GenerateToken(userEmail, username, userID string) (string, error) {
 	return token.SignedString(config.PrivateKey)
 }
 
-func FromToken(authorizationHeader string) (*Identity, error) {
-	authorizationHeader = strings.TrimPrefix(authorizationHeader, "Bearer ")
-	token, err := jwt.ParseWithClaims(authorizationHeader, &Identity{}, func(t *jwt.Token) (interface{}, error) {
+func FromToken(tokenString string) (*Identity, error) {
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+	token, err := jwt.ParseWithClaims(tokenString, &Identity{}, func(t *jwt.Token) (interface{}, error) {
 		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(os.Getenv("PUBLIC_KEY")))
 		if err != nil {
 			return nil, err

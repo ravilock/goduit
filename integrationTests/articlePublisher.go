@@ -27,7 +27,7 @@ func MakeSlug(title string) string {
 	return strings.ReplaceAll(loweredTitle, " ", "-")
 }
 
-func MustWriteArticle(t *testing.T, writeArticlePayload articlePublisherRequests.WriteArticlePayload, token string) *articlePublisherResponses.ArticleResponse {
+func MustWriteArticle(t *testing.T, writeArticlePayload articlePublisherRequests.WriteArticlePayload, cookie *http.Cookie) *articlePublisherResponses.ArticleResponse {
 	httpClient := http.Client{}
 	serverUrl := viper.GetString("server.url")
 	writeArticleEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/articles")
@@ -52,7 +52,7 @@ func MustWriteArticle(t *testing.T, writeArticlePayload articlePublisherRequests
 	req, err := http.NewRequest(http.MethodPost, writeArticleEndpoint, bytes.NewBuffer(requestBody))
 	require.NoError(t, err)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+	req.AddCookie(cookie)
 	res, err := httpClient.Do(req)
 	require.NoError(t, err)
 	defer res.Body.Close()
@@ -91,17 +91,17 @@ func MustWriteArticleRegister(t *testing.T, client *mongo.Client, articleModel *
 	require.NoError(t, err)
 }
 
-func MustWriteArticles(t *testing.T, amount int, authorToken, authorUsername, authorID string) ([]*articlePublisherResponses.ArticleResponse, []string) {
+func MustWriteArticles(t *testing.T, amount int, authorCookie *http.Cookie, authorUsername, authorID string) ([]*articlePublisherResponses.ArticleResponse, []string) {
 	articles := make([]*articlePublisherResponses.ArticleResponse, 0, amount)
 	tags := make([]string, 0, amount)
 	for i := 0; i < amount; i++ {
-		article := MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{TagList: []string{authorID}}, authorToken)
+		article := MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{TagList: []string{authorID}}, authorCookie)
 		articles = append(articles, article)
 	}
 	return articles, slices.Compact(tags)
 }
 
-func MustWriteComment(t *testing.T, writeCommentPayload articlePublisherRequests.WriteCommentPayload, articleSlug, token string) *articlePublisherResponses.CommentResponse {
+func MustWriteComment(t *testing.T, writeCommentPayload articlePublisherRequests.WriteCommentPayload, articleSlug string, authorCookie *http.Cookie) *articlePublisherResponses.CommentResponse {
 	httpClient := http.Client{}
 	serverUrl := viper.GetString("server.url")
 	writeArticleEndpoint := fmt.Sprintf("%s%s/%s%s", serverUrl, "/api/articles", articleSlug, "/comments")
@@ -115,7 +115,7 @@ func MustWriteComment(t *testing.T, writeCommentPayload articlePublisherRequests
 	req, err := http.NewRequest(http.MethodPost, writeArticleEndpoint, bytes.NewBuffer(requestBody))
 	require.NoError(t, err)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+	req.AddCookie(authorCookie)
 	res, err := httpClient.Do(req)
 	require.NoError(t, err)
 	defer res.Body.Close()

@@ -20,8 +20,13 @@ type authenticator interface {
 	profileUpdater
 }
 
+type CookieCreator interface {
+	Create(token string) *http.Cookie
+}
+
 type loginHandler struct {
-	service authenticator
+	service       authenticator
+	cookieService CookieCreator
 }
 
 func (h *loginHandler) Login(c echo.Context) error {
@@ -54,6 +59,8 @@ func (h *loginHandler) Login(c echo.Context) error {
 		log.Println("Error Updating Last Session", err)
 	}
 
-	response := assemblers.UserResponse(user, token)
+	response := assemblers.UserResponse(user)
+	cookie := h.cookieService.Create(token)
+	c.SetCookie(cookie)
 	return c.JSON(http.StatusOK, response)
 }

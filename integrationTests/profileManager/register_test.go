@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ravilock/goduit/api"
+	integrationtests "github.com/ravilock/goduit/integrationTests"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 
 	"github.com/labstack/echo/v4"
@@ -62,6 +63,7 @@ func TestRegister(t *testing.T) {
 		userModel, err := profileManagerRepository.GetUserByEmail(context.Background(), registerRequest.User.Email)
 		require.NoError(t, err)
 		checkUserModel(t, registerRequest, requestTime, userModel)
+		integrationtests.CheckCookie(t, res)
 	})
 
 	t.Run("Should not create user with duplicated email", func(t *testing.T) {
@@ -125,7 +127,6 @@ func checkRegisterResponse(t *testing.T, request *profileManagerRequests.Registe
 	t.Helper()
 	require.Equal(t, request.User.Email, response.User.Email, "User email should be the same")
 	require.Equal(t, request.User.Username, response.User.Username, "User Username should be the same")
-	require.NotZero(t, response.User.Token)
 	require.Zero(t, response.User.Image)
 	require.Zero(t, response.User.Bio)
 }

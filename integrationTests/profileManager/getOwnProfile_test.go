@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/labstack/echo/v4"
 	integrationtests "github.com/ravilock/goduit/integrationTests"
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
@@ -23,10 +22,10 @@ func TestGetOwnProfile(t *testing.T) {
 
 	t.Run("Should get authenticaed user's profile", func(t *testing.T) {
 		// Arrange
-		id, token := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		id, cookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		req, err := http.NewRequest(http.MethodGet, getOwnProfileEndpoint, bytes.NewBuffer([]byte{}))
 		require.NoError(t, err)
-		req.Header.Set(echo.HeaderAuthorization, token)
+		req.AddCookie(cookie)
 
 		// Act
 		res, err := httpClient.Do(req)

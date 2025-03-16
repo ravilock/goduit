@@ -27,10 +27,10 @@ func TestListArticles(t *testing.T) {
 	serverUrl := viper.GetString("server.url")
 	listArticlesEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/articles")
 	httpClient := http.Client{}
-	authorIdentity1, authorToken1 := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-	_, author1Tags := integrationtests.MustWriteArticles(t, 15, authorToken1, authorIdentity1.Username, authorIdentity1.Subject)
-	authorIdentity2, authorToken2 := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-	_, author2Tags := integrationtests.MustWriteArticles(t, 15, authorToken2, authorIdentity2.Username, authorIdentity2.Subject)
+	authorIdentity1, authorCookie1 := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+	_, author1Tags := integrationtests.MustWriteArticles(t, 15, authorCookie1, authorIdentity1.Username, authorIdentity1.Subject)
+	authorIdentity2, authorCookie2 := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+	_, author2Tags := integrationtests.MustWriteArticles(t, 15, authorCookie2, authorIdentity2.Username, authorIdentity2.Subject)
 
 	t.Run("Should list all articles", func(t *testing.T) {
 		// Arrange

@@ -29,15 +29,15 @@ func TestWriteComment(t *testing.T) {
 
 	t.Run("Should create a comment", func(t *testing.T) {
 		// Arrange
-		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
+		authorIdentity, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorCookie)
 		writeCommentRequest := generateWriteCommentBody()
 		requestBody, err := json.Marshal(writeCommentRequest)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s/%s", writeCommentEndpoint, article.Article.Slug, commentsPath), bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+		req.AddCookie(authorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)
@@ -53,14 +53,14 @@ func TestWriteComment(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if targeted article does not exists", func(t *testing.T) {
 		// Arrange
-		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		_, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		writeCommentRequest := generateWriteCommentBody()
 		requestBody, err := json.Marshal(writeCommentRequest)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s/%s", writeCommentEndpoint, uuid.NewString(), commentsPath), bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+		req.AddCookie(authorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)

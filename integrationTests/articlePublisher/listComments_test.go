@@ -24,11 +24,11 @@ func TestListComments(t *testing.T) {
 
 	t.Run("Should list comments from an article", func(t *testing.T) {
 		// Arrange
-		_, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
-		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorToken)
-		comment1 := integrationtests.MustWriteComment(t, articlePublisherRequests.WriteCommentPayload{}, article.Article.Slug, authorToken)
-		comment2 := integrationtests.MustWriteComment(t, articlePublisherRequests.WriteCommentPayload{}, article.Article.Slug, authorToken)
-		comment3 := integrationtests.MustWriteComment(t, articlePublisherRequests.WriteCommentPayload{}, article.Article.Slug, authorToken)
+		_, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorCookie)
+		comment1 := integrationtests.MustWriteComment(t, articlePublisherRequests.WriteCommentPayload{}, article.Article.Slug, authorCookie)
+		comment2 := integrationtests.MustWriteComment(t, articlePublisherRequests.WriteCommentPayload{}, article.Article.Slug, authorCookie)
+		comment3 := integrationtests.MustWriteComment(t, articlePublisherRequests.WriteCommentPayload{}, article.Article.Slug, authorCookie)
 		comments := map[string]*articlePublisherResponses.CommentResponse{
 			comment1.Comment.ID: comment1,
 			comment2.Comment.ID: comment2,
@@ -37,7 +37,7 @@ func TestListComments(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s/%s", listCommentsEndpoint, article.Article.Slug, commentsPath), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+    req.AddCookie(authorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)

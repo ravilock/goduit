@@ -31,7 +31,7 @@ func (h *getOwnProfileHandler) GetOwnProfile(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(user, "")
+	response := assemblers.UserResponse(user)
 
 	return c.JSON(http.StatusOK, response)
 }

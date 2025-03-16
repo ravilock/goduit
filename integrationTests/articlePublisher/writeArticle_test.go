@@ -24,14 +24,14 @@ func TestWriteArticle(t *testing.T) {
 
 	t.Run("Should create an article", func(t *testing.T) {
 		// Arrange
-		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		authorIdentity, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodPost, writeArticleEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+		req.AddCookie(authorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)
@@ -47,14 +47,14 @@ func TestWriteArticle(t *testing.T) {
 
 	t.Run("Should not allow to write article with slug that already exists", func(t *testing.T) {
 		// Arrange
-		authorIdentity, authorToken := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
+		authorIdentity, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodPost, writeArticleEndpoint, bytes.NewBuffer(requestBody))
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", authorToken))
+		req.AddCookie(authorCookie)
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusCreated, res.StatusCode)
