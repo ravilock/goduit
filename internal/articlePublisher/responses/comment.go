@@ -1,8 +1,9 @@
 package responses
 
 import (
-	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"time"
+
+	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 )
 
 type CommentResponse struct {
@@ -19,4 +20,10 @@ type Comment struct {
 
 type CommentsResponse struct {
 	Comment []Comment `json:"comments"`
+}
+
+func NewCommentsResponse() *CommentsResponse {
+	return &CommentsResponse{
+		Comment: []Comment{},
+	}
 }

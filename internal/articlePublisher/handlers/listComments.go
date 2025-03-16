@@ -92,7 +92,7 @@ func (h *listCommentsHandler) ListComments(c echo.Context) error {
 		authorMap[*comment.Author] = authorProfile
 	}
 
-	response := new(responses.CommentsResponse)
+	response := responses.NewCommentsResponse()
 	for _, comment := range comments {
 		commentAuthor := authorMap[*comment.Author]
 		commentResponse := assemblers.CommentResponse(comment, commentAuthor)
