@@ -1,37 +1,43 @@
+ifeq (, $(shell command -v docker-compose))
+DOCKER_COMPOSE=docker compose
+else
+DOCKER_COMPOSE=docker-compose
+endif
+
 SVC_API := goduit-api
 SVC_DB := mongo
 SVC_QUEUE := goduit-queue
 SVC_FEED_WORKER := goduit-feed-worker
-LOGS_CMD := docker-compose logs --follow --tail=5
+LOGS_CMD := $(DOCKER_COMPOSE) logs --follow --tail=5
 
-DB_EXEC_CMD := docker-compose exec mongo bash -c
+DB_EXEC_CMD := $(DOCKER_COMPOSE) exec mongo bash -c
 
 run: run-all
 
 run-all: run-db run-queue run-api run-article-feed-worker
 
 run-api:
-	@docker-compose up -d $(SVC_API)
+	@$(DOCKER_COMPOSE) up -d $(SVC_API)
 
 run-article-feed-worker:
-	@docker-compose up -d $(SVC_FEED_WORKER)
+	@$(DOCKER_COMPOSE) up -d $(SVC_FEED_WORKER)
 
 run-db:
-	@docker-compose up -d $(SVC_DB)
+	@$(DOCKER_COMPOSE) up -d $(SVC_DB)
 
 run-queue:
-	@docker-compose up -d $(SVC_QUEUE)
+	@$(DOCKER_COMPOSE) up -d $(SVC_QUEUE)
 
 stop: stop-all
 
 stop-all:
-	@docker-compose stop
+	@$(DOCKER_COMPOSE) stop
 
 stop-api:
-	@docker-compose stop $(SVC_API)
+	@$(DOCKER_COMPOSE) stop $(SVC_API)
 
 stop-db:
-	@docker-compose stop $(SVC_DB)
+	@$(DOCKER_COMPOSE) stop $(SVC_DB)
 
 logs-api:
 	@$(LOGS_CMD) $(SVC_API)
@@ -47,22 +53,22 @@ connect-db:
 
 .PHONY: test
 test:
-	@docker-compose exec $(SVC_API) go test -count=1 `go list ./... | grep -v integrationTests`
+	@$(DOCKER_COMPOSE) exec $(SVC_API) go test -count=1 `go list ./... | grep -v integrationTests`
 
 .PHONY: test-verbose
 test-verbose:
-	@docker-compose exec $(SVC_API) go test -v -count=1 `go list ./... | grep -v integrationTests`
+	@$(DOCKER_COMPOSE) exec $(SVC_API) go test -v -count=1 `go list ./... | grep -v integrationTests`
 
 .PHONY: test-integration
 test-integration:
-	@docker-compose exec $(SVC_API) go test ./integrationTests/... -count=1 -p 1
+	@$(DOCKER_COMPOSE) exec $(SVC_API) go test ./integrationTests/... -count=1 -p 1
 
 .PHONY: test-integration-verbose
 test-integration-verbose:
-	@docker-compose exec $(SVC_API) go test ./integrationTests/... -v -count=1 -p 1
+	@$(DOCKER_COMPOSE) exec $(SVC_API) go test ./integrationTests/... -v -count=1 -p 1
 
 bash:
-	@docker-compose exec $(SVC_API) bash
+	@$(DOCKER_COMPOSE) exec $(SVC_API) bash
 
 .PHONY: generate-mocks
 generate-mocks:
