@@ -16,3 +16,6 @@ jobs:
           echo ---Containers up--
       - name: Test Locally With Containers
         run: docker compose exec -T goduit-api go test -count=1 `go list ./... | grep -v integrationTests`
+      - name: Test Integration With Containers
+        run: docker compose exec -T goduit-api go test ./integrationTests/... -count=1 -p 1
+
