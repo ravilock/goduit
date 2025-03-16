@@ -41,7 +41,7 @@ jobs:
     - name: Linting
       uses: golangci/golangci-lint-action@v6
       with:
-        version: v1.59.0
+        version: v1.64.4
         args: --timeout=10m
   govulncheck:
     runs-on: ubuntu-latest
