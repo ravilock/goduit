@@ -114,7 +114,7 @@ func (r *ArticleRepository) GetArticlesByIDs(ctx context.Context, IDs []string) 
 	}
 
 	filter := bson.M{"_id": bson.M{"$in": articleIDs}}
-	opt := options.Find().SetSort(bson.D{{Key: "_id", Value: 1}}).SetLimit(int64(len(articleIDs)))
+	opt := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}}).SetLimit(int64(len(articleIDs)))
 	collection := r.DBClient.Database("conduit").Collection("articles")
 	results := make([]*models.Article, 0, len(articleIDs))
 	cursor, err := collection.Find(ctx, filter, opt)
