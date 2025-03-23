@@ -34,12 +34,16 @@ type IdentityHeaders struct {
 func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			now := time.Now()
 			cookie, err := c.Cookie(cookie.CookieKey)
 			if err != nil {
 				if requiredAuthentication {
 					return api.FailedAuthentication
 				}
 				return next(c)
+			}
+			if cookie.Expires.After(now) {
+				return api.FailedAuthentication
 			}
 			token := cookie.Value
 			if !requiredAuthentication && token == "" {
