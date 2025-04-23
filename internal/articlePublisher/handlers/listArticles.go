@@ -19,13 +19,21 @@ type articleLister interface {
 	ListArticles(ctx context.Context, author, tag string, limit, offset int64) ([]*models.Article, error)
 }
 
-type listArticlesHandler struct {
+type ListArticlesHandler struct {
 	service         articleLister
 	profileManager  profileGetter
 	followerCentral isFollowedChecker
 }
 
-func (h *listArticlesHandler) ListArticles(c echo.Context) error {
+func NewListArticlesHandler(service articleLister, profileManager profileGetter, followerCentral isFollowedChecker) *ListArticlesHandler {
+	return &ListArticlesHandler{
+		service:         service,
+		profileManager:  profileManager,
+		followerCentral: followerCentral,
+	}
+}
+
+func (h *ListArticlesHandler) ListArticles(c echo.Context) error {
 	request := requests.NewListArticlesRequest()
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

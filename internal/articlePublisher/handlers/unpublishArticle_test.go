@@ -19,7 +19,7 @@ func TestUnpublishArticle(t *testing.T) {
 	err := validators.InitValidator()
 	require.NoError(t, err)
 	articleUnpublisherMock := newMockArticleUnpublisher(t)
-	handler := unpublishArticleHandler{articleUnpublisherMock}
+	handler := UnpublishArticleHandler{articleUnpublisherMock}
 	e := echo.New()
 
 	t.Run("Should delete an article", func(t *testing.T) {

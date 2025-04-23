@@ -26,7 +26,7 @@ func TestGetArticle(t *testing.T) {
 	articleGetterMock := newMockArticleGetter(t)
 	profileGetterMock := newMockProfileGetter(t)
 	isFollowedCheckerMock := newMockIsFollowedChecker(t)
-	handler := &getArticleHandler{service: articleGetterMock, profileManager: profileGetterMock, followerCentral: isFollowedCheckerMock}
+	handler := &GetArticleHandler{service: articleGetterMock, profileManager: profileGetterMock, followerCentral: isFollowedCheckerMock}
 
 	e := echo.New()
 

@@ -17,12 +17,19 @@ type profileRegister interface {
 	Register(ctx context.Context, model *models.User, password string) (string, error)
 }
 
-type registerProfileHandler struct {
+type RegisterProfileHandler struct {
 	service       profileRegister
 	cookieService CookieCreator
 }
 
-func (h *registerProfileHandler) Register(c echo.Context) error {
+func NewRegisterProfileHandler(service profileRegister, cookieService CookieCreator) *RegisterProfileHandler {
+	return &RegisterProfileHandler{
+		service:       service,
+		cookieService: cookieService,
+	}
+}
+
+func (h *RegisterProfileHandler) Register(c echo.Context) error {
 	request := new(requests.RegisterRequest)
 	if err := c.Bind(request); err != nil {
 		return api.CouldNotUnmarshalBodyError

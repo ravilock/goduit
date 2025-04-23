@@ -22,7 +22,7 @@ func TestListArticles(t *testing.T) {
 	articleListerMock := newMockArticleLister(t)
 	profileGetterMock := newMockProfileGetter(t)
 	isFollowedCheckerMock := newMockIsFollowedChecker(t)
-	handler := &listArticlesHandler{articleListerMock, profileGetterMock, isFollowedCheckerMock}
+	handler := &ListArticlesHandler{articleListerMock, profileGetterMock, isFollowedCheckerMock}
 	e := echo.New()
 
 	t.Run("Should list all articles", func(t *testing.T) {

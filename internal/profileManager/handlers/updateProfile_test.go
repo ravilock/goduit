@@ -26,7 +26,7 @@ func TestUpdateProfile(t *testing.T) {
 	cookieManager := cookie.NewCookieManager()
 	profileUpdaterMock := newMockProfileUpdater(t)
 	cookieCreatorMock := NewMockCookieCreator(t)
-	handler := updateProfileHandler{service: profileUpdaterMock, cookieService: cookieCreatorMock}
+	handler := UpdateProfileHandler{service: profileUpdaterMock, cookieService: cookieCreatorMock}
 	e := echo.New()
 	imageServer := mockValidImageURL(t)
 	defer imageServer.Close()

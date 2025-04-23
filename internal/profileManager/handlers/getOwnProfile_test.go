@@ -16,7 +16,7 @@ import (
 
 func TestGetOwnProfile(t *testing.T) {
 	profileGetterMock := newMockProfileGetter(t)
-	handler := getOwnProfileHandler{service: profileGetterMock}
+	handler := GetOwnProfileHandler{service: profileGetterMock}
 	e := echo.New()
 
 	t.Run("Should get user's authenticated profile", func(t *testing.T) {

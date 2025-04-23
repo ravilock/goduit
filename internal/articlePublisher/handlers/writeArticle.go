@@ -19,12 +19,19 @@ type articleWriter interface {
 	WriteArticle(ctx context.Context, article *models.Article) error
 }
 
-type writeArticleHandler struct {
+type WriteArticleHandler struct {
 	service        articleWriter
 	profileManager profileGetter
 }
 
-func (h *writeArticleHandler) WriteArticle(c echo.Context) error {
+func NewWriteArticleHandler(service articleWriter, profileManager profileGetter) *WriteArticleHandler {
+	return &WriteArticleHandler{
+		service:        service,
+		profileManager: profileManager,
+	}
+}
+
+func (h *WriteArticleHandler) WriteArticle(c echo.Context) error {
 	request := new(requests.WriteArticleRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

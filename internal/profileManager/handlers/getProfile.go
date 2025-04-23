@@ -17,12 +17,22 @@ type isFollowedChecker interface {
 	IsFollowedBy(ctx context.Context, followed, following string) bool
 }
 
-type getProfileHandler struct {
+type GetProfileHandler struct {
 	service         profileGetter
 	followerCentral isFollowedChecker
 }
 
-func (h *getProfileHandler) GetProfile(c echo.Context) error {
+func NewGetProfileHandler(
+	service profileGetter,
+	followerCentral isFollowedChecker,
+) *GetProfileHandler {
+	return &GetProfileHandler{
+		service:         service,
+		followerCentral: followerCentral,
+	}
+}
+
+func (h *GetProfileHandler) GetProfile(c echo.Context) error {
 	request := new(requests.GetProfileRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

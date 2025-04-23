@@ -24,12 +24,19 @@ type CookieCreator interface {
 	Create(token string) *http.Cookie
 }
 
-type loginHandler struct {
+type LoginHandler struct {
 	service       authenticator
 	cookieService CookieCreator
 }
 
-func (h *loginHandler) Login(c echo.Context) error {
+func NewLoginHandler(service authenticator, cookieService CookieCreator) *LoginHandler {
+	return &LoginHandler{
+		service:       service,
+		cookieService: cookieService,
+	}
+}
+
+func (h *LoginHandler) Login(c echo.Context) error {
 	request := new(requests.LoginRequest)
 	if err := c.Bind(request); err != nil {
 		return api.CouldNotUnmarshalBodyError

@@ -22,12 +22,19 @@ type profileGetter interface {
 	GetProfileByUsername(ctx context.Context, username string) (*profileManagerModels.User, error)
 }
 
-type followUserHandler struct {
+type FollowUserHandler struct {
 	service        userFollower
 	profileManager profileGetter
 }
 
-func (h *followUserHandler) Follow(c echo.Context) error {
+func NewFollowUserHandler(service userFollower, profileManager profileGetter) *FollowUserHandler {
+	return &FollowUserHandler{
+		service:        service,
+		profileManager: profileManager,
+	}
+}
+
+func (h *FollowUserHandler) Follow(c echo.Context) error {
 	request := new(requests.FollowerRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

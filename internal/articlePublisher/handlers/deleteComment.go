@@ -18,12 +18,22 @@ type commentDeleter interface {
 	GetCommentByID(ctx context.Context, ID string) (*models.Comment, error)
 }
 
-type deleteCommentHandler struct {
+type DeleteCommentHandler struct {
 	service          commentDeleter
 	articlePublisher articleGetter
 }
 
-func (h *deleteCommentHandler) DeleteComment(c echo.Context) error {
+func NewDeleteCommentHandler(
+	service commentDeleter,
+	articlePublisher articleGetter,
+) *DeleteCommentHandler {
+	return &DeleteCommentHandler{
+		service:          service,
+		articlePublisher: articlePublisher,
+	}
+}
+
+func (h *DeleteCommentHandler) DeleteComment(c echo.Context) error {
 	request := new(requests.DeleteCommentRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

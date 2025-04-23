@@ -20,12 +20,19 @@ type articleFeeder interface {
 	FeedArticles(ctx context.Context, user string, limit, offset int64) ([]*models.Article, error)
 }
 
-type feedArticlesHandler struct {
+type FeedArticlesHandler struct {
 	service        articleFeeder
 	profileManager profileGetter
 }
 
-func (h *feedArticlesHandler) FeedArticles(c echo.Context) error {
+func NewFeedArticlesHandler(service articleFeeder, profileManager profileGetter) *FeedArticlesHandler {
+	return &FeedArticlesHandler{
+		service:        service,
+		profileManager: profileManager,
+	}
+}
+
+func (h *FeedArticlesHandler) FeedArticles(c echo.Context) error {
 	request := requests.NewFeedArticlesRequest()
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

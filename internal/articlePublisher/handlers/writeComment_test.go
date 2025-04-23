@@ -26,7 +26,7 @@ func TestWriteComment(t *testing.T) {
 	commentWriterMock := newMockCommentWriter(t)
 	articleGetterMock := newMockArticleGetter(t)
 	profileGetterMock := newMockProfileGetter(t)
-	handler := &writeCommentHandler{commentWriterMock, articleGetterMock, profileGetterMock}
+	handler := &WriteCommentHandler{commentWriterMock, articleGetterMock, profileGetterMock}
 
 	e := echo.New()
 

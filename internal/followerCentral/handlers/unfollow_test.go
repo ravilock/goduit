@@ -23,7 +23,7 @@ func TestUnfollow(t *testing.T) {
 	require.NoError(t, err)
 	userUnfollowerMock := newMockUserUnfollower(t)
 	profileGetterMock := newMockProfileGetter(t)
-	handler := unfollowUserHandler{userUnfollowerMock, profileGetterMock}
+	handler := UnfollowUserHandler{userUnfollowerMock, profileGetterMock}
 	e := echo.New()
 
 	t.Run("Should unfollow a user", func(t *testing.T) {

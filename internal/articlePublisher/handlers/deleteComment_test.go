@@ -21,7 +21,7 @@ func TestDeleteComment(t *testing.T) {
 	require.NoError(t, err)
 	commentDeleterMock := newMockCommentDeleter(t)
 	articleGetterMock := newMockArticleGetter(t)
-	handler := &deleteCommentHandler{commentDeleterMock, articleGetterMock}
+	handler := &DeleteCommentHandler{commentDeleterMock, articleGetterMock}
 	e := echo.New()
 
 	t.Run("Should delete a commentary", func(t *testing.T) {

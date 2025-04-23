@@ -26,7 +26,7 @@ func TestUpdateArticle(t *testing.T) {
 	require.NoError(t, err)
 	articleUpdaterMock := newMockArticleUpdater(t)
 	profileGetterMock := newMockProfileGetter(t)
-	handler := &updateArticleHandler{articleUpdaterMock, profileGetterMock}
+	handler := &UpdateArticleHandler{articleUpdaterMock, profileGetterMock}
 
 	e := echo.New()
 

@@ -29,13 +29,25 @@ type isFollowedChecker interface {
 	IsFollowedBy(ctx context.Context, followed, following string) bool
 }
 
-type getArticleHandler struct {
+type GetArticleHandler struct {
 	service         articleGetter
 	profileManager  profileGetter
 	followerCentral isFollowedChecker
 }
 
-func (h *getArticleHandler) GetArticle(c echo.Context) error {
+func NewGetArticleHandler(
+	service articleGetter,
+	profileManager profileGetter,
+	followerCentral isFollowedChecker,
+) *GetArticleHandler {
+	return &GetArticleHandler{
+		service:         service,
+		profileManager:  profileManager,
+		followerCentral: followerCentral,
+	}
+}
+
+func (h *GetArticleHandler) GetArticle(c echo.Context) error {
 	request := new(requests.ArticleSlugRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

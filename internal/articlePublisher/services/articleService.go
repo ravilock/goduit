@@ -11,7 +11,7 @@ type ArticlePublisher struct {
 	unpublishArticleService
 	updateArticleService
 	listArticleService
-	feedArticlesService
+	FeedArticlesService
 }
 
 func NewArticlePublisher(articleRepository *repositories.ArticleRepository, feedRepository *repositories.FeedRepository, articleQueuePublisher *publishers.ArticleQueuePublisher) *ArticlePublisher {
@@ -20,6 +20,6 @@ func NewArticlePublisher(articleRepository *repositories.ArticleRepository, feed
 	unpublish := unpublishArticleService{articleRepository}
 	update := updateArticleService{articleRepository}
 	list := listArticleService{articleRepository}
-	feed := feedArticlesService{articleRepository, feedRepository}
+	feed := FeedArticlesService{articleRepository, feedRepository}
 	return &ArticlePublisher{write, get, unpublish, update, list, feed}
 }

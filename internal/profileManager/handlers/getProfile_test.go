@@ -23,7 +23,7 @@ func TestGetProfile(t *testing.T) {
 	require.NoError(t, err)
 	profileGetterMock := newMockProfileGetter(t)
 	isFollowedCheckerMock := newMockIsFollowedChecker(t)
-	handler := getProfileHandler{service: profileGetterMock, followerCentral: isFollowedCheckerMock}
+	handler := GetProfileHandler{service: profileGetterMock, followerCentral: isFollowedCheckerMock}
 	e := echo.New()
 
 	t.Run("Should get user profile", func(t *testing.T) {

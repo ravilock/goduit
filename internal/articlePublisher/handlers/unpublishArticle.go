@@ -17,11 +17,17 @@ type articleUnpublisher interface {
 	articleGetter
 }
 
-type unpublishArticleHandler struct {
+type UnpublishArticleHandler struct {
 	service articleUnpublisher
 }
 
-func (h *unpublishArticleHandler) UnpublishArticle(c echo.Context) error {
+func NewUnpublishArticleHandler(service articleUnpublisher) *UnpublishArticleHandler {
+	return &UnpublishArticleHandler{
+		service: service,
+	}
+}
+
+func (h *UnpublishArticleHandler) UnpublishArticle(c echo.Context) error {
 	request := new(requests.ArticleSlugRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

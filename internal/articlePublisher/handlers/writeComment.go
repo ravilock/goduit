@@ -19,13 +19,25 @@ type commentWriter interface {
 	WriteComment(ctx context.Context, comment *models.Comment) error
 }
 
-type writeCommentHandler struct {
+type WriteCommentHandler struct {
 	service          commentWriter
 	articlePublisher articleGetter
 	profileManager   profileGetter
 }
 
-func (h *writeCommentHandler) WriteComment(c echo.Context) error {
+func NewWriteCommentHandler(
+	service commentWriter,
+	articlePublisher articleGetter,
+	profileManager profileGetter,
+) *WriteCommentHandler {
+	return &WriteCommentHandler{
+		service:          service,
+		articlePublisher: articlePublisher,
+		profileManager:   profileManager,
+	}
+}
+
+func (h *WriteCommentHandler) WriteComment(c echo.Context) error {
 	request := new(requests.WriteCommentRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

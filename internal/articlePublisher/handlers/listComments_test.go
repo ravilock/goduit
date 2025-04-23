@@ -32,7 +32,7 @@ func TestListComments(t *testing.T) {
 	articleGetterMock := newMockArticleGetter(t)
 	profileGetterMock := newMockProfileGetter(t)
 	isFollowedCheckerMock := newMockIsFollowedChecker(t)
-	handler := &listCommentsHandler{commentListerMock, articleGetterMock, profileGetterMock, isFollowedCheckerMock}
+	handler := &ListCommentsHandler{commentListerMock, articleGetterMock, profileGetterMock, isFollowedCheckerMock}
 
 	e := echo.New()
 

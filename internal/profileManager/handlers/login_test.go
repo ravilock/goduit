@@ -34,7 +34,7 @@ func TestLogin(t *testing.T) {
 	cookieManager := cookie.NewCookieManager()
 	authenticatorMock := newMockAuthenticator(t)
 	cookieCreatorMock := NewMockCookieCreator(t)
-	handler := loginHandler{service: authenticatorMock, cookieService: cookieCreatorMock}
+	handler := LoginHandler{service: authenticatorMock, cookieService: cookieCreatorMock}
 	e := echo.New()
 
 	t.Run("Should successfully login", func(t *testing.T) {

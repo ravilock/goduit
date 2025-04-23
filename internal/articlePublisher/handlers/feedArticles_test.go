@@ -19,7 +19,7 @@ func TestFeedArticles(t *testing.T) {
 	require.NoError(t, err)
 	articleFeederMock := newMockArticleFeeder(t)
 	profileGetterMock := newMockProfileGetter(t)
-	handler := &feedArticlesHandler{articleFeederMock, profileGetterMock}
+	handler := &FeedArticlesHandler{articleFeederMock, profileGetterMock}
 	e := echo.New()
 
 	t.Run("Should feed all articles", func(t *testing.T) {

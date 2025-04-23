@@ -22,7 +22,7 @@ func TestWriteArticle(t *testing.T) {
 	require.NoError(t, err)
 	articleWriterMock := newMockArticleWriter(t)
 	profileGetterMock := newMockProfileGetter(t)
-	handler := &writeArticleHandler{articleWriterMock, profileGetterMock}
+	handler := &WriteArticleHandler{articleWriterMock, profileGetterMock}
 
 	e := echo.New()
 

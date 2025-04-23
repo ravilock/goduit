@@ -23,7 +23,7 @@ func TestFollow(t *testing.T) {
 	require.NoError(t, err)
 	userFollowerMock := newMockUserFollower(t)
 	profileGetterMock := newMockProfileGetter(t)
-	handler := followUserHandler{userFollowerMock, profileGetterMock}
+	handler := FollowUserHandler{userFollowerMock, profileGetterMock}
 	e := echo.New()
 
 	t.Run("Should follow a user", func(t *testing.T) {

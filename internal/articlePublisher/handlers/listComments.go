@@ -21,14 +21,28 @@ type commentLister interface {
 	ListComments(ctx context.Context, article string) ([]*models.Comment, error)
 }
 
-type listCommentsHandler struct {
+type ListCommentsHandler struct {
 	service          commentLister
 	articlePublisher articleGetter
 	profileManager   profileGetter
 	followerCentral  isFollowedChecker
 }
 
-func (h *listCommentsHandler) ListComments(c echo.Context) error {
+func NewListCommentsHandler(
+	service commentLister,
+	articlePublisher articleGetter,
+	profileManager profileGetter,
+	followerCentral isFollowedChecker,
+) *ListCommentsHandler {
+	return &ListCommentsHandler{
+		service:          service,
+		articlePublisher: articlePublisher,
+		profileManager:   profileManager,
+		followerCentral:  followerCentral,
+	}
+}
+
+func (h *ListCommentsHandler) ListComments(c echo.Context) error {
 	request := new(requests.ArticleSlugRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

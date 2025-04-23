@@ -20,12 +20,19 @@ type articleUpdater interface {
 	articleGetter
 }
 
-type updateArticleHandler struct {
+type UpdateArticleHandler struct {
 	service        articleUpdater
 	profileManager profileGetter
 }
 
-func (h *updateArticleHandler) UpdateArticle(c echo.Context) error {
+func NewUpdateArticleHandler(service articleUpdater, profileManager profileGetter) *UpdateArticleHandler {
+	return &UpdateArticleHandler{
+		service:        service,
+		profileManager: profileManager,
+	}
+}
+
+func (h *UpdateArticleHandler) UpdateArticle(c echo.Context) error {
 	request := new(requests.UpdateArticleRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

@@ -15,11 +15,17 @@ type profileGetter interface {
 	GetProfileByID(ctx context.Context, ID string) (*models.User, error)
 }
 
-type getOwnProfileHandler struct {
+type GetOwnProfileHandler struct {
 	service profileGetter
 }
 
-func (h *getOwnProfileHandler) GetOwnProfile(c echo.Context) error {
+func NewGetOwnProfileHandler(service profileGetter) *GetOwnProfileHandler {
+	return &GetOwnProfileHandler{
+		service: service,
+	}
+}
+
+func (h *GetOwnProfileHandler) GetOwnProfile(c echo.Context) error {
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}
 	if err := binder.BindHeaders(c, identity); err != nil {

@@ -23,7 +23,7 @@ func TestRegister(t *testing.T) {
 	cookieManager := cookie.NewCookieManager()
 	profileRegisterMock := newMockProfileRegister(t)
 	cookieCreatorMock := NewMockCookieCreator(t)
-	handler := registerProfileHandler{service: profileRegisterMock, cookieService: cookieCreatorMock}
+	handler := RegisterProfileHandler{service: profileRegisterMock, cookieService: cookieCreatorMock}
 	e := echo.New()
 
 	t.Run("Should create new user", func(t *testing.T) {

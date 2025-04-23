@@ -19,12 +19,19 @@ type profileUpdater interface {
 	UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (string, error)
 }
 
-type updateProfileHandler struct {
+type UpdateProfileHandler struct {
 	service       profileUpdater
 	cookieService CookieCreator
 }
 
-func (h *updateProfileHandler) UpdateProfile(c echo.Context) error {
+func NewUpdateProfileHandler(service profileUpdater, cookieService CookieCreator) *UpdateProfileHandler {
+	return &UpdateProfileHandler{
+		service:       service,
+		cookieService: cookieService,
+	}
+}
+
+func (h *UpdateProfileHandler) UpdateProfile(c echo.Context) error {
 	request := new(requests.UpdateProfileRequest)
 	identityHeaders := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

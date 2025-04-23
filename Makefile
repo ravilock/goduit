@@ -12,6 +12,12 @@ LOGS_CMD := $(DOCKER_COMPOSE) logs --follow --tail=5
 
 DB_EXEC_CMD := $(DOCKER_COMPOSE) exec mongo bash -c
 
+.PHONY: setup
+setup:
+	echo 'Installing Golang CI Lint'
+	# binary will be $(go env GOPATH)/bin/golangci-lint
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s v2.1.2
+
 run: run-all
 
 run-all: run-db run-queue run-api run-article-feed-worker
@@ -66,6 +72,10 @@ test-integration:
 .PHONY: test-integration-verbose
 test-integration-verbose:
 	@$(DOCKER_COMPOSE) exec $(SVC_API) go test ./integrationTests/... -v -count=1 -p 1
+
+.PHONY: lint-check
+lint-check:
+	./bin/golangci-lint run --timeout 5m
 
 bash:
 	@$(DOCKER_COMPOSE) exec $(SVC_API) bash

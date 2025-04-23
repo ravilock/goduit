@@ -18,12 +18,19 @@ type userUnfollower interface {
 	Unfollow(ctx context.Context, followed, following string) error
 }
 
-type unfollowUserHandler struct {
+type UnfollowUserHandler struct {
 	service        userUnfollower
 	profileManager profileGetter
 }
 
-func (h *unfollowUserHandler) Unfollow(c echo.Context) error {
+func NewUnfollowUserHandler(service userUnfollower, profileManager profileGetter) *UnfollowUserHandler {
+	return &UnfollowUserHandler{
+		service:        service,
+		profileManager: profileManager,
+	}
+}
+
+func (h *UnfollowUserHandler) Unfollow(c echo.Context) error {
 	request := new(requests.FollowerRequest)
 	identity := new(identity.IdentityHeaders)
 	binder := &echo.DefaultBinder{}

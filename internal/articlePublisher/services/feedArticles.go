@@ -14,12 +14,12 @@ type feedPaginator interface {
 	PaginateFeed(ctx context.Context, user string, limit, offset int64) ([]models.FeedFragment, error)
 }
 
-type feedArticlesService struct {
+type FeedArticlesService struct {
 	repository     articlesGetter
 	feedRepository feedPaginator
 }
 
-func (s *feedArticlesService) FeedArticles(ctx context.Context, user string, limit, offset int64) ([]*models.Article, error) {
+func (s *FeedArticlesService) FeedArticles(ctx context.Context, user string, limit, offset int64) ([]*models.Article, error) {
 	feedFragments, err := s.feedRepository.PaginateFeed(ctx, user, limit, offset)
 	if err != nil {
 		return nil, err
