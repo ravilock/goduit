@@ -80,20 +80,24 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 	commentRepository := articleRepositories.NewCommentRepository(databaseClient)
 	articlePublisherRepository := articleRepositories.NewArticleRepository(databaseClient)
 	feedRepository := articleRepositories.NewFeedRepository(databaseClient)
+
 	// profile services
 	registerProfileService := profileServices.NewRegisterProfileService(userRepository)
 	logUserService := profileServices.NewLogUserService(userRepository)
 	getProfileService := profileServices.NewGetProfileService(userRepository)
 	updateUserService := profileServices.NewUpdateUserService(userRepository)
+
 	// follower services
 	followService := followerServices.NewFollowUserService(followerRepository)
 	isFollowedByService := followerServices.NewIsFollowedByService(followerRepository)
 	unfollowService := followerServices.NewUnfollowUserService(followerRepository)
+
 	// comment services
 	writeCommentService := articleServices.NewWriteCommentService(commentRepository)
 	getCommentService := articleServices.NewGetCommentService(commentRepository)
 	listCommentsService := articleServices.NewListCommentsService(commentRepository)
 	deleteCommentService := articleServices.NewDeleteCommentService(commentRepository)
+
 	// article services
 	writeArticleService := articleServices.NewWriteArticleService(articlePublisherRepository, articleQueuePublisher)
 	getArticleService := articleServices.NewGetArticleService(articlePublisherRepository)
@@ -101,8 +105,10 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 	feedArticlesService := articleServices.NewFeedArticlesService(articlePublisherRepository, feedRepository)
 	updateArticleService := articleServices.NewUpdateArticleService(articlePublisherRepository)
 	unpublishArticlesService := articleServices.NewUnpublishArticleService(articlePublisherRepository)
+
 	// cookie manager
 	cookieManager := cookie.NewCookieManager()
+
 	// profile handlers
 	registerProfileHandler := profileHandlers.NewRegisterProfileHandler(registerProfileService, cookieManager)
 	getOwnProfileHandler := profileHandlers.NewGetOwnProfileHandler(getProfileService)
@@ -110,9 +116,11 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 	loginHandler := profileHandlers.NewLoginHandler(logUserService, updateUserService, cookieManager)
 	logoutHandler := profileHandlers.NewLogoutHandler(cookieManager)
 	updateProfileHandler := profileHandlers.NewUpdateProfileHandler(updateUserService, cookieManager)
+
 	// follower handlers
 	followUserHandler := followerHandlers.NewFollowUserHandler(followService, getProfileService)
 	unfollowUserHandler := followerHandlers.NewUnfollowUserHandler(unfollowService, getProfileService)
+
 	// article handlers
 	writeArticleHandler := articleHandlers.NewWriteArticleHandler(writeArticleService, getProfileService)
 	getArticleHandler := articleHandlers.NewGetArticleHandler(getArticleService, getProfileService, isFollowedByService)
@@ -120,6 +128,7 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 	feedArticlesHandler := articleHandlers.NewFeedArticlesHandler(feedArticlesService, getProfileService)
 	updateArticleHandler := articleHandlers.NewUpdateArticleHandler(updateArticleService, getArticleService, getProfileService)
 	unpublishArticlesHandler := articleHandlers.NewUnpublishArticleHandler(unpublishArticlesService, getArticleService)
+
 	// comment handlers
 	writeCommentHandler := articleHandlers.NewWriteCommentHandler(writeCommentService, getArticleService, getProfileService)
 	listCommentsHandler := articleHandlers.NewListCommentsHandler(listCommentsService, getArticleService, getProfileService, isFollowedByService)
