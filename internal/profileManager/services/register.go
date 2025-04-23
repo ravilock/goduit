@@ -12,11 +12,15 @@ type profileRegister interface {
 	RegisterUser(ctx context.Context, user *models.User) (*models.User, error)
 }
 
-type registerProfileService struct {
+type RegisterProfileService struct {
 	repository profileRegister
 }
 
-func (s *registerProfileService) Register(ctx context.Context, model *models.User, password string) (string, error) {
+func NewRegisterProfileService(repository profileRegister) *RegisterProfileService {
+	return &RegisterProfileService{repository: repository}
+}
+
+func (s *RegisterProfileService) Register(ctx context.Context, model *models.User, password string) (string, error) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err

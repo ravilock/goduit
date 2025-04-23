@@ -6,8 +6,14 @@ type userUnfollower interface {
 	Unfollow(ctx context.Context, followed, following string) error
 }
 
-type unfollowUserService struct {
+type UnfollowUserService struct {
 	repository userUnfollower
+}
+
+func NewUnfollowUserService(repository userUnfollower) *UnfollowUserService {
+	return &UnfollowUserService{
+		repository: repository,
+	}
 }
 
 // Unfollow de-establishes a follow relationship between two users.
@@ -15,6 +21,6 @@ type unfollowUserService struct {
 // The followed parameter represents the ID of the user to be followed.
 //
 // The follower parameter represents the ID of the user that is following.
-func (s *unfollowUserService) Unfollow(ctx context.Context, followed, following string) error {
+func (s *UnfollowUserService) Unfollow(ctx context.Context, followed, following string) error {
 	return s.repository.Unfollow(ctx, followed, following)
 }

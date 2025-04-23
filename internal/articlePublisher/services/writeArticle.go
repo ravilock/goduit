@@ -14,12 +14,19 @@ type articlePublisher interface {
 	PublishArticle(ctx context.Context, article *models.Article) error
 }
 
-type writeArticleService struct {
+type WriteArticleService struct {
 	repository articleWriter
 	queue      articlePublisher
 }
 
-func (s *writeArticleService) WriteArticle(ctx context.Context, article *models.Article) error {
+func NewWriteArticleService(repository articleWriter, queue articlePublisher) *WriteArticleService {
+	return &WriteArticleService{
+		repository: repository,
+		queue:      queue,
+	}
+}
+
+func (s *WriteArticleService) WriteArticle(ctx context.Context, article *models.Article) error {
 	if err := s.repository.WriteArticle(ctx, article); err != nil {
 		return err
 	}

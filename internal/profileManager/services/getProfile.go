@@ -12,11 +12,17 @@ type UserGetter interface {
 	GetUserByID(ctx context.Context, ID string) (*models.User, error)
 }
 
-type getProfileService struct {
+type GetProfileService struct {
 	repository UserGetter
 }
 
-func (s *getProfileService) GetProfileByUsername(ctx context.Context, username string) (*models.User, error) {
+func NewGetProfileService(repository UserGetter) *GetProfileService {
+	return &GetProfileService{
+		repository: repository,
+	}
+}
+
+func (s *GetProfileService) GetProfileByUsername(ctx context.Context, username string) (*models.User, error) {
 	model, err := s.repository.GetUserByUsername(ctx, username)
 	if err != nil {
 		return nil, err
@@ -24,7 +30,7 @@ func (s *getProfileService) GetProfileByUsername(ctx context.Context, username s
 	return model, nil
 }
 
-func (s *getProfileService) GetProfileByID(ctx context.Context, ID string) (*models.User, error) {
+func (s *GetProfileService) GetProfileByID(ctx context.Context, ID string) (*models.User, error) {
 	model, err := s.repository.GetUserByID(ctx, ID)
 	if err != nil {
 		return nil, err

@@ -5,7 +5,6 @@ package handlers
 import (
 	context "context"
 
-	models "github.com/ravilock/goduit/internal/articlePublisher/models"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -20,65 +19,6 @@ type mockArticleUnpublisher_Expecter struct {
 
 func (_m *mockArticleUnpublisher) EXPECT() *mockArticleUnpublisher_Expecter {
 	return &mockArticleUnpublisher_Expecter{mock: &_m.Mock}
-}
-
-// GetArticleBySlug provides a mock function with given fields: ctx, slug
-func (_m *mockArticleUnpublisher) GetArticleBySlug(ctx context.Context, slug string) (*models.Article, error) {
-	ret := _m.Called(ctx, slug)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetArticleBySlug")
-	}
-
-	var r0 *models.Article
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.Article, error)); ok {
-		return rf(ctx, slug)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Article); ok {
-		r0 = rf(ctx, slug)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Article)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, slug)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// mockArticleUnpublisher_GetArticleBySlug_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetArticleBySlug'
-type mockArticleUnpublisher_GetArticleBySlug_Call struct {
-	*mock.Call
-}
-
-// GetArticleBySlug is a helper method to define mock.On call
-//   - ctx context.Context
-//   - slug string
-func (_e *mockArticleUnpublisher_Expecter) GetArticleBySlug(ctx interface{}, slug interface{}) *mockArticleUnpublisher_GetArticleBySlug_Call {
-	return &mockArticleUnpublisher_GetArticleBySlug_Call{Call: _e.mock.On("GetArticleBySlug", ctx, slug)}
-}
-
-func (_c *mockArticleUnpublisher_GetArticleBySlug_Call) Run(run func(ctx context.Context, slug string)) *mockArticleUnpublisher_GetArticleBySlug_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *mockArticleUnpublisher_GetArticleBySlug_Call) Return(_a0 *models.Article, _a1 error) *mockArticleUnpublisher_GetArticleBySlug_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *mockArticleUnpublisher_GetArticleBySlug_Call) RunAndReturn(run func(context.Context, string) (*models.Article, error)) *mockArticleUnpublisher_GetArticleBySlug_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // UnpublishArticle provides a mock function with given fields: ctx, slug

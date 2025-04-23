@@ -6,10 +6,16 @@ type articleDeleter interface {
 	DeleteArticle(ctx context.Context, slug string) error
 }
 
-type unpublishArticleService struct {
+type UnpublishArticleService struct {
 	repository articleDeleter
 }
 
-func (s *unpublishArticleService) UnpublishArticle(ctx context.Context, slug string) error {
+func NewUnpublishArticleService(repository articleDeleter) *UnpublishArticleService {
+	return &UnpublishArticleService{
+		repository: repository,
+	}
+}
+
+func (s *UnpublishArticleService) UnpublishArticle(ctx context.Context, slug string) error {
 	return s.repository.DeleteArticle(ctx, slug)
 }

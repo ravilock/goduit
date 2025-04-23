@@ -33,8 +33,9 @@ func TestLogin(t *testing.T) {
 	require.NoError(t, err)
 	cookieManager := cookie.NewCookieManager()
 	authenticatorMock := newMockAuthenticator(t)
+	profileUpdaterMock := newMockProfileUpdater(t)
 	cookieCreatorMock := NewMockCookieCreator(t)
-	handler := LoginHandler{service: authenticatorMock, cookieService: cookieCreatorMock}
+	handler := LoginHandler{authenticator: authenticatorMock, profileUpdater: profileUpdaterMock, cookieService: cookieCreatorMock}
 	e := echo.New()
 
 	t.Run("Should successfully login", func(t *testing.T) {
@@ -63,7 +64,7 @@ func TestLogin(t *testing.T) {
 		expectedToken := "token"
 		expectedCookie := cookieManager.Create(expectedToken)
 		authenticatorMock.EXPECT().Login(c.Request().Context(), loginRequest.User.Email, loginRequest.User.Password).Return(expectedUserModel, expectedToken, nil).Once()
-		authenticatorMock.EXPECT().UpdateProfile(mock.AnythingOfType("context.backgroundCtx"), loginRequest.User.Email, *expectedUserModel.Username, "", mock.AnythingOfType("*models.User")).Return("", nil).Once()
+		profileUpdaterMock.EXPECT().UpdateProfile(mock.AnythingOfType("context.backgroundCtx"), loginRequest.User.Email, *expectedUserModel.Username, "", mock.AnythingOfType("*models.User")).Return("", nil).Once()
 		cookieCreatorMock.EXPECT().Create(expectedToken).Return(expectedCookie)
 
 		// Act

@@ -10,10 +10,16 @@ type articleUpdater interface {
 	UpdateArticle(ctx context.Context, slug string, article *models.Article) error
 }
 
-type updateArticleService struct {
+type UpdateArticleService struct {
 	repository articleUpdater
 }
 
-func (s *updateArticleService) UpdateArticle(ctx context.Context, slug string, article *models.Article) error {
+func NewUpdateArticleService(repository articleUpdater) *UpdateArticleService {
+	return &UpdateArticleService{
+		repository: repository,
+	}
+}
+
+func (s *UpdateArticleService) UpdateArticle(ctx context.Context, slug string, article *models.Article) error {
 	return s.repository.UpdateArticle(ctx, slug, article)
 }

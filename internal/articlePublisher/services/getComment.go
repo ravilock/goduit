@@ -10,10 +10,16 @@ type commentGetter interface {
 	GetCommentByID(ctx context.Context, ID string) (*models.Comment, error)
 }
 
-type getCommentService struct {
+type GetCommentService struct {
 	repository commentGetter
 }
 
-func (s *getCommentService) GetCommentByID(ctx context.Context, ID string) (*models.Comment, error) {
+func NewGetCommentService(repository commentGetter) *GetCommentService {
+	return &GetCommentService{
+		repository: repository,
+	}
+}
+
+func (s *GetCommentService) GetCommentByID(ctx context.Context, ID string) (*models.Comment, error) {
 	return s.repository.GetCommentByID(ctx, ID)
 }

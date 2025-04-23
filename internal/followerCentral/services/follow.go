@@ -8,8 +8,14 @@ type userFollower interface {
 	Follow(ctx context.Context, followed, following string) error
 }
 
-type followUserService struct {
+type FollowUserService struct {
 	repository userFollower
+}
+
+func NewFollowUserService(repository userFollower) *FollowUserService {
+	return &FollowUserService{
+		repository: repository,
+	}
 }
 
 // Follow establishes a follow relationship between two users.
@@ -17,6 +23,6 @@ type followUserService struct {
 // The followed parameter represents the ID of the user to be followed.
 //
 // The follower parameter represents the ID of the user that is following.
-func (s *followUserService) Follow(ctx context.Context, followed, following string) error {
+func (s *FollowUserService) Follow(ctx context.Context, followed, following string) error {
 	return s.repository.Follow(ctx, followed, following)
 }

@@ -14,16 +14,17 @@ import (
 
 type articleUnpublisher interface {
 	UnpublishArticle(ctx context.Context, slug string) error
-	articleGetter
 }
 
 type UnpublishArticleHandler struct {
-	service articleUnpublisher
+	articleUnpublisher articleUnpublisher
+	articleGetter      articleGetter
 }
 
-func NewUnpublishArticleHandler(service articleUnpublisher) *UnpublishArticleHandler {
+func NewUnpublishArticleHandler(service articleUnpublisher, aarticleGetter articleGetter) *UnpublishArticleHandler {
 	return &UnpublishArticleHandler{
-		service: service,
+		articleUnpublisher: service,
+		articleGetter:      aarticleGetter,
 	}
 }
 
@@ -44,7 +45,7 @@ func (h *UnpublishArticleHandler) UnpublishArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	article, err := h.service.GetArticleBySlug(ctx, request.Slug)
+	article, err := h.articleGetter.GetArticleBySlug(ctx, request.Slug)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -59,7 +60,7 @@ func (h *UnpublishArticleHandler) UnpublishArticle(c echo.Context) error {
 		return api.Forbidden
 	}
 
-	if err := h.service.UnpublishArticle(ctx, request.Slug); err != nil {
+	if err := h.articleUnpublisher.UnpublishArticle(ctx, request.Slug); err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
 			case app.ArticleNotFoundErrorCode:

@@ -15,20 +15,26 @@ import (
 
 type commentDeleter interface {
 	DeleteComment(ctx context.Context, ID string) error
+}
+
+type commentGetter interface {
 	GetCommentByID(ctx context.Context, ID string) (*models.Comment, error)
 }
 
 type DeleteCommentHandler struct {
-	service          commentDeleter
+	commentDeleter   commentDeleter
+	commentGetter    commentGetter
 	articlePublisher articleGetter
 }
 
 func NewDeleteCommentHandler(
 	service commentDeleter,
+	commentGetter commentGetter,
 	articlePublisher articleGetter,
 ) *DeleteCommentHandler {
 	return &DeleteCommentHandler{
-		service:          service,
+		commentDeleter:   service,
+		commentGetter:    commentGetter,
 		articlePublisher: articlePublisher,
 	}
 }
@@ -61,7 +67,7 @@ func (h *DeleteCommentHandler) DeleteComment(c echo.Context) error {
 		return err
 	}
 
-	comment, err := h.service.GetCommentByID(ctx, request.ID)
+	comment, err := h.commentGetter.GetCommentByID(ctx, request.ID)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -76,7 +82,7 @@ func (h *DeleteCommentHandler) DeleteComment(c echo.Context) error {
 		return api.Forbidden
 	}
 
-	if err := h.service.DeleteComment(ctx, request.ID); err != nil {
+	if err := h.commentDeleter.DeleteComment(ctx, request.ID); err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
 			case app.CommentNotFoundErrorCode:

@@ -10,8 +10,14 @@ type isFollowedChecker interface {
 	IsFollowedBy(ctx context.Context, followed, following string) (*models.Follower, error)
 }
 
-type isFollowedByService struct {
+type IsFollowedByService struct {
 	repository isFollowedChecker
+}
+
+func NewIsFollowedByService(repository isFollowedChecker) *IsFollowedByService {
+	return &IsFollowedByService{
+		repository: repository,
+	}
 }
 
 // IsFollowedBy determines wether or not a user follows another user. Returns bool
@@ -19,7 +25,7 @@ type isFollowedByService struct {
 // The followed parameter represents the ID of the user to be followed.
 //
 // The following parameter represents the ID of the user that is following.
-func (s *isFollowedByService) IsFollowedBy(ctx context.Context, followed, following string) bool {
+func (s *IsFollowedByService) IsFollowedBy(ctx context.Context, followed, following string) bool {
 	if following == "" || followed == following {
 		return false
 	}

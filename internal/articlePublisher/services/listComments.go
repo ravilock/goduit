@@ -10,10 +10,16 @@ type commentLister interface {
 	ListComments(ctx context.Context, article string) ([]*models.Comment, error)
 }
 
-type listCommentService struct {
+type ListCommentsService struct {
 	repository commentLister
 }
 
-func (s *listCommentService) ListComments(ctx context.Context, article string) ([]*models.Comment, error) {
+func NewListCommentsService(repository commentLister) *ListCommentsService {
+	return &ListCommentsService{
+		repository: repository,
+	}
+}
+
+func (s *ListCommentsService) ListComments(ctx context.Context, article string) ([]*models.Comment, error) {
 	return s.repository.ListComments(ctx, article)
 }

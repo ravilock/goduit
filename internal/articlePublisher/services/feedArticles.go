@@ -19,6 +19,13 @@ type FeedArticlesService struct {
 	feedRepository feedPaginator
 }
 
+func NewFeedArticlesService(repository articlesGetter, feedRepository feedPaginator) *FeedArticlesService {
+	return &FeedArticlesService{
+		repository:     repository,
+		feedRepository: feedRepository,
+	}
+}
+
 func (s *FeedArticlesService) FeedArticles(ctx context.Context, user string, limit, offset int64) ([]*models.Article, error) {
 	feedFragments, err := s.feedRepository.PaginateFeed(ctx, user, limit, offset)
 	if err != nil {

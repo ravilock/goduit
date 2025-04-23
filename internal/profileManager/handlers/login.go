@@ -17,7 +17,6 @@ import (
 
 type authenticator interface {
 	Login(ctx context.Context, email, password string) (*models.User, string, error)
-	profileUpdater
 }
 
 type CookieCreator interface {
@@ -25,14 +24,16 @@ type CookieCreator interface {
 }
 
 type LoginHandler struct {
-	service       authenticator
-	cookieService CookieCreator
+	authenticator  authenticator
+	profileUpdater profileUpdater
+	cookieService  CookieCreator
 }
 
-func NewLoginHandler(service authenticator, cookieService CookieCreator) *LoginHandler {
+func NewLoginHandler(authenticator authenticator, profileUpdater profileUpdater, cookieService CookieCreator) *LoginHandler {
 	return &LoginHandler{
-		service:       service,
-		cookieService: cookieService,
+		authenticator:  authenticator,
+		profileUpdater: profileUpdater,
+		cookieService:  cookieService,
 	}
 }
 
@@ -47,7 +48,7 @@ func (h *LoginHandler) Login(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	user, token, err := h.service.Login(ctx, request.User.Email, request.User.Password)
+	user, token, err := h.authenticator.Login(ctx, request.User.Email, request.User.Password)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -62,7 +63,7 @@ func (h *LoginHandler) Login(c echo.Context) error {
 
 	lastSession := time.Now().UTC().Truncate(time.Millisecond)
 	user.LastSession = &lastSession
-	if _, err := h.service.UpdateProfile(context.Background(), *user.Email, *user.Username, "", user); err != nil {
+	if _, err := h.profileUpdater.UpdateProfile(context.Background(), *user.Email, *user.Username, "", user); err != nil {
 		log.Println("Error Updating Last Session", err)
 	}
 

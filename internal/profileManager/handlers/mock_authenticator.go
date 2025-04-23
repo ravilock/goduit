@@ -89,66 +89,6 @@ func (_c *mockAuthenticator_Login_Call) RunAndReturn(run func(context.Context, s
 	return _c
 }
 
-// UpdateProfile provides a mock function with given fields: ctx, subjectEmail, clientUsername, password, model
-func (_m *mockAuthenticator) UpdateProfile(ctx context.Context, subjectEmail string, clientUsername string, password string, model *models.User) (string, error) {
-	ret := _m.Called(ctx, subjectEmail, clientUsername, password, model)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateProfile")
-	}
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, *models.User) (string, error)); ok {
-		return rf(ctx, subjectEmail, clientUsername, password, model)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, *models.User) string); ok {
-		r0 = rf(ctx, subjectEmail, clientUsername, password, model)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, *models.User) error); ok {
-		r1 = rf(ctx, subjectEmail, clientUsername, password, model)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// mockAuthenticator_UpdateProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateProfile'
-type mockAuthenticator_UpdateProfile_Call struct {
-	*mock.Call
-}
-
-// UpdateProfile is a helper method to define mock.On call
-//   - ctx context.Context
-//   - subjectEmail string
-//   - clientUsername string
-//   - password string
-//   - model *models.User
-func (_e *mockAuthenticator_Expecter) UpdateProfile(ctx interface{}, subjectEmail interface{}, clientUsername interface{}, password interface{}, model interface{}) *mockAuthenticator_UpdateProfile_Call {
-	return &mockAuthenticator_UpdateProfile_Call{Call: _e.mock.On("UpdateProfile", ctx, subjectEmail, clientUsername, password, model)}
-}
-
-func (_c *mockAuthenticator_UpdateProfile_Call) Run(run func(ctx context.Context, subjectEmail string, clientUsername string, password string, model *models.User)) *mockAuthenticator_UpdateProfile_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(*models.User))
-	})
-	return _c
-}
-
-func (_c *mockAuthenticator_UpdateProfile_Call) Return(_a0 string, _a1 error) *mockAuthenticator_UpdateProfile_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *mockAuthenticator_UpdateProfile_Call) RunAndReturn(run func(context.Context, string, string, string, *models.User) (string, error)) *mockAuthenticator_UpdateProfile_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // newMockAuthenticator creates a new instance of mockAuthenticator. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func newMockAuthenticator(t interface {

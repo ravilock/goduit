@@ -12,11 +12,17 @@ type profileUpdater interface {
 	UpdateProfile(ctx context.Context, subjectEmail, clientUsername string, user *models.User) error
 }
 
-type updateProfileService struct {
+type UpdateUserService struct {
 	repository profileUpdater
 }
 
-func (s *updateProfileService) UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (string, error) {
+func NewUpdateUserService(repository profileUpdater) *UpdateUserService {
+	return &UpdateUserService{
+		repository: repository,
+	}
+}
+
+func (s *UpdateUserService) UpdateProfile(ctx context.Context, subjectEmail, clientUsername, password string, model *models.User) (string, error) {
 	if shouldGenerateNewPasswordHash(password) {
 		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {

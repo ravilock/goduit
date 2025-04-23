@@ -17,17 +17,18 @@ import (
 
 type articleUpdater interface {
 	UpdateArticle(ctx context.Context, slug string, article *models.Article) error
-	articleGetter
 }
 
 type UpdateArticleHandler struct {
-	service        articleUpdater
+	articleUpdater articleUpdater
+	articleGetter  articleGetter
 	profileManager profileGetter
 }
 
-func NewUpdateArticleHandler(service articleUpdater, profileManager profileGetter) *UpdateArticleHandler {
+func NewUpdateArticleHandler(service articleUpdater, articleGetter articleGetter, profileManager profileGetter) *UpdateArticleHandler {
 	return &UpdateArticleHandler{
-		service:        service,
+		articleUpdater: service,
+		articleGetter:  articleGetter,
 		profileManager: profileManager,
 	}
 }
@@ -54,7 +55,7 @@ func (h *UpdateArticleHandler) UpdateArticle(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	currentArticle, err := h.service.GetArticleBySlug(ctx, request.Slug)
+	currentArticle, err := h.articleGetter.GetArticleBySlug(ctx, request.Slug)
 	if err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
@@ -69,7 +70,7 @@ func (h *UpdateArticleHandler) UpdateArticle(c echo.Context) error {
 		return api.Forbidden
 	}
 
-	if err = h.service.UpdateArticle(ctx, request.Slug, article); err != nil {
+	if err = h.articleUpdater.UpdateArticle(ctx, request.Slug, article); err != nil {
 		if appError := new(app.AppError); errors.As(err, &appError) {
 			switch appError.ErrorCode {
 			case app.ArticleNotFoundErrorCode:

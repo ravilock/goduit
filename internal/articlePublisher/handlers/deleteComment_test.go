@@ -20,8 +20,9 @@ func TestDeleteComment(t *testing.T) {
 	err := validators.InitValidator()
 	require.NoError(t, err)
 	commentDeleterMock := newMockCommentDeleter(t)
+	commentGetterMock := newMockCommentGetter(t)
 	articleGetterMock := newMockArticleGetter(t)
-	handler := &DeleteCommentHandler{commentDeleterMock, articleGetterMock}
+	handler := &DeleteCommentHandler{commentDeleterMock, commentGetterMock, articleGetterMock}
 	e := echo.New()
 
 	t.Run("Should delete a commentary", func(t *testing.T) {
@@ -41,7 +42,7 @@ func TestDeleteComment(t *testing.T) {
 		c.SetParamValues(*expectedArticle.Slug, expectedComment.ID.Hex())
 		ctx := c.Request().Context()
 		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
-		commentDeleterMock.EXPECT().GetCommentByID(ctx, expectedComment.ID.Hex()).Return(expectedComment, nil).Once()
+		commentGetterMock.EXPECT().GetCommentByID(ctx, expectedComment.ID.Hex()).Return(expectedComment, nil).Once()
 		commentDeleterMock.EXPECT().DeleteComment(ctx, expectedComment.ID.Hex()).Return(nil).Once()
 
 		// Act
@@ -68,7 +69,7 @@ func TestDeleteComment(t *testing.T) {
 		c.SetParamValues(*expectedArticle.Slug, expectedComment.ID.Hex())
 		ctx := c.Request().Context()
 		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
-		commentDeleterMock.EXPECT().GetCommentByID(ctx, expectedComment.ID.Hex()).Return(expectedComment, nil).Once()
+		commentGetterMock.EXPECT().GetCommentByID(ctx, expectedComment.ID.Hex()).Return(expectedComment, nil).Once()
 
 		// Act
 		err := handler.DeleteComment(c)
@@ -119,7 +120,7 @@ func TestDeleteComment(t *testing.T) {
 		ctx := c.Request().Context()
 		c.SetParamValues(*expectedArticle.Slug, expectedComment.ID.Hex())
 		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
-		commentDeleterMock.EXPECT().GetCommentByID(ctx, expectedComment.ID.Hex()).Return(nil, app.CommentNotFoundError(expectedComment.ID.Hex(), nil)).Once()
+		commentGetterMock.EXPECT().GetCommentByID(ctx, expectedComment.ID.Hex()).Return(nil, app.CommentNotFoundError(expectedComment.ID.Hex(), nil)).Once()
 
 		// Act
 		err := handler.DeleteComment(c)

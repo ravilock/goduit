@@ -10,11 +10,17 @@ type articleGetter interface {
 	GetArticleBySlug(ctx context.Context, slug string) (*models.Article, error)
 }
 
-type getArticleService struct {
+type GetArticleService struct {
 	repository articleGetter
 }
 
-func (s *getArticleService) GetArticleBySlug(ctx context.Context, slug string) (*models.Article, error) {
+func NewGetArticleService(repository articleGetter) *GetArticleService {
+	return &GetArticleService{
+		repository: repository,
+	}
+}
+
+func (s *GetArticleService) GetArticleBySlug(ctx context.Context, slug string) (*models.Article, error) {
 	article, err := s.repository.GetArticleBySlug(ctx, slug)
 	if err != nil {
 		return nil, err

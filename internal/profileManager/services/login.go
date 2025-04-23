@@ -9,11 +9,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type logUserService struct {
+type LogUserService struct {
 	repository UserGetter
 }
 
-func (s *logUserService) Login(ctx context.Context, email, password string) (*models.User, string, error) {
+func NewLogUserService(repository UserGetter) *LogUserService {
+	return &LogUserService{
+		repository: repository,
+	}
+}
+
+func (s *LogUserService) Login(ctx context.Context, email, password string) (*models.User, string, error) {
 	model, err := s.repository.GetUserByEmail(ctx, email)
 	if err != nil {
 		return nil, "", err

@@ -19,7 +19,8 @@ func TestUnpublishArticle(t *testing.T) {
 	err := validators.InitValidator()
 	require.NoError(t, err)
 	articleUnpublisherMock := newMockArticleUnpublisher(t)
-	handler := UnpublishArticleHandler{articleUnpublisherMock}
+	articleGetterMock := newMockArticleGetter(t)
+	handler := UnpublishArticleHandler{articleUnpublisherMock, articleGetterMock}
 	e := echo.New()
 
 	t.Run("Should delete an article", func(t *testing.T) {
@@ -37,7 +38,7 @@ func TestUnpublishArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(*expectedArticle.Slug)
 		ctx := c.Request().Context()
-		articleUnpublisherMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
 		articleUnpublisherMock.EXPECT().UnpublishArticle(ctx, *expectedArticle.Slug).Return(nil).Once()
 
 		// Act
@@ -62,7 +63,7 @@ func TestUnpublishArticle(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("slug")
 		c.SetParamValues(*expectedArticle.Slug)
-		articleUnpublisherMock.EXPECT().GetArticleBySlug(c.Request().Context(), *expectedArticle.Slug).Return(nil, app.ArticleNotFoundError(*expectedArticle.Slug, nil)).Once()
+		articleGetterMock.EXPECT().GetArticleBySlug(c.Request().Context(), *expectedArticle.Slug).Return(nil, app.ArticleNotFoundError(*expectedArticle.Slug, nil)).Once()
 
 		// Act
 		err := handler.UnpublishArticle(c)
@@ -85,7 +86,7 @@ func TestUnpublishArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(*expectedArticle.Slug)
 		ctx := c.Request().Context()
-		articleUnpublisherMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
 
 		// Act
 		err := handler.UnpublishArticle(c)

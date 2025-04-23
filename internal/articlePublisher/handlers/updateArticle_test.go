@@ -25,8 +25,9 @@ func TestUpdateArticle(t *testing.T) {
 	err := validators.InitValidator()
 	require.NoError(t, err)
 	articleUpdaterMock := newMockArticleUpdater(t)
+	articleGetterMock := newMockArticleGetter(t)
 	profileGetterMock := newMockProfileGetter(t)
-	handler := &UpdateArticleHandler{articleUpdaterMock, profileGetterMock}
+	handler := &UpdateArticleHandler{articleUpdaterMock, articleGetterMock, profileGetterMock}
 
 	e := echo.New()
 
@@ -48,7 +49,7 @@ func TestUpdateArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(*expectedArticle.Slug)
 		ctx := c.Request().Context()
-		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
 		articleUpdaterMock.EXPECT().UpdateArticle(ctx, *expectedArticle.Slug, updateArticleRequest.Model()).RunAndReturn(func(ctx context.Context, slug string, article *models.Article) error {
 			favoritesCount := int64(30)
 			article.FavoritesCount = &favoritesCount
@@ -87,7 +88,7 @@ func TestUpdateArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(*expectedArticle.Slug)
 		ctx := c.Request().Context()
-		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(nil, app.ArticleNotFoundError(*expectedArticle.Slug, nil)).Once()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(nil, app.ArticleNotFoundError(*expectedArticle.Slug, nil)).Once()
 
 		// Act
 		err = handler.UpdateArticle(c)
@@ -113,7 +114,7 @@ func TestUpdateArticle(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(*expectedArticle.Slug)
 		ctx := c.Request().Context()
-		articleUpdaterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
+		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
 
 		// Act
 		err = handler.UpdateArticle(c)
