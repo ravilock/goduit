@@ -39,7 +39,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Linting
-      uses: golangci/golangci-lint-action@v6
+      uses: golangci/golangci-lint-action@v8
       with:
         version: v1.64.4
         args: --timeout=10m
