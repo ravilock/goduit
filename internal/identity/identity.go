@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	invalidTokenErr        = errors.New("invalid Token")
-	couldNotParseClaimsErr = errors.New("could Not Parse Claims")
+	errInvalidToken       = errors.New("invalid Token")
+	errCouldNotParseClaim = errors.New("could Not Parse Claims")
 )
 
 type Identity struct {
@@ -87,7 +87,7 @@ func FromToken(tokenString string) (*Identity, error) {
 			return nil, err
 		}
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, invalidTokenErr
+			return nil, errInvalidToken
 		}
 		return key, nil
 	})
@@ -95,11 +95,11 @@ func FromToken(tokenString string) (*Identity, error) {
 		return nil, err
 	}
 	if !token.Valid {
-		return nil, invalidTokenErr
+		return nil, errInvalidToken
 	}
 	claims, ok := token.Claims.(*Identity)
 	if !ok {
-		return nil, couldNotParseClaimsErr
+		return nil, errCouldNotParseClaim
 	}
 	return claims, nil
 }

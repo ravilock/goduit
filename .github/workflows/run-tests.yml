@@ -5,16 +5,16 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - name: Setup Golang
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24.1'
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Test Locally
-      run: go test -count=1 `go list ./... | grep -v integrationTests`
+      - name: Setup Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.1"
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test Locally
+        run: go test -count=1 `go list ./... | grep -v integrationTests`
   integration-test:
     runs-on: ubuntu-latest
     steps:
@@ -32,23 +32,23 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - name: Setup Golang
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24.1'
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Linting
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: v1.64.4
-        args: --timeout=10m
+      - name: Setup Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.1"
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Linting
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1.6
+          args: --timeout=10m
   govulncheck:
     runs-on: ubuntu-latest
     steps:
-    - name: Setup Golang
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24.1'
-    - name: Vulnerability Check
-      uses: golang/govulncheck-action@v1
+      - name: Setup Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.1"
+      - name: Vulnerability Check
+        uses: golang/govulncheck-action@v1

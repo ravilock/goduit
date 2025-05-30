@@ -8,17 +8,19 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/responses"
 )
 
-var nilModelError = errors.New("Model is nil")
-var nilUsernameError = errors.New("Username is nil")
+var (
+	errNilModel    = errors.New("model is nil")
+	errNilUsername = errors.New("username is nil")
+)
 
 func ProfileResponse(user *models.User, isFollowing bool) (*responses.ProfileResponse, error) {
 	var profile responses.Profile
 	response := new(responses.ProfileResponse)
 	if user == nil {
-		return nil, api.InternalError(nilModelError)
+		return nil, api.InternalError(errNilModel)
 	}
 	if user.Username == nil {
-		return nil, api.InternalError(nilUsernameError)
+		return nil, api.InternalError(errNilUsername)
 	}
 	profile.Username = *user.Username
 	if user.Bio != nil {

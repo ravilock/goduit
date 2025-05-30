@@ -31,7 +31,7 @@ func (r *CommentRepository) WriteComment(ctx context.Context, comment *models.Co
 	}
 	newId, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return errors.New("Could not convert comment ID")
+		return errors.New("could not convert comment ID")
 	}
 	comment.ID = &newId
 	return nil

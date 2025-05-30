@@ -20,7 +20,7 @@ func NewAmpqMessage(delivery *amqp.Delivery) *ampqMessage {
 
 // Data implements app.Message.
 func (a *ampqMessage) Data() []byte {
-	return a.Delivery.Body
+	return a.Body
 }
 
 // Failure implements app.Message.

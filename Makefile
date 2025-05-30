@@ -16,7 +16,7 @@ DB_EXEC_CMD := $(DOCKER_COMPOSE) exec mongo bash -c
 setup:
 	echo 'Installing Golang CI Lint'
 	# binary will be $(go env GOPATH)/bin/golangci-lint
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s v2.1.2
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s v2.1.6
 
 run: run-all
 

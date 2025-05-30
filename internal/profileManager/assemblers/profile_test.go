@@ -13,7 +13,7 @@ func TestProfileResponse(t *testing.T) {
 		if responses != nil {
 			t.Errorf("Response should be nil")
 		}
-		assertError(t, err, api.InternalError(nilModelError))
+		assertError(t, err, api.InternalError(errNilModel))
 	})
 	t.Run("Should return error if Username is nil", func(t *testing.T) {
 		model := assembleUserModel()
@@ -22,7 +22,7 @@ func TestProfileResponse(t *testing.T) {
 		if responses != nil {
 			t.Errorf("Response should be nil")
 		}
-		assertError(t, err, api.InternalError(nilUsernameError))
+		assertError(t, err, api.InternalError(errNilUsername))
 	})
 	t.Run("Should handle if Bio is nil", func(t *testing.T) {
 		model := assembleUserModel()
