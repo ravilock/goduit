@@ -49,7 +49,9 @@ func newRabbitMQPublisher(conn *amqp.Connection, queueName string) (*rabbitmqPub
 
 	queue, err := channel.QueueDeclare(queueName, true, false, false, false, nil)
 	if err != nil {
-		channel.Close()
+		if closeErr := channel.Close(); closeErr != nil {
+			slog.Error("Failed to close channel", "error", closeErr)
+		}
 		return nil, err
 	}
 
@@ -112,14 +114,18 @@ func (c *rabbitmqConsumer) setup() error {
 
 	queue, err := c.channel.QueueDeclare(c.queueName, true, false, false, false, nil)
 	if err != nil {
-		c.channel.Close()
+		if closeErr := c.channel.Close(); closeErr != nil {
+			c.logger.Error("Failed to close channel", "error", closeErr)
+		}
 		return err
 	}
 	c.queue = queue
 
 	deliveryChan, err := c.channel.Consume(c.queue.Name, "", false, false, false, false, nil)
 	if err != nil {
-		c.channel.Close()
+		if closeErr := c.channel.Close(); closeErr != nil {
+			c.logger.Error("Failed to close channel", "error", closeErr)
+		}
 		return err
 	}
 	c.deliveryChan = deliveryChan
@@ -138,7 +144,9 @@ func (c *rabbitmqConsumer) Consume() {
 			c.logger.Info("Delivery sent")
 		case <-c.exitChan:
 			if c.channel != nil {
-				c.channel.Close()
+				if err := c.channel.Close(); err != nil {
+					c.logger.Error("Failed to close channel", "error", err)
+				}
 			}
 			return
 		}
