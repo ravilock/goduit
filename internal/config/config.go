@@ -26,6 +26,7 @@ func init() {
 	viper.SetDefault("db.user", "goduit")
 	viper.SetDefault("db.pass", "goduit-password")
 	viper.SetDefault("db.url", "mongodb://goduit:goduit-password@mongo:27017/")
+	viper.SetDefault("queue.type", "rabbitmq")
 	viper.SetDefault("queue.url", "amqp://guest:guest@goduit-queue:5672/")
 	viper.SetDefault("article.queue.name", "new-articles-queue")
 	viper.SetDefault("feed.max.articles", 30)

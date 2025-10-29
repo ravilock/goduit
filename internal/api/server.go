@@ -7,7 +7,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/ravilock/goduit/api/validators"
 	articleHandlers "github.com/ravilock/goduit/internal/articlePublisher/handlers"
 	articlePublishers "github.com/ravilock/goduit/internal/articlePublisher/publishers"
@@ -23,7 +22,7 @@ import (
 	profileHandlers "github.com/ravilock/goduit/internal/profileManager/handlers"
 	profileRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
 	profileServices "github.com/ravilock/goduit/internal/profileManager/services"
-	"github.com/ravilock/goduit/internal/rabbitmq"
+	"github.com/ravilock/goduit/internal/queue"
 	"github.com/spf13/viper"
 	mongoDriver "go.mongodb.org/mongo-driver/mongo"
 )
@@ -36,7 +35,7 @@ type Server interface {
 type server struct {
 	*echo.Echo
 	db    *mongoDriver.Client
-	queue *amqp.Connection
+	queue queue.Connection
 }
 
 func (s *server) Start() {
@@ -51,7 +50,10 @@ func NewServer() (Server, error) {
 		return nil, err
 	}
 
-	queueConnection, err := rabbitmq.ConnectQueue(viper.GetString("queue.url"))
+	queueConnection, err := queue.Connect(
+		queue.QueueType(viper.GetString("queue.type")),
+		viper.GetString("queue.url"),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +61,7 @@ func NewServer() (Server, error) {
 	return createNewServer(databaseClient, queueConnection, serverLogger)
 }
 
-func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.Connection, _ *slog.Logger) (Server, error) {
+func createNewServer(databaseClient *mongoDriver.Client, queueConnection queue.Connection, _ *slog.Logger) (Server, error) {
 	// TODO: Add logger to each controller
 	// Echo instance
 	e := echo.New()
@@ -70,10 +72,11 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection *amqp.C
 		queue: queueConnection,
 	}
 	// queue publishers
-	articleQueuePublisher, err := articlePublishers.NewArticleQueuePublisher(queueConnection, viper.GetString("article.queue.name"))
+	queuePublisher, err := queueConnection.NewPublisher(viper.GetString("article.queue.name"))
 	if err != nil {
 		return nil, err
 	}
+	articleQueuePublisher := articlePublishers.NewArticlePublisher(queuePublisher)
 	// repositories
 	userRepository := profileRepositories.NewUserRepository(databaseClient)
 	followerRepository := followerRepositories.NewFollowerRepository(databaseClient)

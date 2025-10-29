@@ -7,10 +7,14 @@ endif
 SVC_API := goduit-api
 SVC_DB := mongo
 SVC_QUEUE := goduit-queue
+SVC_REDIS := goduit-redis
 SVC_FEED_WORKER := goduit-feed-worker
 LOGS_CMD := $(DOCKER_COMPOSE) logs --follow --tail=5
 
 DB_EXEC_CMD := $(DOCKER_COMPOSE) exec mongo bash -c
+
+# Queue configuration (can be overridden: make run QUEUE=redis)
+QUEUE ?= rabbitmq
 
 .PHONY: setup
 setup:
@@ -20,7 +24,14 @@ setup:
 
 run: run-all
 
-run-all: run-db run-queue run-api run-article-feed-worker
+run-all:
+ifeq ($(QUEUE),redis)
+	@echo "Starting services with Redis..."
+	@QUEUE_TYPE=redis QUEUE_URL=redis://goduit-redis:6379 $(DOCKER_COMPOSE) --profile redis up -d
+else
+	@echo "Starting services with RabbitMQ..."
+	@QUEUE_TYPE=rabbitmq QUEUE_URL=amqp://guest:guest@goduit-queue:5672/ $(DOCKER_COMPOSE) --profile rabbitmq up -d
+endif
 
 run-api:
 	@$(DOCKER_COMPOSE) up -d $(SVC_API)
@@ -31,25 +42,26 @@ run-article-feed-worker:
 run-db:
 	@$(DOCKER_COMPOSE) up -d $(SVC_DB)
 
-run-queue:
-	@$(DOCKER_COMPOSE) up -d $(SVC_QUEUE)
-
 stop: stop-all
 
 stop-all:
-	@$(DOCKER_COMPOSE) stop
-
-stop-api:
-	@$(DOCKER_COMPOSE) stop $(SVC_API)
-
-stop-db:
-	@$(DOCKER_COMPOSE) stop $(SVC_DB)
+	@$(DOCKER_COMPOSE) down
 
 logs-api:
 	@$(LOGS_CMD) $(SVC_API)
 
 logs-db:
 	@$(LOGS_CMD) $(SVC_DB)
+
+logs-worker:
+	@$(LOGS_CMD) $(SVC_FEED_WORKER)
+
+logs-queue:
+ifeq ($(QUEUE),redis)
+	@$(LOGS_CMD) $(SVC_REDIS)
+else
+	@$(LOGS_CMD) $(SVC_QUEUE)
+endif
 
 logs-all:
 	@$(LOGS_CMD)
@@ -72,6 +84,29 @@ test-integration:
 .PHONY: test-integration-verbose
 test-integration-verbose:
 	@$(DOCKER_COMPOSE) exec $(SVC_API) go test ./integrationTests/... -v -count=1 -p 1
+
+.PHONY: test-both-queues
+test-both-queues:
+	@echo "=========================================="
+	@echo "Testing with RabbitMQ..."
+	@echo "=========================================="
+	@$(MAKE) stop-all
+	@$(MAKE) run QUEUE=rabbitmq
+	@sleep 10
+	@$(MAKE) test-integration
+	@echo ""
+	@echo "=========================================="
+	@echo "Testing with Redis..."
+	@echo "=========================================="
+	@$(MAKE) stop-all
+	@$(MAKE) run QUEUE=redis
+	@sleep 10
+	@$(MAKE) test-integration
+	@$(MAKE) stop-all
+	@echo ""
+	@echo "=========================================="
+	@echo "✅ All tests passed with both queues!"
+	@echo "=========================================="
 
 .PHONY: lint-check
 lint-check:

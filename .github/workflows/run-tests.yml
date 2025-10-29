@@ -15,20 +15,58 @@ jobs:
           fetch-depth: 0
       - name: Test Locally
         run: go test -count=1 `go list ./... | grep -v integrationTests`
+  
   integration-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        queue-type: [rabbitmq, redis]
+    name: integration-test (${{ matrix.queue-type }})
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Create Public a Private Keys
+      
+      - name: Create Public and Private Keys
         run: sh scripts/generateJWTRS256Keys.sh
+      
+      - name: Set Queue Environment Variables
+        run: |
+          if [ "${{ matrix.queue-type }}" = "redis" ]; then
+            echo "QUEUE_TYPE=redis" >> $GITHUB_ENV
+            echo "QUEUE_URL=redis://goduit-redis:6379" >> $GITHUB_ENV
+          else
+            echo "QUEUE_TYPE=rabbitmq" >> $GITHUB_ENV
+            echo "QUEUE_URL=amqp://guest:guest@goduit-queue:5672/" >> $GITHUB_ENV
+          fi
+      
       - name: Start Containers
         run: |
-          echo ---Building and starting up docker---
-          make run
-          echo ---Containers up--
+          echo "---Building and starting up docker with ${{ matrix.queue-type }}---"
+          make run QUEUE=${{ matrix.queue-type }}
+          echo "---Containers up---"
+      
+      - name: Wait for Services
+        run: |
+          echo "Waiting for services to be healthy..."
+          sleep 10
+      
       - name: Test Integration With Containers
         run: make test-integration
+      
+      - name: Show Container Logs on Failure
+        if: failure()
+        run: |
+          echo "=== API Logs ==="
+          docker compose logs goduit-api || true
+          echo "=== Worker Logs ==="
+          docker compose logs goduit-feed-worker || true
+          echo "=== Queue Logs ==="
+          make logs-queue QUEUE=${{ matrix.queue-type }} || true
+      
+      - name: Stop Containers
+        if: always()
+        run: docker compose down -v
+  
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -43,6 +81,7 @@ jobs:
         with:
           version: v2.1.6
           args: --timeout=10m
+  
   govulncheck:
     runs-on: ubuntu-latest
     steps:

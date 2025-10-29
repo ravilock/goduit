@@ -7,9 +7,11 @@ services:
       - 3000:3000
     depends_on:
       - mongo
-      - goduit-queue
     volumes:
       - ./:/app
+    environment:
+      - QUEUE_TYPE=${QUEUE_TYPE:-rabbitmq}
+      - QUEUE_URL=${QUEUE_URL:-amqp://guest:guest@goduit-queue:5672/}
 
   goduit-feed-worker:
     build:
@@ -17,9 +19,11 @@ services:
       dockerfile: goduit-feed-worker.Dockerfile
     depends_on:
       - mongo
-      - goduit-queue
     volumes:
       - ./:/app
+    environment:
+      - QUEUE_TYPE=${QUEUE_TYPE:-rabbitmq}
+      - QUEUE_URL=${QUEUE_URL:-amqp://guest:guest@goduit-queue:5672/}
 
   mongo:
     image: mongo
@@ -33,6 +37,16 @@ services:
   goduit-queue:
     image: rabbitmq:4.0.3-management
     container_name: goduit-queue
+    profiles:
+      - rabbitmq
     ports:
       - 5672:5672
       - 15672:15672
+
+  goduit-redis:
+    image: redis:7-alpine
+    container_name: goduit-redis
+    profiles:
+      - redis
+    ports:
+      - 6379:6379

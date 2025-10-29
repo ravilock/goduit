@@ -13,7 +13,7 @@ import (
 	_ "github.com/ravilock/goduit/internal/config"
 	followerRepositories "github.com/ravilock/goduit/internal/followerCentral/repositories"
 	profileRepositories "github.com/ravilock/goduit/internal/profileManager/repositories"
-	"github.com/ravilock/goduit/internal/rabbitmq"
+	"github.com/ravilock/goduit/internal/queue"
 	"github.com/spf13/viper"
 )
 
@@ -32,7 +32,10 @@ func main() {
 	articlePublisherRepository := articleRepositories.NewArticleRepository(databaseClient)
 	feedRepository := articleRepositories.NewFeedRepository(databaseClient)
 
-	queueConnection, err := rabbitmq.ConnectQueue(viper.GetString("queue.url"))
+	queueConnection, err := queue.Connect(
+		queue.QueueType(viper.GetString("queue.type")),
+		viper.GetString("queue.url"),
+	)
 	if err != nil {
 		logger.Error("Failed to connect to queue", "error", err)
 		panic(err)
@@ -40,7 +43,7 @@ func main() {
 
 	handler := articleFeedWorker.NewArticleFeedHandler(articlePublisherRepository, userRepository, followerRepository, feedRepository, logger)
 
-	articleFeedQueueConsumer, err := rabbitmq.NewQueueConsumer(handler, queueConnection, viper.GetString("article.queue.name"), logger)
+	articleFeedQueueConsumer, err := queueConnection.NewConsumer(viper.GetString("article.queue.name"), handler)
 	if err != nil {
 		panic(err)
 	}
