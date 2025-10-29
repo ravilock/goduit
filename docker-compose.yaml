@@ -9,6 +9,8 @@ services:
       - mongo
     volumes:
       - ./:/app
+    entrypoint: ["/app/scripts/docker-entrypoint.sh"]
+    command: ["gin", "-b", "goduit", "run"]
     environment:
       - QUEUE_TYPE=${QUEUE_TYPE:-rabbitmq}
       - QUEUE_URL=${QUEUE_URL:-amqp://guest:guest@goduit-queue:5672/}
@@ -21,6 +23,8 @@ services:
       - mongo
     volumes:
       - ./:/app
+    entrypoint: ["/app/scripts/docker-entrypoint.sh"]
+    command: ["reflex", "-d", "none", "-c", "/usr/local/etc/reflex.conf"]
     environment:
       - QUEUE_TYPE=${QUEUE_TYPE:-rabbitmq}
       - QUEUE_URL=${QUEUE_URL:-amqp://guest:guest@goduit-queue:5672/}

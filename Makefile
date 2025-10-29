@@ -79,11 +79,11 @@ test-verbose:
 
 .PHONY: test-integration
 test-integration:
-	@$(DOCKER_COMPOSE) exec $(SVC_API) go test ./integrationTests/... -count=1 -p 1
+	@$(DOCKER_COMPOSE) exec $(SVC_API) sh -c 'JWT_PRIVATE_KEY_BASE64=$$(base64 -w 0 /app/jwtRS256.key) JWT_PUBLIC_KEY_BASE64=$$(base64 -w 0 /app/jwtRS256.key.pub) go test ./integrationTests/... -count=1 -p 1'
 
 .PHONY: test-integration-verbose
 test-integration-verbose:
-	@$(DOCKER_COMPOSE) exec $(SVC_API) go test ./integrationTests/... -v -count=1 -p 1
+	@$(DOCKER_COMPOSE) exec $(SVC_API) sh -c 'JWT_PRIVATE_KEY_BASE64=$$(base64 -w 0 /app/jwtRS256.key) JWT_PUBLIC_KEY_BASE64=$$(base64 -w 0 /app/jwtRS256.key.pub) go test ./integrationTests/... -v -count=1 -p 1'
 
 .PHONY: test-both-queues
 test-both-queues:
