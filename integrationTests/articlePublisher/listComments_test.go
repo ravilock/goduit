@@ -37,7 +37,7 @@ func TestListComments(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s/%s", listCommentsEndpoint, article.Article.Slug, commentsPath), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-    req.AddCookie(authorCookie)
+		req.AddCookie(authorCookie)
 
 		// Act
 		res, err := httpClient.Do(req)

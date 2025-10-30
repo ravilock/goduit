@@ -89,7 +89,7 @@ type rabbitmqConsumer struct {
 
 func newRabbitMQConsumer(conn *amqp.Connection, queueName string, handler app.Handler) (*rabbitmqConsumer, error) {
 	logger := slog.Default().With("emitter", "rabbitmq-consumer", "queue-name", queueName)
-	
+
 	consumer := &rabbitmqConsumer{
 		handler:    handler,
 		logger:     logger,

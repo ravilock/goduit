@@ -20,10 +20,10 @@ func NewRedisConnection(url string) (Connection, error) {
 	}
 
 	client := redis.NewClient(opts)
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	if err := client.Ping(ctx).Err(); err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ type redisConsumer struct {
 
 func newRedisConsumer(client *redis.Client, queueName string, handler app.Handler) *redisConsumer {
 	logger := slog.Default().With("emitter", "redis-consumer", "queue-name", queueName)
-	
+
 	return &redisConsumer{
 		handler:   handler,
 		logger:    logger,
@@ -84,14 +84,14 @@ func newRedisConsumer(client *redis.Client, queueName string, handler app.Handle
 
 func (c *redisConsumer) Consume() {
 	ctx := context.Background()
-	
+
 	for {
 		select {
 		case <-c.exitChan:
 			return
 		default:
 			c.logger.Debug("Waiting for new redis messages")
-			
+
 			result, err := c.client.BLPop(ctx, 1*time.Second, c.queueName).Result()
 			if err != nil {
 				if err == redis.Nil {
@@ -100,11 +100,11 @@ func (c *redisConsumer) Consume() {
 				c.logger.Error("Error reading from redis queue", "error", err)
 				continue
 			}
-			
+
 			if len(result) < 2 {
 				continue
 			}
-			
+
 			messageData := result[1]
 			c.logger.Info("Message received", "body", messageData)
 			message := newRedisMessage([]byte(messageData))

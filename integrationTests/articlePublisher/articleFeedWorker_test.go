@@ -71,7 +71,7 @@ func TestArticleFeedWorkerWithQueue(t *testing.T) {
 	logger := logger.NewLogger(map[string]string{"emitter": "Goduit-Article-Feed-Worker-Integration-Test"})
 
 	queueConnection := integrationtests.GetQueueConnection()
-	
+
 	t.Run("Should process article through queue and write to followers feed", func(t *testing.T) {
 		// Arrange
 		authorIdentity, _ := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
@@ -84,7 +84,7 @@ func TestArticleFeedWorkerWithQueue(t *testing.T) {
 		handler := articleFeedWorker.NewArticleFeedHandler(articlePublisherRepository, userRepository, followerCentralRepository, feedRepository, logger)
 		consumer, err := queueConnection.NewConsumer(viper.GetString("article.queue.name")+"-integration-test", handler)
 		require.NoError(t, err)
-		
+
 		// Start consumer
 		go consumer.Consume()
 		defer consumer.Stop()
@@ -93,7 +93,7 @@ func TestArticleFeedWorkerWithQueue(t *testing.T) {
 		publisher, err := queueConnection.NewPublisher(viper.GetString("article.queue.name") + "-integration-test")
 		require.NoError(t, err)
 		defer publisher.Close()
-		
+
 		err = publisher.Publish(context.Background(), []byte(expectedArticle.ID.Hex()))
 		require.NoError(t, err)
 
