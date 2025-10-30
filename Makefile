@@ -45,7 +45,7 @@ run-db:
 stop: stop-all
 
 stop-all:
-	@$(DOCKER_COMPOSE) down
+	@$(DOCKER_COMPOSE) --profile redis --profile rabbitmq down
 
 logs-api:
 	@$(LOGS_CMD) $(SVC_API)
