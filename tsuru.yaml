@@ -1,0 +1,15 @@
+processes:
+  - name: web
+    command: ./goduit
+    healthcheck:
+      path: /api/healthcheck
+      scheme: http
+      deploy_timeout_seconds: 75
+    startupcheck:
+      path: /api/healthcheck
+      scheme: http
+      allowed_failures: 5
+      interval_seconds: 15
+      timeout_seconds: 5
+  - name: article-feed-worker
+    command: article-feed-worker
