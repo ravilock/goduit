@@ -67,7 +67,7 @@ func (h *LoginHandler) Login(c echo.Context) error {
 		log.Println("Error Updating Last Session", err)
 	}
 
-	response := assemblers.UserResponse(user)
+	response := assemblers.UserResponse(user, token)
 	cookie := h.cookieService.Create(token)
 	c.SetCookie(cookie)
 	return c.JSON(http.StatusOK, response)

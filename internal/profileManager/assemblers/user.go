@@ -5,8 +5,11 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/responses"
 )
 
-func UserResponse(user *models.User) *responses.User {
+func UserResponse(user *models.User, token ...string) *responses.User {
 	response := new(responses.User)
+	if len(token) > 0 {
+		response.User.Token = token[0]
+	}
 	if user.Username != nil {
 		response.User.Username = *user.Username
 	}

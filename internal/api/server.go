@@ -142,7 +142,7 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection queue.C
 	e.Use(middleware.Recover())
 	// TODO: make origins be loaded as configurations
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://goduit-aws-ravi.http-apps.tsuru.lab.aws.i.globo"},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 		AllowCredentials: true,
 	}))

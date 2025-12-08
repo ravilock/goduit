@@ -61,7 +61,7 @@ func (h *UpdateProfileHandler) UpdateProfile(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(model)
+	response := assemblers.UserResponse(model, token)
 	if token != "" {
 		cookie := h.cookieService.Create(token)
 		c.SetCookie(cookie)

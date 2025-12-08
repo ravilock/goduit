@@ -2,6 +2,7 @@ package identity
 
 import (
 	"errors"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -34,18 +35,27 @@ type IdentityHeaders struct {
 func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			now := time.Now()
+			authHeader := c.Request().Header.Get("Authorization")
 			cookie, err := c.Cookie(cookie.CookieKey)
-			if err != nil {
+			if err != nil && !errors.Is(err, http.ErrNoCookie) {
 				if requiredAuthentication {
 					return api.FailedAuthentication
 				}
 				return next(c)
 			}
-			if cookie.Expires.After(now) {
+			if authHeader == "" && errors.Is(err, http.ErrNoCookie) && requiredAuthentication {
 				return api.FailedAuthentication
 			}
-			token := cookie.Value
+			token := authHeader
+			if cookie != nil {
+				cookieToken, err := handleCookieAuth(cookie)
+				if err != nil && requiredAuthentication {
+					return api.FailedAuthentication
+				}
+				if cookieToken != "" {
+					token = cookieToken
+				}
+			}
 			if !requiredAuthentication && token == "" {
 				return next(c)
 			}
@@ -102,4 +112,12 @@ func FromToken(tokenString string) (*Identity, error) {
 		return nil, errCouldNotParseClaim
 	}
 	return claims, nil
+}
+
+func handleCookieAuth(cookie *http.Cookie) (string, error) {
+	now := time.Now()
+	if now.After(cookie.Expires) {
+		return "", api.FailedAuthentication
+	}
+	return cookie.Value, nil
 }

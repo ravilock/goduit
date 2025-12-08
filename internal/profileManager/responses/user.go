@@ -6,5 +6,6 @@ type User struct {
 		Email    string `json:"email"`
 		Bio      string `json:"bio,omitempty"`
 		Image    string `json:"image,omitempty"`
+		Token    string `json:"token,omitempty"`
 	} `json:"user"`
 }

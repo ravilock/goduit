@@ -52,7 +52,7 @@ func (h *RegisterProfileHandler) Register(c echo.Context) error {
 		return err
 	}
 
-	response := assemblers.UserResponse(user)
+	response := assemblers.UserResponse(user, token)
 	cookie := h.cookieService.Create(token)
 	c.SetCookie(cookie)
 	return c.JSON(http.StatusCreated, response)
