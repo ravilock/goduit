@@ -138,11 +138,11 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection queue.C
 	deleteCommentHandler := articleHandlers.NewDeleteCommentHandler(deleteCommentService, getCommentService, getArticleService)
 
 	// Middleware
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
 	// TODO: make origins be loaded as configurations
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://goduit-aws-ravi.http-apps.tsuru.lab.aws.i.globo"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 		AllowCredentials: true,
 	}))
