@@ -14,7 +14,7 @@ import (
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestWriteArticle(t *testing.T) {
@@ -28,7 +28,7 @@ func TestWriteArticle(t *testing.T) {
 
 	t.Run("Should create an article", func(t *testing.T) {
 		// Arrange
-		authorID := primitive.NewObjectID()
+		authorID := bson.NewObjectID()
 		expectedAuthor := assembleArticleAuthor(authorID.Hex())
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)
@@ -58,7 +58,7 @@ func TestWriteArticle(t *testing.T) {
 
 	t.Run("Should return conflict error if title/slug is already used", func(t *testing.T) {
 		// Arrange
-		authorID := primitive.NewObjectID()
+		authorID := bson.NewObjectID()
 		expectedAuthor := assembleArticleAuthor(authorID.Hex())
 		createArticleRequest := generateWriteArticleBody()
 		requestBody, err := json.Marshal(createArticleRequest)

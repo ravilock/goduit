@@ -24,7 +24,7 @@ import (
 	profileServices "github.com/ravilock/goduit/internal/profileManager/services"
 	"github.com/ravilock/goduit/internal/queue"
 	"github.com/spf13/viper"
-	mongoDriver "go.mongodb.org/mongo-driver/mongo"
+	mongoDriver "go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type Server interface {
@@ -39,8 +39,7 @@ type server struct {
 }
 
 func (s *server) Start() {
-	addr := fmt.Sprintf(":%d", viper.GetInt("port"))
-	s.Logger.Fatal(s.Echo.Start(addr))
+	s.Logger.Fatal(s.Echo.Start(viper.GetString("server.address")))
 }
 
 func NewServer() (Server, error) {
@@ -61,7 +60,7 @@ func NewServer() (Server, error) {
 	return createNewServer(databaseClient, queueConnection, serverLogger)
 }
 
-func createNewServer(databaseClient *mongoDriver.Client, queueConnection queue.Connection, _ *slog.Logger) (Server, error) {
+func createNewServer(databaseClient *mongoDriver.Client, queueConnection queue.Connection, logger *slog.Logger) (Server, error) {
 	// TODO: Add logger to each controller
 	// Echo instance
 	e := echo.New()
@@ -152,8 +151,8 @@ func createNewServer(databaseClient *mongoDriver.Client, queueConnection queue.C
 		return nil, err
 	}
 
-	optionalAuthMiddleware := identity.CreateAuthMiddleware(false)
-	requiredAuthMiddleware := identity.CreateAuthMiddleware(true)
+	optionalAuthMiddleware := identity.CreateAuthMiddleware(false, logger)
+	requiredAuthMiddleware := identity.CreateAuthMiddleware(true, logger)
 
 	// Routes
 	apiGroup := e.Group("/api")

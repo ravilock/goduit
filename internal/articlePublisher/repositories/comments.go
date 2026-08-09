@@ -7,10 +7,9 @@ import (
 
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type CommentRepository struct {
@@ -29,7 +28,7 @@ func (r *CommentRepository) WriteComment(ctx context.Context, comment *models.Co
 	if err != nil {
 		return err
 	}
-	newId, ok := result.InsertedID.(primitive.ObjectID)
+	newId, ok := result.InsertedID.(bson.ObjectID)
 	if !ok {
 		return errors.New("could not convert comment ID")
 	}
@@ -57,7 +56,7 @@ func (r *CommentRepository) ListComments(ctx context.Context, article string) ([
 
 func (r *CommentRepository) GetCommentByID(ctx context.Context, ID string) (*models.Comment, error) {
 	var comment *models.Comment
-	commentID, err := primitive.ObjectIDFromHex(ID)
+	commentID, err := bson.ObjectIDFromHex(ID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +75,7 @@ func (r *CommentRepository) GetCommentByID(ctx context.Context, ID string) (*mod
 }
 
 func (r *CommentRepository) DeleteComment(ctx context.Context, ID string) error {
-	commentID, err := primitive.ObjectIDFromHex(ID)
+	commentID, err := bson.ObjectIDFromHex(ID)
 	if err != nil {
 		return err
 	}

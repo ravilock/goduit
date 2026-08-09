@@ -32,8 +32,8 @@ func TestUpdateProfile(t *testing.T) {
 		log.Fatalln("Error connecting to database", err)
 	}
 	profileManagerRepository := profileManagerRepositories.NewUserRepository(client)
-	serverUrl := viper.GetString("server.url")
-	updateProfileEndpoint := fmt.Sprintf("%s%s", serverUrl, "/api/user")
+	serverURL := viper.GetString("server.url")
+	updateProfileEndpoint := fmt.Sprintf("%s%s", serverURL, "/api/user")
 	httpClient := http.Client{}
 	imageServer := mockValidImageURL(t)
 	defer imageServer.Close()

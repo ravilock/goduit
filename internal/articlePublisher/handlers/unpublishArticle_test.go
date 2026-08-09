@@ -12,7 +12,7 @@ import (
 	"github.com/ravilock/goduit/api/validators"
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestUnpublishArticle(t *testing.T) {
@@ -25,7 +25,7 @@ func TestUnpublishArticle(t *testing.T) {
 
 	t.Run("Should delete an article", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		expectedArticle := assembleArticleModel(articleAuthorID)
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
@@ -51,7 +51,7 @@ func TestUnpublishArticle(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		expectedArticle := assembleArticleModel(articleAuthorID)
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
@@ -74,7 +74,7 @@ func TestUnpublishArticle(t *testing.T) {
 
 	t.Run("Should only delete aritcles authored by the currently authenticated user", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedArticle := assembleArticleModel(articleAuthorID)
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

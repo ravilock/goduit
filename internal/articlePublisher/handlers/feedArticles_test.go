@@ -11,7 +11,7 @@ import (
 	"github.com/ravilock/goduit/api/validators"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestFeedArticles(t *testing.T) {
@@ -25,9 +25,9 @@ func TestFeedArticles(t *testing.T) {
 	t.Run("Should feed all articles", func(t *testing.T) {
 		// Arrange
 		limit := 30
-		userID := primitive.NewObjectID()
+		userID := bson.NewObjectID()
 		user := assembleArticleAuthor(userID.Hex())
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedArticles := assembleRandomArticles(limit, articleAuthorID)
 		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		req := httptest.NewRequest(http.MethodGet, "/api/articles", nil)

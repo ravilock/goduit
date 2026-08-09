@@ -17,7 +17,7 @@ import (
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestGetArticle(t *testing.T) {
@@ -32,7 +32,7 @@ func TestGetArticle(t *testing.T) {
 
 	t.Run("Should get an article", func(t *testing.T) {
 		// Arrange
-		expectedArticle := assembleArticleModel(primitive.NewObjectID())
+		expectedArticle := assembleArticleModel(bson.NewObjectID())
 		expectedAuthor := assembleArticleAuthor(*expectedArticle.Author)
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/article/%s", *expectedArticle.Slug), nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -77,8 +77,8 @@ func TestGetArticle(t *testing.T) {
 	})
 }
 
-func assembleArticleModel(authorID primitive.ObjectID) *models.Article {
-	articleID := primitive.NewObjectID()
+func assembleArticleModel(authorID bson.ObjectID) *models.Article {
+	articleID := bson.NewObjectID()
 	authorIDHex := authorID.Hex()
 	articleTitle := "Article Title"
 	articleSlug := "article-title"
@@ -101,7 +101,7 @@ func assembleArticleModel(authorID primitive.ObjectID) *models.Article {
 }
 
 func assembleArticleAuthor(authorID string) *profileManagerModels.User {
-	ID, err := primitive.ObjectIDFromHex(authorID)
+	ID, err := bson.ObjectIDFromHex(authorID)
 	if err != nil {
 		log.Fatalln("could not parse authorID to object ID format", err)
 	}

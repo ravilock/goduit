@@ -17,7 +17,7 @@ import (
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestUpdateProfile(t *testing.T) {
@@ -33,7 +33,7 @@ func TestUpdateProfile(t *testing.T) {
 
 	t.Run("Should fully update an authenticated user's profile", func(t *testing.T) {
 		// Arrange
-		expectedSubject := primitive.NewObjectID().Hex()
+		expectedSubject := bson.NewObjectID().Hex()
 		clientUsername := "test-username"
 		clientEmail := "test.email@test.test"
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)
@@ -66,7 +66,7 @@ func TestUpdateProfile(t *testing.T) {
 
 	t.Run("Should return HTTP 409 if new username or email is already being used", func(t *testing.T) {
 		// Arrange
-		expectedSubject := primitive.NewObjectID().Hex()
+		expectedSubject := bson.NewObjectID().Hex()
 		clientUsername := "test-username"
 		clientEmail := "test.email@test.test"
 		updateProfileRequest := generateUpdateProfileBody(imageServer.URL)

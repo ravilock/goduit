@@ -15,7 +15,7 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestGetProfile(t *testing.T) {
@@ -28,7 +28,7 @@ func TestGetProfile(t *testing.T) {
 
 	t.Run("Should get user profile", func(t *testing.T) {
 		// Arrange
-		expectedUserID := primitive.NewObjectID()
+		expectedUserID := bson.NewObjectID()
 		expectedProfileUsername := "test-username"
 		expectedProfileEmail := "test.email@test.test"
 		expectedUserPassword := "test-password"
@@ -65,10 +65,10 @@ func TestGetProfile(t *testing.T) {
 
 	t.Run("Should return following as true if logged user follows profile", func(t *testing.T) {
 		// Arrange
-		followerUserID := primitive.NewObjectID()
+		followerUserID := bson.NewObjectID()
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
-		expectedUserID := primitive.NewObjectID()
+		expectedUserID := bson.NewObjectID()
 		expectedProfileUsername := "test-username"
 		expectedProfileEmail := "test.email@test.test"
 		expectedUserPassword := "test-password"

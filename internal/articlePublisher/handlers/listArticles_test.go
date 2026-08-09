@@ -13,7 +13,7 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestListArticles(t *testing.T) {
@@ -28,7 +28,7 @@ func TestListArticles(t *testing.T) {
 	t.Run("Should list all articles", func(t *testing.T) {
 		// Arrange
 		limit := 30
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedArticles := assembleRandomArticles(limit, articleAuthorID)
 		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		req := httptest.NewRequest(http.MethodGet, "/api/articles", nil)
@@ -58,7 +58,7 @@ func TestListArticles(t *testing.T) {
 	t.Run("Should filter articles based on tag", func(t *testing.T) {
 		// Arrange
 		limit := 30
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		possibleArticles := assembleRandomArticles(limit, articleAuthorID)
 		tag := possibleArticles[0].TagList[0]
 		expectedArticles := slices.DeleteFunc(possibleArticles, func(article *models.Article) bool {
@@ -93,7 +93,7 @@ func TestListArticles(t *testing.T) {
 	t.Run("Should filter articles based on author", func(t *testing.T) {
 		// Arrange
 		limit := 30
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedArticles := assembleRandomArticles(limit, articleAuthorID)
 		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		req := httptest.NewRequest(http.MethodGet, "/api/articles", nil)
@@ -123,7 +123,7 @@ func TestListArticles(t *testing.T) {
 	})
 }
 
-func assembleRandomArticles(amount int, authorId primitive.ObjectID) []*models.Article {
+func assembleRandomArticles(amount int, authorId bson.ObjectID) []*models.Article {
 	articles := make([]*models.Article, 0, amount)
 	for range amount {
 		articles = append(articles, assembleArticleModel(authorId))

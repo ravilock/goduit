@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 
 	"github.com/ravilock/goduit/api"
 	"github.com/ravilock/goduit/api/validators"
@@ -38,7 +38,7 @@ func TestListComments(t *testing.T) {
 
 	t.Run("Should list comments", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		articleAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		authorMap := map[string]*models.User{
 			articleAuthorID.Hex(): articleAuthor,
@@ -75,7 +75,7 @@ func TestListComments(t *testing.T) {
 
 	t.Run("Should return empty array if no comments are found", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		articleAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		authorMap := map[string]*models.User{
 			articleAuthorID.Hex(): articleAuthor,
@@ -150,7 +150,7 @@ func checkListCommentsResponse(t *testing.T, response *articlePublisherResponses
 }
 
 func assembleCommentModel(commentAuthorID string, articleID string) *articlePublisherModels.Comment {
-	commentID := primitive.NewObjectID()
+	commentID := bson.NewObjectID()
 	commentBody := "comment body"
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	return &articlePublisherModels.Comment{
