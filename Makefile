@@ -20,7 +20,7 @@ QUEUE ?= rabbitmq
 setup:
 	echo 'Installing Golang CI Lint'
 	# binary will be $(go env GOPATH)/bin/golangci-lint
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s v2.1.6
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s v2.12.2
 
 run: run-all
 

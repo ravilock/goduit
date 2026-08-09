@@ -6,16 +6,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Golang
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: "1.24.1"
+          go-version: "1.25.6"
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Test Locally
         run: go test -count=1 `go list ./... | grep -v integrationTests`
-  
+
   integration-test:
     runs-on: ubuntu-latest
     strategy:
@@ -24,11 +24,11 @@ jobs:
     name: integration-test (${{ matrix.queue-type }})
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-      
+        uses: actions/checkout@v7
+
       - name: Create Public and Private Keys
         run: sh scripts/generateJWTRS256Keys.sh
-      
+
       - name: Set Queue Environment Variables
         run: |
           if [ "${{ matrix.queue-type }}" = "redis" ]; then
@@ -38,21 +38,21 @@ jobs:
             echo "QUEUE_TYPE=rabbitmq" >> $GITHUB_ENV
             echo "QUEUE_URL=amqp://guest:guest@goduit-queue:5672/" >> $GITHUB_ENV
           fi
-      
+
       - name: Start Containers
         run: |
           echo "---Building and starting up docker with ${{ matrix.queue-type }}---"
           make run QUEUE=${{ matrix.queue-type }}
           echo "---Containers up---"
-      
+
       - name: Wait for Services
         run: |
           echo "Waiting for services to be healthy..."
           sleep 10
-      
+
       - name: Test Integration With Containers
         run: make test-integration
-      
+
       - name: Show Container Logs on Failure
         if: failure()
         run: |
@@ -62,32 +62,32 @@ jobs:
           docker compose logs goduit-feed-worker || true
           echo "=== Queue Logs ==="
           make logs-queue QUEUE=${{ matrix.queue-type }} || true
-      
+
       - name: Stop Containers
         if: always()
         run: docker compose down -v
-  
+
   lint:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Golang
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: "1.24.1"
+          go-version: "1.25.6"
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       - name: Linting
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.1.6
+          version: v2.12.2
           args: --timeout=10m
-  
+
   govulncheck:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Golang
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: "1.24.1"
+          go-version: "1.25.6"
       - name: Vulnerability Check
         uses: golang/govulncheck-action@v1
