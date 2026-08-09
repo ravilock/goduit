@@ -2,6 +2,8 @@ package identity
 
 import (
 	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -32,28 +34,30 @@ type IdentityHeaders struct {
 	ClientEmail    string `header:"Goduit-Client-Email"`
 }
 
-func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
+func CreateAuthMiddleware(requiredAuthentication bool, logger *slog.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			authHeader := c.Request().Header.Get("Authorization")
 			cookie, err := c.Cookie(cookie.CookieKey)
 			if err != nil && !errors.Is(err, http.ErrNoCookie) {
+				logger.Error("unexpected error during auth cookie retrieval", "error", err)
 				if requiredAuthentication {
 					return api.FailedAuthentication
 				}
 				return next(c)
 			}
 			if authHeader == "" && errors.Is(err, http.ErrNoCookie) && requiredAuthentication {
+				logger.Error("no auth header nor auth cookie found")
 				return api.FailedAuthentication
 			}
 			token := authHeader
 			if cookie != nil {
-				cookieToken, err := handleCookieAuth(cookie)
 				if err != nil && requiredAuthentication {
+					logger.Error("failed to handle auth cookie", "error", err)
 					return api.FailedAuthentication
 				}
-				if cookieToken != "" {
-					token = cookieToken
+				if cookie.Value != "" {
+					token = cookie.Value
 				}
 			}
 			if !requiredAuthentication && token == "" {
@@ -61,6 +65,7 @@ func CreateAuthMiddleware(requiredAuthentication bool) echo.MiddlewareFunc {
 			}
 			identity, err := FromToken(token)
 			if err != nil {
+				logger.Error("failed to handle token", "error", err)
 				return api.FailedAuthentication
 			}
 			headers := c.Request().Header
@@ -91,33 +96,25 @@ func GenerateToken(userEmail, username, userID string) (string, error) {
 
 func FromToken(tokenString string) (*Identity, error) {
 	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-	token, err := jwt.ParseWithClaims(tokenString, &Identity{}, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Identity{}, func(t *jwt.Token) (any, error) {
 		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(os.Getenv("PUBLIC_KEY")))
 		if err != nil {
 			return nil, err
 		}
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, errInvalidToken
+			return nil, fmt.Errorf("invalid token method %v: %w", t.Method, errInvalidToken)
 		}
 		return key, nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse token with claims: %w", err)
 	}
 	if !token.Valid {
-		return nil, errInvalidToken
+		return nil, fmt.Errorf("token marked as invalid after parse: %w", errInvalidToken)
 	}
 	claims, ok := token.Claims.(*Identity)
 	if !ok {
-		return nil, errCouldNotParseClaim
+		return nil, fmt.Errorf("token claims could not be parsed into expected format: %w", errCouldNotParseClaim)
 	}
 	return claims, nil
-}
-
-func handleCookieAuth(cookie *http.Cookie) (string, error) {
-	now := time.Now()
-	if now.After(cookie.Expires) {
-		return "", api.FailedAuthentication
-	}
-	return cookie.Value, nil
 }

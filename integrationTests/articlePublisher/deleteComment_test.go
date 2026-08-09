@@ -13,7 +13,7 @@ import (
 	profileManagerRequests "github.com/ravilock/goduit/internal/profileManager/requests"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestDeleteComment(t *testing.T) {
@@ -78,7 +78,7 @@ func TestDeleteComment(t *testing.T) {
 		// Arrange
 		_, authorCookie := integrationtests.MustRegisterUser(t, profileManagerRequests.RegisterPayload{})
 		article := integrationtests.MustWriteArticle(t, articlePublisherRequests.WriteArticlePayload{}, authorCookie)
-		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/%s/%s", deleteCommentEndpoint, article.Article.Slug, commentsPath, primitive.NewObjectID().Hex()), nil)
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/%s/%s", deleteCommentEndpoint, article.Article.Slug, commentsPath, bson.NewObjectID().Hex()), nil)
 		require.NoError(t, err)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		req.AddCookie(authorCookie)

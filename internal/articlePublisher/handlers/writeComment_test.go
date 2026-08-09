@@ -17,7 +17,7 @@ import (
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestWriteComment(t *testing.T) {
@@ -32,7 +32,7 @@ func TestWriteComment(t *testing.T) {
 
 	t.Run("Should create a commentary", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		expectedArticle := assembleArticleModel(articleAuthorID)
 		createCommentRequest := generateWriteCommentBody()
@@ -54,7 +54,7 @@ func TestWriteComment(t *testing.T) {
 		articleGetterMock.EXPECT().GetArticleBySlug(ctx, *expectedArticle.Slug).Return(expectedArticle, nil).Once()
 		profileGetterMock.EXPECT().GetProfileByID(ctx, expectedAuthor.ID.Hex()).Return(expectedAuthor, nil).Once()
 		commentWriterMock.EXPECT().WriteComment(ctx, expectedCommentModel).RunAndReturn(func(ctx context.Context, comment *models.Comment) error {
-			commentID := primitive.NewObjectID()
+			commentID := bson.NewObjectID()
 			comment.ID = &commentID
 			return nil
 		}).Once()
@@ -73,7 +73,7 @@ func TestWriteComment(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		expectedArticle := assembleArticleModel(articleAuthorID)
 		createCommentRequest := generateWriteCommentBody()

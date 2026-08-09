@@ -18,7 +18,7 @@ import (
 	articlePublisherRequests "github.com/ravilock/goduit/internal/articlePublisher/requests"
 	articlePublisherResponses "github.com/ravilock/goduit/internal/articlePublisher/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestUpdateArticle(t *testing.T) {
@@ -33,7 +33,7 @@ func TestUpdateArticle(t *testing.T) {
 
 	t.Run("Should update an article", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		expectedArticle := assembleArticleModel(articleAuthorID)
 		updateArticleRequest := generateUpdateArticleBody()
@@ -72,7 +72,7 @@ func TestUpdateArticle(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if no article is found", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedAuthor := assembleArticleAuthor(articleAuthorID.Hex())
 		expectedArticle := assembleArticleModel(articleAuthorID)
 		updateArticleRequest := generateUpdateArticleBody()
@@ -99,7 +99,7 @@ func TestUpdateArticle(t *testing.T) {
 
 	t.Run("Should only update articles authored by the currently authenticated user", func(t *testing.T) {
 		// Arrange
-		articleAuthorID := primitive.NewObjectID()
+		articleAuthorID := bson.NewObjectID()
 		expectedArticle := assembleArticleModel(articleAuthorID)
 		updateArticleRequest := generateUpdateArticleBody()
 		requestBody, err := json.Marshal(updateArticleRequest)

@@ -15,7 +15,7 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestUnfollow(t *testing.T) {
@@ -28,10 +28,10 @@ func TestUnfollow(t *testing.T) {
 
 	t.Run("Should unfollow a user", func(t *testing.T) {
 		// Act
-		followerID := primitive.NewObjectID()
+		followerID := bson.NewObjectID()
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
-		followedID := primitive.NewObjectID()
+		followedID := bson.NewObjectID()
 		followedUsername := "followed-test-username"
 		followedEmail := "followed.email@test.test"
 		now := time.Now().UTC().Truncate(time.Millisecond)
@@ -70,10 +70,10 @@ func TestUnfollow(t *testing.T) {
 
 	t.Run("If the user is already not following the other user, return HTTP 200", func(t *testing.T) {
 		// Act
-		followerID := primitive.NewObjectID()
+		followerID := bson.NewObjectID()
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
-		followedID := primitive.NewObjectID()
+		followedID := bson.NewObjectID()
 		followedUsername := "followed-test-username"
 		followedEmail := "followed.email@test.test"
 		now := time.Now().UTC().Truncate(time.Millisecond)
@@ -112,7 +112,7 @@ func TestUnfollow(t *testing.T) {
 
 	t.Run("Should return 404 if no user is found", func(t *testing.T) {
 		// Arrange
-		followerID := primitive.NewObjectID()
+		followerID := bson.NewObjectID()
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
 		inexistentUsername := "inexistent-username"

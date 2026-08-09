@@ -8,10 +8,9 @@ import (
 
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/profileManager/models"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type UserRepository struct {
@@ -34,7 +33,7 @@ func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) (*
 		}
 		return nil, err
 	}
-	newId, ok := result.InsertedID.(primitive.ObjectID)
+	newId, ok := result.InsertedID.(bson.ObjectID)
 	if !ok {
 		return nil, errors.New("could not convert user ID")
 	}
@@ -76,7 +75,7 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, username string)
 
 func (r *UserRepository) GetUserByID(ctx context.Context, ID string) (*models.User, error) {
 	var user *models.User
-	userID, err := primitive.ObjectIDFromHex(ID)
+	userID, err := bson.ObjectIDFromHex(ID)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse ID: %s into ObjectID: %w", ID, err)
 	}
@@ -103,8 +102,8 @@ func (r *UserRepository) UpdateProfile(ctx context.Context, subjectEmail, client
 	}
 	update := bson.D{{Key: "$set", Value: user}}
 	collection := r.DBClient.Database("conduit").Collection("users")
-	returnDocumentOption := options.After
-	err := collection.FindOneAndUpdate(ctx, filter, update, &options.FindOneAndUpdateOptions{ReturnDocument: &returnDocumentOption}).Decode(user)
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	err := collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return app.ConflictError("users")

@@ -11,7 +11,7 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestGetOwnProfile(t *testing.T) {
@@ -21,7 +21,7 @@ func TestGetOwnProfile(t *testing.T) {
 
 	t.Run("Should get user's authenticated profile", func(t *testing.T) {
 		// Arrange
-		expectedSubject := primitive.NewObjectID()
+		expectedSubject := bson.NewObjectID()
 		clientUsername := "test-username"
 		clientEmail := "test.email@test.test"
 		expectedUserPassword := "test-password"

@@ -8,10 +8,9 @@ import (
 
 	"github.com/ravilock/goduit/internal/app"
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type ArticleRepository struct {
@@ -33,7 +32,7 @@ func (r *ArticleRepository) WriteArticle(ctx context.Context, article *models.Ar
 		}
 		return err
 	}
-	newId, ok := result.InsertedID.(primitive.ObjectID)
+	newId, ok := result.InsertedID.(bson.ObjectID)
 	if !ok {
 		return errors.New("could not convert article ID")
 	}
@@ -85,7 +84,7 @@ func (r *ArticleRepository) GetArticleBySlug(ctx context.Context, slug string) (
 
 func (r *ArticleRepository) GetArticleByID(ctx context.Context, ID string) (*models.Article, error) {
 	var article *models.Article
-	articleID, err := primitive.ObjectIDFromHex(ID)
+	articleID, err := bson.ObjectIDFromHex(ID)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse ID: %s into ObjectID: %w", ID, err)
 	}
@@ -104,9 +103,9 @@ func (r *ArticleRepository) GetArticleByID(ctx context.Context, ID string) (*mod
 }
 
 func (r *ArticleRepository) GetArticlesByIDs(ctx context.Context, IDs []string) ([]*models.Article, error) {
-	articleIDs := make([]primitive.ObjectID, 0, len(IDs))
+	articleIDs := make([]bson.ObjectID, 0, len(IDs))
 	for _, ID := range IDs {
-		articleID, err := primitive.ObjectIDFromHex(ID)
+		articleID, err := bson.ObjectIDFromHex(ID)
 		if err != nil {
 			return nil, err
 		}
@@ -149,8 +148,8 @@ func (r *ArticleRepository) UpdateArticle(ctx context.Context, slug string, arti
 	filter := bson.D{{Key: "slug", Value: slug}}
 	update := bson.D{{Key: "$set", Value: article}}
 	collection := r.DBClient.Database("conduit").Collection("articles")
-	returnDocumentOption := options.After
-	err := collection.FindOneAndUpdate(ctx, filter, update, &options.FindOneAndUpdateOptions{ReturnDocument: &returnDocumentOption}).Decode(article)
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	err := collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(article)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return app.ArticleNotFoundError(slug, err)

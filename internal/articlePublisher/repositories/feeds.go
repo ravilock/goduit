@@ -9,10 +9,9 @@ import (
 	"github.com/ravilock/goduit/internal/articlePublisher/models"
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	"github.com/spf13/viper"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type FeedRepository struct {
@@ -25,7 +24,7 @@ func NewFeedRepository(client *mongo.Client) *FeedRepository {
 
 func (r *FeedRepository) PaginateFeed(ctx context.Context, user string, limit, offset int64) ([]models.FeedFragment, error) {
 	var feed *models.Feed
-	feedID, err := primitive.ObjectIDFromHex(user)
+	feedID, err := bson.ObjectIDFromHex(user)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +85,7 @@ func (r *FeedRepository) AppendArticleToUserFeeds(ctx context.Context, article *
 	for _, feed := range feeds {
 		filter := bson.M{"_id": feed.UserID}
 		update := bson.M{"$set": feed}
-		opt := options.Update().SetUpsert(true)
+		opt := options.UpdateOne().SetUpsert(true)
 
 		result, err := collection.UpdateOne(ctx, filter, update, opt)
 		if err != nil {
@@ -100,9 +99,9 @@ func (r *FeedRepository) AppendArticleToUserFeeds(ctx context.Context, article *
 }
 
 func (r *FeedRepository) listFeedsByID(ctx context.Context, IDs []string) ([]models.Feed, error) {
-	objectIDs := make([]primitive.ObjectID, 0, len(IDs))
+	objectIDs := make([]bson.ObjectID, 0, len(IDs))
 	for _, ID := range IDs {
-		objID, err := primitive.ObjectIDFromHex(ID)
+		objID, err := bson.ObjectIDFromHex(ID)
 		if err != nil {
 			return nil, err
 		}
@@ -125,8 +124,8 @@ func (r *FeedRepository) listFeedsByID(ctx context.Context, IDs []string) ([]mod
 	return results, nil
 }
 
-func getUsersWithoutFeed(IDs []string, feeds []models.Feed) ([]primitive.ObjectID, error) {
-	usersWithoutFeed := []primitive.ObjectID{}
+func getUsersWithoutFeed(IDs []string, feeds []models.Feed) ([]bson.ObjectID, error) {
+	usersWithoutFeed := []bson.ObjectID{}
 
 	feedIdMap := make(map[string]struct{})
 	for _, feed := range feeds {
@@ -134,7 +133,7 @@ func getUsersWithoutFeed(IDs []string, feeds []models.Feed) ([]primitive.ObjectI
 	}
 
 	for _, ID := range IDs {
-		objID, err := primitive.ObjectIDFromHex(ID)
+		objID, err := bson.ObjectIDFromHex(ID)
 		if err != nil {
 			return nil, err
 		}

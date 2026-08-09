@@ -15,7 +15,7 @@ import (
 	"github.com/ravilock/goduit/internal/profileManager/models"
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestFollow(t *testing.T) {
@@ -28,10 +28,10 @@ func TestFollow(t *testing.T) {
 
 	t.Run("Should follow a user", func(t *testing.T) {
 		// Arrange
-		followerID := primitive.NewObjectID()
+		followerID := bson.NewObjectID()
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
-		followedID := primitive.NewObjectID()
+		followedID := bson.NewObjectID()
 		followedUsername := "followed-test-username"
 		followedEmail := "followed.email@test.test"
 		now := time.Now().UTC().Truncate(time.Millisecond)
@@ -70,7 +70,7 @@ func TestFollow(t *testing.T) {
 
 	t.Run("Should return HTTP 404 if no user is found", func(t *testing.T) {
 		// Arrange
-		followerID := primitive.NewObjectID()
+		followerID := bson.NewObjectID()
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
 		inexistentUser := "inexistent-username"
@@ -95,10 +95,10 @@ func TestFollow(t *testing.T) {
 
 	t.Run("Should return HTTP 409 if follower already follows followed", func(t *testing.T) {
 		// Arrange
-		followerID := primitive.NewObjectID()
+		followerID := bson.NewObjectID()
 		followerUsername := "follower-username"
 		followerEmail := "follower.email@test.test"
-		followedID := primitive.NewObjectID()
+		followedID := bson.NewObjectID()
 		followedUsername := "followed-test-username"
 		followedEmail := "followed.email@test.test"
 		now := time.Now().UTC().Truncate(time.Millisecond)

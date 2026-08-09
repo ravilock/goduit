@@ -19,7 +19,7 @@ import (
 	profileManagerResponses "github.com/ravilock/goduit/internal/profileManager/responses"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 const (
@@ -41,7 +41,7 @@ func TestLogin(t *testing.T) {
 	t.Run("Should successfully login", func(t *testing.T) {
 		// Arrange
 		loginRequest := generateLoginBody()
-		expectedUserID := primitive.NewObjectID()
+		expectedUserID := bson.NewObjectID()
 		expectedUsername := "testing-username"
 		now := time.Now().UTC().Truncate(time.Millisecond)
 		expectedUserModel := &models.User{

@@ -13,7 +13,7 @@ import (
 	profileManagerModels "github.com/ravilock/goduit/internal/profileManager/models"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type loggerSpy struct {
@@ -72,7 +72,7 @@ func TestArticleFeedWorker(t *testing.T) {
 
 	t.Run("Should finalize saga if articleID does not point to an expected article", func(t *testing.T) {
 		// Arrange
-		expectedAuthorID := primitive.NewObjectID()
+		expectedAuthorID := bson.NewObjectID()
 		expectedArticle := assembleArticleModel(expectedAuthorID)
 		expectedArticleID := expectedArticle.ID.Hex()
 		expectedMessageBody := []byte(expectedArticleID)
@@ -93,7 +93,7 @@ func TestArticleFeedWorker(t *testing.T) {
 
 	t.Run("Should fail saga (retry) if GetArticleByID call fails unexpectedly", func(t *testing.T) {
 		// Arrange
-		expectedAuthorID := primitive.NewObjectID()
+		expectedAuthorID := bson.NewObjectID()
 		expectedArticle := assembleArticleModel(expectedAuthorID)
 		expectedArticleID := expectedArticle.ID.Hex()
 		expectedMessageBody := []byte(expectedArticleID)
@@ -114,7 +114,7 @@ func TestArticleFeedWorker(t *testing.T) {
 
 	t.Run("Should finalize saga if article author is not found in database", func(t *testing.T) {
 		// Arrange
-		expectedAuthorID := primitive.NewObjectID()
+		expectedAuthorID := bson.NewObjectID()
 		expectedArticle := assembleArticleModel(expectedAuthorID)
 		expectedArticleID := expectedArticle.ID.Hex()
 		expectedMessageBody := []byte(expectedArticleID)
@@ -136,7 +136,7 @@ func TestArticleFeedWorker(t *testing.T) {
 
 	t.Run("Should fail saga (retry) if GetUserByID call fails unexpectedly", func(t *testing.T) {
 		// Arrange
-		expectedAuthorID := primitive.NewObjectID()
+		expectedAuthorID := bson.NewObjectID()
 		expectedArticle := assembleArticleModel(expectedAuthorID)
 		expectedArticleID := expectedArticle.ID.Hex()
 		expectedMessageBody := []byte(expectedArticleID)
@@ -235,8 +235,8 @@ func TestArticleFeedWorker(t *testing.T) {
 	})
 }
 
-func assembleArticleModel(authorID primitive.ObjectID) *models.Article {
-	articleID := primitive.NewObjectID()
+func assembleArticleModel(authorID bson.ObjectID) *models.Article {
+	articleID := bson.NewObjectID()
 	authorIDHex := authorID.Hex()
 	articleTitle := "Article Title"
 	articleSlug := "article-title"
@@ -259,7 +259,7 @@ func assembleArticleModel(authorID primitive.ObjectID) *models.Article {
 }
 
 func assembleUserModel() *profileManagerModels.User {
-	authorID := primitive.NewObjectID()
+	authorID := bson.NewObjectID()
 	username := "raylok"
 	bio := "This is a bio"
 	image := "https://cataas.com/cat"
@@ -272,7 +272,7 @@ func assembleUserModel() *profileManagerModels.User {
 }
 
 func assembleFollowerModel(followed string) *followerCentralModels.Follower {
-	ID := primitive.NewObjectID()
+	ID := bson.NewObjectID()
 	followerID := uuid.NewString()
 	return &followerCentralModels.Follower{
 		ID:       &ID,

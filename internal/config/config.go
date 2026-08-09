@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -20,7 +21,9 @@ func init() {
 	envReplacer := strings.NewReplacer(".", "_")
 	viper.SetEnvKeyReplacer(envReplacer)
 	viper.SetDefault("log.level", "debug")
-	viper.SetDefault("server.address", ":3000")
+	viper.SetDefault("server.port", "3001")
+	viper.SetDefault("server.domain", "localhost")
+	viper.SetDefault("server.address", fmt.Sprintf("%s:%s", viper.GetString("server.domain"), viper.GetString("server.port")))
 	viper.SetDefault("db.host", "mongodb")
 	viper.SetDefault("db.port", "27017")
 	viper.SetDefault("db.user", "goduit")

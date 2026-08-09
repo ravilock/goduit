@@ -3,14 +3,14 @@ package mongo
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var DatabaseClient *mongo.Client
 
 func ConnectDatabase(databaseURI string) (*mongo.Client, error) {
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(databaseURI))
+	client, err := mongo.Connect(options.Client().ApplyURI(databaseURI))
 	DatabaseClient = client
 	if err != nil {
 		return nil, err
