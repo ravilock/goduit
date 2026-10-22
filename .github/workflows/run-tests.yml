@@ -8,7 +8,7 @@ jobs:
       - name: Setup Golang
         uses: actions/setup-go@v7
         with:
-          go-version: "1.25.6"
+          go-version: "1.27.2"
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -73,7 +73,7 @@ jobs:
       - name: Setup Golang
         uses: actions/setup-go@v7
         with:
-          go-version: "1.25.6"
+          go-version: "1.27.2"
       - name: Checkout
         uses: actions/checkout@v7
       - name: Linting
@@ -88,6 +88,6 @@ jobs:
       - name: Setup Golang
         uses: actions/setup-go@v7
         with:
-          go-version: "1.25.6"
+          go-version: "1.27.2"
       - name: Vulnerability Check
         uses: golang/govulncheck-action@v1
