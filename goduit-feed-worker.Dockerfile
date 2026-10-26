@@ -1,4 +1,4 @@
-FROM golang:1.27.2-bookworm
+FROM golang:1.27.3-bookworm
 
 RUN go install github.com/cespare/reflex@latest
 
